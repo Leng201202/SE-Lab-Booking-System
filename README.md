@@ -1,2 +1,2 @@
-# DormFlow
-Smart Dormitory Management System
+# Internship Management
+Internship Management System
