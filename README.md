@@ -1,2 +1,2 @@
-# Internship Management
-Internship Management System
+# SE Lab Booking System
+SE Lab Management System
