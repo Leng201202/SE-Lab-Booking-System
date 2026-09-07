@@ -7,8 +7,8 @@
 3. Lands on today's timetable; sees which of the 10 PCs are open right now.
 4. Taps an open slot on PC 04, sets 13:00–15:00, selects **Remote**, adds a
    purpose note ("SE project — running training job"), confirms.
-5. Leaves the lab. The tile on PC 04 now shows their name + "Remote" to
-   everyone who looks at the calendar for the rest of that window.
+5. Leaves the lab. The tile on PC 04 now shows their **student ID** + **Remote**
+   to every signed-in user who looks at the calendar for the rest of that window.
 6. **Pain this removes:** without step 5's visible tag, a second student
    walking by an apparently-idle PC 04 would have taken it. TODO (team):
    replace with the real quote/interview # once collected.
@@ -17,7 +17,7 @@
 
 1. Walks into the lab, sees PC 04's monitor asleep/idle.
 2. Opens the site on their phone before touching the keyboard.
-3. Sees PC 04 marked "Remote · 13:00–15:00" under the first student's name.
+3. Sees PC 04 marked "Remote · 13:00–15:00" under the first student's ID.
 4. Picks a different open PC instead — no confrontation, no lost work for
    either side.
 
@@ -26,8 +26,8 @@
 1. Signs in (role: teacher).
 2. Navigates to the date of the next class session via "Next day" / date picker.
 3. Books PCs 01–10 (or a subset) for the class block, mode **Onsite**.
-4. During class, any student checking the calendar sees the teacher's name
-   and role on those machines and knows not to book them.
+4. During class, any signed-in student checking the calendar sees the
+   teacher's student ID and role on those machines and knows not to book them.
 
 ## Journey 4 — Plan changes, booking needs to move (current workaround)
 

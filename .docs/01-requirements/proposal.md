@@ -19,12 +19,28 @@ booking once it's made.
 | Persona | Who | What they need from the system |
 |---|---|---|
 | Student (individual/team) | SE students booking a machine for coursework or projects | See real-time availability, book a specific computer for specific hours, mark the session onsite/remote, cancel/rebook without asking anyone |
-| Teacher | Lab instructors booking machines for class sections or demos | Same booking ability as students, plus visibility into who is using what (role shown on each booking) for accountability during class hours |
+| Teacher | Lab instructors booking machines for class sections or demos | Same booking ability as students, plus visibility into who is using what (role shown on each booking) for accountability during class hours; holder identified by **student ID**, not name |
 
 Both roles share one account system and one live calendar — there is no
 separate "admin" view; every signed-in user sees the same shared timetable
 (`src/components/LabCalendar.tsx`), which is the core fix for the
 invisibility problem above.
+
+### Identity: student ID instead of name (decided 9 Sep 2026)
+
+To support data minimization, bookings identify the holder by their
+**8-digit student ID** (e.g. `6631503***`) rather than their full name, so
+the system stores and shows the minimum needed to hold someone accountable
+for a slot. **Visibility rule (decided 9 Sep 2026):** the holder's
+**student ID + role** are shown to **signed-in users only**; signed-out
+visitors see nothing (only the sign-in screen). Teachers and students use
+the same 8-digit code field at sign-up.
+
+> **Status note:** this is the agreed target. The app as shipped still
+> shows `full_name` and its current RLS lets signed-out (`anon`) users read
+> bookings/profiles — see [feature-list.md](../02-design/feature-list.md)
+> and [rule.md](../03-compliance/rule.md) for the backlogged
+> student-ID + authenticated-only change.
 
 ## Why this approach
 

@@ -14,7 +14,7 @@ Legend: **Done** = shipped and working · **Planned** = agreed, not built ·
 | B2 | As a signed-in user, I see a live timetable of all 10 computers for a chosen day (9:00–20:00) so I know what's free before walking to the lab. | Must | Done | TODO |
 | B3 | As a signed-in user, I can book an open computer for a specific hour range so I have a guaranteed seat. | Must | Done | TODO |
 | B4 | As a signed-in user, I must mark each booking **onsite** or **remote** so others can see a slot is in remote use, not actually empty. | Must | Done | TODO — this is the core pain from the project brief |
-| B5 | As any user (including signed-out visitors), I can view whose booking is on a computer (name + role) and its onsite/remote mode, without needing to ask around. | Must | Done | TODO |
+| B5 | As a signed-in user, I can see whose booking is on a computer — the holder's **student ID + role** and its onsite/remote mode — without needing to ask around; signed-out visitors see nothing. | Must | Planned (agreed: student ID + signed-in-only; app currently shows name and allows anon read) | TODO |
 | B6 | As the owner of a booking, I can cancel it so the slot becomes available again for others. | Must | Done | TODO |
 | B7 | As a user, the system rejects a booking that overlaps an existing one on the same computer/day, so double-booking is impossible even under a race. | Must | Done (DB trigger `prevent_booking_overlap`) | TODO |
 | B8 | As a user, I can navigate to previous/next/today so I can check or book a different day. | Should | Done | TODO |

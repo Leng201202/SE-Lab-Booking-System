@@ -18,7 +18,7 @@ sequenceDiagram
         DB-->>W: insert succeeds
         W->>DB: re-fetch bookings for that day
         DB-->>W: updated booking list
-        W-->>U: toast "Computer booked", tile now shows name + mode
+        W-->>U: toast "Computer booked", tile now shows holder student ID + mode
     end
 ```
 

@@ -7,7 +7,7 @@ erDiagram
     PROFILES ||--o{ BOOKINGS : "makes"
     PROFILES {
         uuid id PK "references auth.users"
-        text full_name
+        text student_id "8-digit; replaces full_name (agreed 9 Sep 2026)"
         enum role "teacher | student"
         timestamptz created_at
     }
@@ -29,6 +29,9 @@ Notes:
   `BEFORE INSERT OR UPDATE` trigger (`prevent_booking_overlap`) rejects any
   new/edited booking whose `[start_hour, end_hour)` overlaps an existing
   booking on the same `computer_id` + `booking_date`.
-- Row-Level Security: `bookings` and `profiles` are readable by everyone
-  (`anon` + `authenticated`) so the calendar is genuinely public/live, but
-  only the owning `user_id` can insert/update/delete their own booking.
+- Row-Level Security (agreed target, 9 Sep 2026): `bookings` and `profiles`
+  are readable by **`authenticated` users only** — the holder's **student ID +
+  role** is shown to signed-in users, and **not** to `anon`. Currently the
+  migrations still grant `anon` SELECT and the app stores `full_name`; the RLS
+  + schema change is the pending item behind this design.
+- Only the owning `user_id` can insert/update/delete their own booking.

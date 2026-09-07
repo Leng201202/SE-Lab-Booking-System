@@ -18,6 +18,10 @@ it's built on Lovable/TanStack Start + Supabase and is live.
 > 3. Booking dialog — creating a booking
 > 4. Booking dialog — viewing someone else's booking (mode + role visible)
 
+Identity note: the agreed design shows the holder's **student ID** (not
+`full_name`). The app currently renders `full_name`; update screenshots and
+labels once the student-ID change ships.
+
 ## What's real vs. simulated
 
 Everything in the feature list marked **Done** is real, working
