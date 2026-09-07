@@ -21,6 +21,7 @@ erDiagram
         enum mode "onsite | remote"
         text purpose
         timestamptz created_at
+        timestamptz updated_at
     }
 ```
 
