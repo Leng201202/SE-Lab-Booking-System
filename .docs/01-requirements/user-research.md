@@ -27,11 +27,11 @@ to a real user pain.
 
 | # | Date | Name / role (student or teacher) | Key pain described | Pain confirmed? (which problem from the proposal) | Traces to backlog item |
 |---|---|---|---|---|---|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | 7 Sep 2026 | Student 1 | Someone may close the computer while it is being used remotely | Yes — remote computer use is not visible | Show remote-use status |
+| 2 | 8 Sep 2026 | Student 2 | Cannot easily know if someone is using the computer remotely | Yes — remote usage is unclear | Show remote-use status |
+| 3 | 8 Sep 2026 | Student 3 | Someone may take the computer they planned to use | Yes — conflict over computer usage | Computer reservation |
+| 4 | 8 Sep 2026 | Student 4 | Someone may take the computer they planned to use | Yes — conflict over computer usage | Computer reservation |
+| 5 | 8 Sep 2026 | Student 5 | No major issue yet, but still needs to check if a computer is free | Partly — computer availability is still important | Show computer availability |
 | 6 | | | | | |
 | 7 | | | | | |
 | 8 | | | | | |
@@ -42,7 +42,6 @@ to a real user pain.
 | 13 | | | | | |
 | 14 | | | | | |
 | 15 | | | | | |
-
 ## Summary
 
 > TODO (team): once ≥5 rows are filled, summarize the pattern here — e.g.
