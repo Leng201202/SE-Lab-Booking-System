@@ -10,9 +10,9 @@ it. There's no shared source of truth for which computer is free, which is
 in onsite use, and which is in remote use, and no way to see or change a
 booking once it's made.
 
-> TODO (team): tighten this with 1–2 direct quotes from real interviews,
-> e.g. "we lost 40 minutes of a deadline because our remote session got
-> taken" — see [user-research.md](user-research.md).
+> **Gap (9 Sep 2026):** no verbatim quote collected yet. Pending one from an
+> interview — see [user-research.md](user-research.md) summary/rows 1–2 for
+> the confirmed remote-use-invisible pain.
 
 ## Target users
 

@@ -44,7 +44,14 @@ to a real user pain.
 | 15 | | | | | |
 ## Summary
 
-> TODO (team): once ≥5 rows are filled, summarize the pattern here — e.g.
-> "X of Y interviewees had a computer taken from under a remote session in
-> the last month." This paragraph is what the proposal's problem
-> statement should quote from.
+> 5 interviews to date. Core pattern: **remote computer use is invisible**
+> (rows 1–2) — a machine in remote use looks free, so it can be taken/closed
+> by someone else. A second recurring pain is **conflict over reserved
+> computers** (rows 3–4). Row 5 confirms availability-checking matters. These
+> map to backlog B4/B5 (onsite/remote + who's using it), B3/B6/B7
+> (reserve/conflict), and B2/B8 (availability). Proposed stories B11–B13 have
+> **no interview support yet**.
+>
+> TODO (team): extend this summary with a concrete quote once a participant
+> gives one, e.g. "we lost 40 minutes of a deadline because our remote
+> session got taken", and confirm the source row.
