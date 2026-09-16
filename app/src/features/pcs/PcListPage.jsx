@@ -11,7 +11,7 @@ export function PcListPage() {
       <PageHeader eyebrow="SE Lab inventory" title="Lab PCs" description="Browse the demo workstation inventory and current availability." action={<Link to="/book"><Button><Plus size={17} />Create request</Button></Link>} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {mockPcs.map((pc) => (
-          <Card key={pc.id} className="p-5">
+          <Card key={pc.id} className="p-4 sm:p-5">
             <div className="flex items-start justify-between"><span className="grid size-11 place-items-center rounded-xl bg-mfu-50 text-mfu-700"><Cpu size={21} /></span><Badge tone={pc.status === 'Available' ? 'green' : pc.status === 'Booked' ? 'violet' : 'amber'}>{pc.status}</Badge></div>
             <h2 className="mt-5 text-xl font-bold text-slate-950">{pc.id}</h2>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><MapPin size={14} />{pc.room}</p>

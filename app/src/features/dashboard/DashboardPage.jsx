@@ -20,9 +20,9 @@ import { formatBookingDateRange, formatBookingTime } from '../../utils/booking'
 
 function SectionTitle({ title, link, linkLabel = 'View all' }) {
   return (
-    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-      <h2 className="font-bold text-slate-900">{title}</h2>
-      {link && <Link className="flex items-center gap-1 text-xs font-semibold text-mfu-700 hover:text-mfu-900" to={link}>{linkLabel}<ArrowRight size={14} /></Link>}
+    <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-5">
+      <h2 className="min-w-0 font-bold text-slate-900">{title}</h2>
+      {link && <Link className="flex shrink-0 items-center gap-1 text-xs font-semibold text-mfu-700 hover:text-mfu-900" to={link}>{linkLabel}<ArrowRight size={14} /></Link>}
     </div>
   )
 }
@@ -50,8 +50,8 @@ function StudentDashboard() {
         <Card className="overflow-hidden">
           <SectionTitle title="Upcoming approved booking" link="/calendar" linkLabel="Calendar" />
           {upcoming ? (
-            <div className="p-5">
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-mfu-700 to-mfu-900 p-5 text-white shadow-lg shadow-mfu-900/15">
+            <div className="p-4 sm:p-5">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-mfu-700 to-mfu-900 p-4 text-white shadow-lg shadow-mfu-900/15 sm:p-5">
                 <div className="brand-stripe absolute inset-x-0 top-0 h-1" aria-hidden="true" />
                 <div className="flex items-start justify-between gap-3">
                   <span className="grid size-11 place-items-center rounded-xl bg-white/12"><CalendarCheck2 size={21} /></span>
@@ -97,10 +97,10 @@ function ReviewerDashboard({ role }) {
         <SectionTitle title="Recent requests" link="/requests/history" linkLabel="View history" />
         <div className="divide-y divide-slate-100">
           {bookings.slice(0, 4).map((booking) => (
-            <Link key={booking.id} to={`/bookings/${booking.id}`} className="flex flex-col gap-3 px-5 py-4 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+            <Link key={booking.id} to={`/bookings/${booking.id}`} className="flex flex-col items-start gap-3 px-4 py-4 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900">{booking.studentName} · {booking.pcId}</p>
-                <p className="mt-1 text-xs text-slate-500">{formatBookingDateRange(booking)} · {formatBookingTime(booking)}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{formatBookingDateRange(booking)} · {formatBookingTime(booking)}</p>
               </div>
               <StatusBadge status={booking.status} />
             </Link>

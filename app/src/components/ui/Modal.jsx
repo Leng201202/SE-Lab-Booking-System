@@ -4,8 +4,8 @@ import { Button } from './Button'
 export function Modal({ open, onClose, title, description, children }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/45 p-4 backdrop-blur-[2px]" role="presentation" onMouseDown={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="modal-title" onMouseDown={(event) => event.stopPropagation()}>
+    <div className="fixed inset-0 z-50 grid items-end bg-slate-950/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4" role="presentation" onMouseDown={onClose}>
+      <div className="max-h-[calc(100dvh-1rem)] w-full overflow-y-auto rounded-t-2xl bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl sm:max-w-md sm:rounded-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modal-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="modal-title" className="text-lg font-bold text-slate-950">{title}</h2>
@@ -24,9 +24,9 @@ export function Modal({ open, onClose, title, description, children }) {
 export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel = 'Confirm' }) {
   return (
     <Modal open={open} onClose={onClose} title={title} description={description}>
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" onClick={onClose}>Cancel</Button>
-        <Button onClick={onConfirm}>{confirmLabel}</Button>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button className="w-full sm:w-auto" variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button className="w-full sm:w-auto" onClick={onConfirm}>{confirmLabel}</Button>
       </div>
     </Modal>
   )

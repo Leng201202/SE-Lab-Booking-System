@@ -109,7 +109,7 @@ export function BookingFormPage() {
     <div className="space-y-6">
       <PageHeader eyebrow="New request" title="Book a lab PC" description="Your request will be sent to your advisor first, then to the dean for final approval." />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <Card className="p-5 sm:p-7">
+        <Card className="p-4 sm:p-7">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             {fromCalendar && (
               <div className="flex gap-3 rounded-xl border border-mfu-200 bg-mfu-50 p-4 text-sm text-mfu-900">
@@ -164,18 +164,18 @@ export function BookingFormPage() {
               <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert"><Info className="mt-0.5 shrink-0" size={18} /><div><p className="font-semibold">Booking conflict</p><p className="mt-1">{errors.root.conflict.message}</p></div></div>
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
-              <Link to={fromCalendar ? '/calendar' : '/dashboard'}><Button type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? 'Back to calendar' : 'Cancel'}</Button></Link>
-              <Button type="submit" disabled={isSubmitting}>Submit booking request</Button>
+              <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? 'Back to calendar' : 'Cancel'}</Button></Link>
+              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting}>Submit booking request</Button>
             </div>
           </form>
         </Card>
         <div className="space-y-4">
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <h2 className="flex items-center gap-2 font-bold text-slate-900"><Monitor size={18} className="text-mfu-700" />Selected workstation</h2>
             {selectedPc ? <div className="mt-4"><p className="text-2xl font-bold text-slate-950">{selectedPc.id}</p><p className="mt-1 text-sm text-slate-500">{selectedPc.room}</p><p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">{selectedPc.specification}</p></div> : <p className="mt-4 text-sm leading-6 text-slate-500">Choose a PC to view its room and specification.</p>}
             <Link to="/pcs" className="mt-4 inline-flex text-sm font-semibold text-mfu-700 hover:text-mfu-900">View all lab PCs →</Link>
           </Card>
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <h2 className="font-bold text-slate-900">Before you submit</h2>
             <ul className="mt-4 space-y-3 text-sm text-slate-600">
               <li className="flex gap-2"><CalendarDays size={16} className="mt-0.5 shrink-0 text-mfu-700" /> One day uses normal lab opening hours.</li>

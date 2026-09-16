@@ -24,9 +24,9 @@ import { formatBookingDateRange, formatBookingTime, formatRequestDate, isRemoteB
 
 function DetailItem({ icon: Icon, label, value }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex min-w-0 gap-3">
       <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500"><Icon size={17} /></span>
-      <div><p className="text-xs font-medium text-slate-400">{label}</p><p className="mt-1 text-sm font-semibold leading-5 text-slate-800">{value}</p></div>
+      <div className="min-w-0"><p className="text-xs font-medium text-slate-400">{label}</p><p className="mt-1 break-words text-sm font-semibold leading-5 text-slate-800">{value}</p></div>
     </div>
   )
 }
@@ -54,7 +54,7 @@ function ApprovalProgress({ booking }) {
   const finalState = booking.status === 'approved' || booking.status === 'completed' ? 'complete' : booking.status === 'rejected' || booking.status === 'cancelled' ? 'rejected' : 'waiting'
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="p-4 sm:p-6">
       <h2 className="font-bold text-slate-900">Approval progress</h2>
       <div className="mt-6">
         <ProgressStep title="Student submitted" state="complete" detail={formatRequestDate(booking.requestedAt)} />
@@ -77,7 +77,7 @@ export function BookingDetailPage() {
   const booking = bookings.find((item) => item.id === id)
 
   if (!booking) {
-    return <Card className="p-10 text-center"><h1 className="text-xl font-bold text-slate-900">Request not found</h1><p className="mt-2 text-sm text-slate-500">This demo booking does not exist or was reset.</p><Button className="mt-5" onClick={() => navigate('/dashboard')}>Back to dashboard</Button></Card>
+    return <Card className="p-6 text-center sm:p-10"><h1 className="text-xl font-bold text-slate-900">Request not found</h1><p className="mt-2 text-sm text-slate-500">This demo booking does not exist or was reset.</p><Button className="mt-5 w-full sm:w-auto" onClick={() => navigate('/dashboard')}>Back to dashboard</Button></Card>
   }
 
   const canReview = (user.role === 'advisor' && booking.status === 'pending_advisor') || (user.role === 'dean' && booking.status === 'pending_dean')
@@ -102,12 +102,12 @@ export function BookingDetailPage() {
           <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{booking.id}</h1><StatusBadge status={booking.status} /></div>
           <p className="mt-2 text-sm text-slate-500">Submitted {formatRequestDate(booking.requestedAt)}</p>
         </div>
-        {canReview && <div className="flex gap-3"><Button variant="secondary" onClick={() => setRejectOpen(true)}><XCircle size={17} />Reject</Button><Button onClick={() => setConfirmOpen(true)}><CheckCircle2 size={17} />Approve</Button></div>}
+        {canReview && <div className="grid grid-cols-2 gap-3 sm:flex"><Button className="w-full sm:w-auto" variant="secondary" onClick={() => setRejectOpen(true)}><XCircle size={17} />Reject</Button><Button className="w-full sm:w-auto" onClick={() => setConfirmOpen(true)}><CheckCircle2 size={17} />Approve</Button></div>}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
         <div className="space-y-6">
-          <Card className="p-5 sm:p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
               <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-mfu-700">Booking information</p><h2 className="mt-1 text-xl font-bold text-slate-950">{booking.pcId}</h2></div>
               <span className="grid size-11 place-items-center rounded-xl bg-mfu-50 text-mfu-700"><Monitor size={22} /></span>
@@ -123,7 +123,7 @@ export function BookingDetailPage() {
             <div className="mt-6 border-t border-slate-100 pt-6"><DetailItem icon={FileText} label="Purpose" value={booking.purpose} /></div>
           </Card>
           {booking.rejectionReason && (
-            <Card className="border-red-200 bg-red-50 p-5"><div className="flex gap-3"><XCircle className="mt-0.5 shrink-0 text-red-600" size={20} /><div><h2 className="font-bold text-red-900">Rejected by {booking.rejectedBy}</h2><p className="mt-1 text-sm leading-6 text-red-700">{booking.rejectionReason}</p></div></div></Card>
+            <Card className="border-red-200 bg-red-50 p-4 sm:p-5"><div className="flex gap-3"><XCircle className="mt-0.5 shrink-0 text-red-600" size={20} /><div className="min-w-0"><h2 className="font-bold text-red-900">Rejected by {booking.rejectedBy}</h2><p className="mt-1 break-words text-sm leading-6 text-red-700">{booking.rejectionReason}</p></div></div></Card>
           )}
         </div>
         <ApprovalProgress booking={booking} />
@@ -134,7 +134,7 @@ export function BookingDetailPage() {
         <label className="block text-sm font-semibold text-slate-700">Rejection reason</label>
         <Textarea className="mt-2" value={reason} onChange={(event) => { setReason(event.target.value); setReasonError('') }} placeholder="Explain why this request cannot be approved…" autoFocus />
         {reasonError && <p className="mt-1.5 text-sm text-red-600">{reasonError}</p>}
-        <div className="mt-5 flex justify-end gap-3"><Button variant="secondary" onClick={() => setRejectOpen(false)}>Cancel</Button><Button variant="danger" onClick={reject}>Reject request</Button></div>
+        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button className="w-full sm:w-auto" variant="secondary" onClick={() => setRejectOpen(false)}>Cancel</Button><Button className="w-full sm:w-auto" variant="danger" onClick={reject}>Reject request</Button></div>
       </Modal>
     </div>
   )

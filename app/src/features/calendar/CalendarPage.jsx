@@ -148,7 +148,7 @@ function weekLabel(days) {
 function PcLabel({ pc }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500">
+      <span className="hidden size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500 sm:grid">
         <Monitor size={15} />
       </span>
       <div className="min-w-0">
@@ -233,13 +233,13 @@ function AvailabilityCell({ pc, date, bookings, canOpenAll, userId, canBook, onC
 
 function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline, canBook }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left">
+    <div className="overflow-x-auto overscroll-x-contain">
+      <table className="w-full min-w-[960px] border-separate border-spacing-0 text-left sm:min-w-[1120px]">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 w-48 border-b border-r border-slate-200 bg-white px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">Workstation</th>
+            <th className="sticky left-0 z-10 w-28 min-w-28 border-b border-r border-slate-200 bg-white px-3 py-4 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:w-48 sm:min-w-48 sm:px-5 sm:text-xs"><span className="sm:hidden">PC</span><span className="hidden sm:inline">Workstation</span></th>
             {weekDays.map((day) => (
-              <th key={day.toISOString()} className={`min-w-32 border-b border-slate-200 p-0 text-center ${isToday(day) ? 'bg-mfu-50' : 'bg-white'}`}>
+              <th key={day.toISOString()} className={`min-w-28 border-b border-slate-200 p-0 text-center sm:min-w-32 ${isToday(day) ? 'bg-mfu-50' : 'bg-white'}`}>
                 <button className="w-full px-3 py-3 hover:bg-mfu-50" onClick={() => openTimeline(day)} title={`Open timeline for ${format(day, 'd MMMM yyyy')}`}>
                   <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday(day) ? 'text-mfu-600' : 'text-slate-400'}`}>{format(day, 'EEE')}</p>
                   <p className={`mt-1 text-lg font-bold ${isToday(day) ? 'text-mfu-800' : 'text-slate-800'}`}>{format(day, 'd')}</p>
@@ -252,7 +252,7 @@ function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline, canBoo
         <tbody>
           {mockPcs.map((pc) => (
             <tr key={pc.id}>
-              <th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-5 py-4 align-top"><PcLabel pc={pc} /></th>
+              <th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-3 py-4 align-top sm:px-5"><PcLabel pc={pc} /></th>
               {weekDays.map((day) => (
                 <td key={day.toISOString()} className={`border-b border-slate-100 p-2 align-top ${isToday(day) ? 'bg-mfu-50/40' : 'bg-white'}`}>
                   <AvailabilityCell
@@ -372,14 +372,14 @@ function TimelineSelection({ selection, date, activeBookings, onChange }) {
     >
       <button
         type="button"
-        className="-ml-1.5 h-9 w-3 shrink-0 cursor-ew-resize touch-none rounded-full border-2 border-white bg-mfu-700 shadow transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-mfu-800"
+        className="-ml-2 h-10 w-4 shrink-0 cursor-ew-resize touch-none rounded-full border-2 border-white bg-mfu-700 shadow transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-mfu-800"
         onPointerDown={(event) => startDrag('start', event)}
         aria-label="Drag to change start time"
       />
       <span className="pointer-events-none truncate px-1">{selection.startTime}–{selection.endTime}</span>
       <button
         type="button"
-        className="-mr-1.5 h-9 w-3 shrink-0 cursor-ew-resize touch-none rounded-full border-2 border-white bg-mfu-700 shadow transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-mfu-800"
+        className="-mr-2 h-10 w-4 shrink-0 cursor-ew-resize touch-none rounded-full border-2 border-white bg-mfu-700 shadow transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-mfu-800"
         onPointerDown={(event) => startDrag('end', event)}
         aria-label="Drag to change end time"
       />
@@ -441,16 +441,16 @@ function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, 
 
   return (
     <div className="flex w-full bg-white">
-      <div className="w-40 shrink-0 border-r border-slate-200 bg-white sm:w-48">
-        <div className="flex h-12 items-center border-b border-slate-200 bg-slate-50 px-3 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:px-4 sm:text-xs">Workstations <span className="ml-1 text-slate-400">({mockPcs.length})</span></div>
+      <div className="w-28 shrink-0 border-r border-slate-200 bg-white sm:w-48">
+        <div className="flex h-12 items-center border-b border-slate-200 bg-slate-50 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:px-4 sm:text-xs"><span className="sm:hidden">PCs</span><span className="hidden sm:inline">Workstations</span> <span className="ml-1 text-slate-400">({mockPcs.length})</span></div>
         {mockPcs.map((pc) => (
-          <div key={pc.id} className="flex items-center border-b border-slate-100 px-3 sm:px-4" style={{ height: `${TIMELINE_ROW_HEIGHT}px` }}>
+          <div key={pc.id} className="flex items-center border-b border-slate-100 px-2 sm:px-4" style={{ height: `${TIMELINE_ROW_HEIGHT}px` }}>
             <PcLabel pc={pc} />
           </div>
         ))}
       </div>
 
-      <div className="min-w-0 flex-1 overflow-x-auto" aria-label={`PC timeline for ${format(date, 'd MMMM yyyy')}`}>
+      <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain" aria-label={`PC timeline for ${format(date, 'd MMMM yyyy')}`}>
         <div className="min-w-[900px]">
           <div className="relative h-12 border-b border-slate-200 bg-slate-50">
             {HOUR_MARKS.map((hour, index) => (
@@ -517,9 +517,9 @@ function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, 
 
 function ViewToggle({ view, setView }) {
   return (
-    <div className="inline-flex rounded-lg bg-slate-200/70 p-1" role="group" aria-label="Calendar view">
-      <button onClick={() => setView('week')} aria-pressed={view === 'week'} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${view === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Week</button>
-      <button onClick={() => setView('timeline')} aria-pressed={view === 'timeline'} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${view === 'timeline' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Timeline</button>
+    <div className="inline-flex w-full rounded-lg bg-slate-200/70 p-1 sm:w-auto" role="group" aria-label="Calendar view">
+      <button onClick={() => setView('week')} aria-pressed={view === 'week'} className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition sm:flex-none ${view === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Week</button>
+      <button onClick={() => setView('timeline')} aria-pressed={view === 'timeline'} className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition sm:flex-none ${view === 'timeline' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Timeline</button>
     </div>
   )
 }
@@ -533,9 +533,9 @@ function CalendarLegend() {
     { label: 'Maintenance', dot: 'bg-red-500', classes: 'border-red-100 bg-red-50/60 text-red-800' },
   ]
   return (
-    <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 sm:px-5">
+    <div className="flex flex-nowrap gap-2 overflow-x-auto border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 sm:flex-wrap sm:px-5">
       {items.map((item) => (
-        <span key={item.label} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${item.classes}`}>
+        <span key={item.label} className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${item.classes}`}>
           <span className={`size-1.5 rounded-full ${item.dot}`} />{item.label}
         </span>
       ))}
@@ -611,7 +611,7 @@ export function CalendarPage() {
               <h2 className="mt-0.5 text-sm font-bold text-slate-900">{view === 'week' ? weekLabel(weekDays) : format(selectedDate, 'EEEE, d MMMM yyyy')}</h2>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 sm:justify-start">
             <Button variant="secondary" size="sm" onClick={() => movePeriod(-1)} aria-label={view === 'week' ? 'Previous week' : 'Previous day'}><ChevronLeft size={17} /><span className="hidden sm:inline">Previous</span></Button>
             <Button variant="secondary" size="sm" onClick={goToday}>Today</Button>
             <Button variant="secondary" size="sm" onClick={() => movePeriod(1)} aria-label={view === 'week' ? 'Next week' : 'Next day'}><span className="hidden sm:inline">Next</span><ChevronRight size={17} /></Button>
@@ -634,9 +634,9 @@ export function CalendarPage() {
               </div>
             </div>
             {selection && (
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="grid w-full shrink-0 grid-cols-[2.5rem_1fr] items-center gap-2 sm:flex sm:w-auto">
                 <button onClick={() => setSelection(null)} className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800" aria-label="Clear selected time"><X size={17} /></button>
-                <Link to={`/book?${bookingSearch}`}><Button size="sm">Book selected time <ArrowRight size={16} /></Button></Link>
+                <Link className="block" to={`/book?${bookingSearch}`}><Button className="w-full sm:w-auto" size="sm">Book selected time <ArrowRight size={16} /></Button></Link>
               </div>
             )}
           </div>
@@ -648,7 +648,7 @@ export function CalendarPage() {
           <TimelineView date={selectedDate} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} canBook={canBook} selection={selection} onSelect={setSelection} />
         )}
 
-        <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-2.5 text-[11px] leading-5 text-slate-500">
+        <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-[11px] leading-5 text-slate-500 sm:px-5">
           {view === 'week' ? `${user.role === 'student' ? 'Select an available cell to choose a booking time, or select a date heading to open its timeline. ' : 'Select a date heading to open its detailed timeline. '}` : `${canBook ? 'Drag to select; move the selected block or resize it with the edge handles. ' : 'Scroll horizontally to see all lab hours. '}`}
           Rejected, cancelled, and completed requests do not block availability.
         </div>

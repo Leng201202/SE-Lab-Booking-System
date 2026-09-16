@@ -56,7 +56,7 @@ function Brand() {
 function Sidebar({ onNavigate }) {
   const { user } = useApp()
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-mfu-950 px-4 py-6 text-slate-300">
+    <div className="relative flex h-full flex-col overflow-y-auto overflow-x-hidden bg-mfu-950 px-4 py-6 text-slate-300">
       <div className="brand-stripe absolute inset-x-0 top-0 h-1" aria-hidden="true" />
       <Brand />
       <div className="mx-3 mt-7 rounded-xl border border-white/10 bg-white/[0.055] px-3 py-3">
@@ -110,26 +110,26 @@ export function AppShell() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <button className="absolute inset-0 bg-slate-950/40" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />
-          <aside className="relative h-full w-72 shadow-2xl">
-            <button className="absolute right-3 top-4 z-10 rounded-lg p-2 text-slate-400 hover:bg-white/10" onClick={() => setMobileOpen(false)}><X size={20} /></button>
+          <aside className="relative h-full w-[min(18rem,calc(100vw-2rem))] shadow-2xl">
+            <button className="absolute right-3 top-4 z-10 grid size-11 place-items-center rounded-xl text-slate-300 hover:bg-white/10" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={20} /></button>
             <Sidebar onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
 
       <div className="md:pl-64">
-        <header className="sticky top-0 z-20 flex h-18 items-center justify-between border-b border-mfu-100 bg-white/92 px-4 backdrop-blur md:px-8">
-          <div className="flex items-center gap-3">
-            <button className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
-            <div>
-              <p className="text-xs text-slate-400">{roleLabels[user.role]} workspace</p>
-              <p className="text-sm font-bold text-slate-800">{pageName}</p>
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-2 border-b border-mfu-100 bg-white/92 px-3 backdrop-blur sm:h-18 sm:px-4 md:px-8">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <button className="grid size-11 shrink-0 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
+            <div className="min-w-0">
+              <p className="truncate text-[11px] text-slate-400 sm:text-xs">{roleLabels[user.role]} workspace</p>
+              <p className="truncate text-sm font-bold text-slate-800">{pageName}</p>
             </div>
           </div>
 
           <div className="relative">
-            <button className="flex items-center gap-3 rounded-xl p-1.5 pr-2 text-left hover:bg-slate-100" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen}>
-              <span className="grid size-9 place-items-center rounded-full bg-mfu-100 text-sm font-bold text-mfu-700">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
+            <button className="flex min-h-11 items-center gap-2 rounded-xl p-1 pr-1.5 text-left hover:bg-slate-100 sm:gap-3 sm:p-1.5 sm:pr-2" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen}>
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-mfu-100 text-sm font-bold text-mfu-700">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
               <span className="hidden sm:block">
                 <span className="block max-w-44 truncate text-sm font-semibold text-slate-800">{user.shortName || user.name}</span>
                 <span className="block text-xs capitalize text-slate-400">Demo {user.role}</span>
@@ -138,7 +138,7 @@ export function AppShell() {
             </button>
 
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="fixed inset-x-3 top-16 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:w-64">
                 <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Switch demo role</p>
                 {Object.keys(demoUsers).map((role) => (
                   <button key={role} onClick={() => switchRole(role)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${user.role === role ? 'bg-mfu-50 text-mfu-700' : 'text-slate-600 hover:bg-slate-50'}`}>
@@ -154,11 +154,11 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8"><Outlet /></main>
+        <main className="mx-auto max-w-7xl p-3 sm:p-6 lg:p-8"><Outlet /></main>
       </div>
 
       {toast && (
-        <div className={`fixed bottom-5 right-5 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xl ${toast.tone === 'error' ? 'bg-red-600' : 'bg-mfu-800'}`} role="status">
+        <div className={`fixed inset-x-3 bottom-3 z-[60] rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xl sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-sm ${toast.tone === 'error' ? 'bg-red-600' : 'bg-mfu-800'}`} role="status">
           {toast.message}
         </div>
       )}
