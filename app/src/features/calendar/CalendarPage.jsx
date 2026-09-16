@@ -1,11 +1,14 @@
 import {
+  ArrowRight,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   Clock3,
   MapPin,
+  MousePointer2,
   Monitor,
   ShieldAlert,
+  X,
 } from 'lucide-react'
 import {
   addDays,
@@ -16,7 +19,7 @@ import {
   isToday,
   startOfWeek,
 } from 'date-fns'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
@@ -66,6 +69,61 @@ function getActiveBookings(bookings, pcId, date) {
 function timeToMinutes(time) {
   const [hours, minutes] = time.split(':').map(Number)
   return hours * 60 + minutes
+}
+
+function minutesToTime(minutes) {
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  return `${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+}
+
+function overlapsBooking(activeBookings, startMinutes, endMinutes) {
+  return activeBookings.some((booking) => {
+    const bounds = getBookingTimeBounds(booking)
+    return startMinutes < timeToMinutes(bounds.endTime) && endMinutes > timeToMinutes(bounds.startTime)
+  })
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(Math.max(value, minimum), maximum)
+}
+
+function createSelection(pcId, date, startSlot, endSlot) {
+  return {
+    pcId,
+    date: format(date, 'yyyy-MM-dd'),
+    startTime: minutesToTime(LAB_OPEN_MINUTES + startSlot * TIMELINE_SLOT_MINUTES),
+    endTime: minutesToTime(LAB_OPEN_MINUTES + endSlot * TIMELINE_SLOT_MINUTES),
+  }
+}
+
+function timeToSlot(time) {
+  return (timeToMinutes(time) - LAB_OPEN_MINUTES) / TIMELINE_SLOT_MINUTES
+}
+
+function formatSelectionDuration(selection) {
+  const minutes = timeToMinutes(selection.endTime) - timeToMinutes(selection.startTime)
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  if (!hours) return `${remainder} min`
+  if (!remainder) return `${hours} hr${hours === 1 ? '' : 's'}`
+  return `${hours} hr ${remainder} min`
+}
+
+function getSuggestedSelection(pcId, date, slotIndex, activeBookings) {
+  const startMinutes = LAB_OPEN_MINUTES + slotIndex * TIMELINE_SLOT_MINUTES
+  const nextBookingStart = activeBookings
+    .map((booking) => timeToMinutes(getBookingTimeBounds(booking).startTime))
+    .filter((minutes) => minutes > startMinutes)
+    .sort((a, b) => a - b)[0]
+  const endMinutes = Math.min(startMinutes + 60, nextBookingStart || LAB_CLOSE_MINUTES, LAB_CLOSE_MINUTES)
+
+  return createSelection(
+    pcId,
+    date,
+    slotIndex,
+    (endMinutes - LAB_OPEN_MINUTES) / TIMELINE_SLOT_MINUTES,
+  )
 }
 
 function getTimelineGridPosition(startTime, endTime) {
@@ -118,7 +176,7 @@ function BookingContent({ booking }) {
   )
 }
 
-function AvailabilityCell({ pc, date, bookings, canOpenAll, userId }) {
+function AvailabilityCell({ pc, date, bookings, canOpenAll, userId, canBook, onChooseTime }) {
   if (pc.status === 'Maintenance') {
     return (
       <div className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-red-100 bg-red-50/70 px-2 text-center">
@@ -131,12 +189,19 @@ function AvailabilityCell({ pc, date, bookings, canOpenAll, userId }) {
 
   const activeBookings = getActiveBookings(bookings, pc.id, date)
   if (!activeBookings.length) {
-    return (
-      <div className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50/50 px-2 text-center">
+    const content = (
+      <>
         <span className="size-2 rounded-full bg-emerald-500" />
         <span className="mt-2 text-xs font-bold text-emerald-700">Available</span>
-        <span className="mt-0.5 text-[10px] text-emerald-600">All day</span>
-      </div>
+        <span className="mt-0.5 text-[10px] text-emerald-600">{canBook ? 'Choose a time' : 'All day'}</span>
+      </>
+    )
+    return canBook ? (
+      <button onClick={onChooseTime} className="flex min-h-20 w-full flex-col items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50/60 px-2 text-center transition hover:border-emerald-300 hover:bg-emerald-100/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mfu-600" aria-label={`Choose a booking time for ${pc.id} on ${format(date, 'd MMMM yyyy')}`}>
+        {content}
+      </button>
+    ) : (
+      <div className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50/50 px-2 text-center">{content}</div>
     )
   }
 
@@ -155,12 +220,18 @@ function AvailabilityCell({ pc, date, bookings, canOpenAll, userId }) {
           </div>
         )
       })}
-      <p className="px-1 pt-1 text-center text-[10px] font-medium text-emerald-600">Available at other times</p>
+      {canBook ? (
+        <button onClick={onChooseTime} className="flex w-full items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] font-bold text-mfu-700 transition hover:bg-mfu-50 focus-visible:outline-2 focus-visible:outline-mfu-600">
+          Choose another time <ArrowRight size={11} />
+        </button>
+      ) : (
+        <p className="px-1 pt-1 text-center text-[10px] font-medium text-emerald-600">Available at other times</p>
+      )}
     </div>
   )
 }
 
-function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline }) {
+function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline, canBook }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left">
@@ -184,7 +255,15 @@ function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline }) {
               <th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-5 py-4 align-top"><PcLabel pc={pc} /></th>
               {weekDays.map((day) => (
                 <td key={day.toISOString()} className={`border-b border-slate-100 p-2 align-top ${isToday(day) ? 'bg-mfu-50/40' : 'bg-white'}`}>
-                  <AvailabilityCell pc={pc} date={day} bookings={bookings} canOpenAll={canOpenAll} userId={userId} />
+                  <AvailabilityCell
+                    pc={pc}
+                    date={day}
+                    bookings={bookings}
+                    canOpenAll={canOpenAll}
+                    userId={userId}
+                    canBook={canBook && format(day, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')}
+                    onChooseTime={() => openTimeline(day, pc.id)}
+                  />
                 </td>
               ))}
             </tr>
@@ -210,7 +289,156 @@ function TimelineBlock({ booking, canOpen }) {
   )
 }
 
-function TimelineView({ date, bookings, canOpenAll, userId }) {
+function TimelineSelection({ selection, date, activeBookings, onChange }) {
+  const drag = useRef(null)
+  const startSlot = timeToSlot(selection.startTime)
+  const endSlot = timeToSlot(selection.endTime)
+
+  const startDrag = (mode, event) => {
+    if (event.button !== undefined && event.button !== 0) return
+    event.preventDefault()
+    event.stopPropagation()
+    const row = event.currentTarget.closest('[data-timeline-row]')
+    if (!row) return
+    drag.current = {
+      mode,
+      pointerId: event.pointerId,
+      pointerStartX: event.clientX,
+      rowWidth: row.getBoundingClientRect().width,
+      startSlot,
+      endSlot,
+    }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveSelection = (event) => {
+    const interaction = drag.current
+    if (!interaction || interaction.pointerId !== event.pointerId) return
+    event.preventDefault()
+    const slotWidth = interaction.rowWidth / TIMELINE_SLOT_COUNT
+    const slotDelta = Math.round((event.clientX - interaction.pointerStartX) / slotWidth)
+    let nextStart = interaction.startSlot
+    let nextEnd = interaction.endSlot
+
+    if (interaction.mode === 'move') {
+      const duration = interaction.endSlot - interaction.startSlot
+      nextStart = clamp(interaction.startSlot + slotDelta, 0, TIMELINE_SLOT_COUNT - duration)
+      nextEnd = nextStart + duration
+    } else if (interaction.mode === 'start') {
+      nextStart = clamp(interaction.startSlot + slotDelta, 0, interaction.endSlot - 1)
+    } else {
+      nextEnd = clamp(interaction.endSlot + slotDelta, interaction.startSlot + 1, TIMELINE_SLOT_COUNT)
+    }
+
+    const startMinutes = LAB_OPEN_MINUTES + nextStart * TIMELINE_SLOT_MINUTES
+    const endMinutes = LAB_OPEN_MINUTES + nextEnd * TIMELINE_SLOT_MINUTES
+    if (!overlapsBooking(activeBookings, startMinutes, endMinutes)) {
+      onChange(createSelection(selection.pcId, date, nextStart, nextEnd))
+    }
+  }
+
+  const stopDrag = (event) => {
+    if (drag.current?.pointerId !== event.pointerId) return
+    drag.current = null
+  }
+
+  const moveWithKeyboard = (event) => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return
+    event.preventDefault()
+    const direction = event.key === 'ArrowLeft' ? -1 : 1
+    const duration = endSlot - startSlot
+    const nextStart = clamp(startSlot + direction, 0, TIMELINE_SLOT_COUNT - duration)
+    const nextEnd = nextStart + duration
+    const startMinutes = LAB_OPEN_MINUTES + nextStart * TIMELINE_SLOT_MINUTES
+    const endMinutes = LAB_OPEN_MINUTES + nextEnd * TIMELINE_SLOT_MINUTES
+    if (!overlapsBooking(activeBookings, startMinutes, endMinutes)) {
+      onChange(createSelection(selection.pcId, date, nextStart, nextEnd))
+    }
+  }
+
+  return (
+    <div
+      className="group pointer-events-auto z-[3] my-2 flex cursor-grab touch-none select-none items-center justify-between overflow-visible rounded-lg border-2 border-mfu-600 bg-mfu-100/95 text-[10px] font-bold text-mfu-900 shadow-md active:cursor-grabbing"
+      style={getTimelineGridPosition(selection.startTime, selection.endTime)}
+      onPointerDown={(event) => startDrag('move', event)}
+      onPointerMove={moveSelection}
+      onPointerUp={stopDrag}
+      onPointerCancel={stopDrag}
+      onKeyDown={moveWithKeyboard}
+      role="button"
+      tabIndex={0}
+      aria-label={`Selected ${selection.pcId} from ${selection.startTime} to ${selection.endTime}. Drag to move or use left and right arrow keys.`}
+      title="Drag to move · drag either edge to resize"
+    >
+      <button
+        type="button"
+        className="-ml-1.5 h-9 w-3 shrink-0 cursor-ew-resize touch-none rounded-full border-2 border-white bg-mfu-700 shadow transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-mfu-800"
+        onPointerDown={(event) => startDrag('start', event)}
+        aria-label="Drag to change start time"
+      />
+      <span className="pointer-events-none truncate px-1">{selection.startTime}–{selection.endTime}</span>
+      <button
+        type="button"
+        className="-mr-1.5 h-9 w-3 shrink-0 cursor-ew-resize touch-none rounded-full border-2 border-white bg-mfu-700 shadow transition hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-mfu-800"
+        onPointerDown={(event) => startDrag('end', event)}
+        aria-label="Drag to change end time"
+      />
+    </div>
+  )
+}
+
+function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, onSelect }) {
+  const createDrag = useRef(null)
+
+  const startSlotSelection = (event, pcId, slotIndex, activeBookings) => {
+    if (event.button !== undefined && event.button !== 0) return
+    const row = event.currentTarget.closest('[data-timeline-row]')
+    if (!row) return
+    event.preventDefault()
+    createDrag.current = {
+      pointerId: event.pointerId,
+      pcId,
+      originSlot: slotIndex,
+      currentSlot: slotIndex,
+      moved: false,
+      rowBounds: row.getBoundingClientRect(),
+      activeBookings,
+    }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    onSelect(createSelection(pcId, date, slotIndex, slotIndex + 1))
+  }
+
+  const extendSlotSelection = (event) => {
+    const interaction = createDrag.current
+    if (!interaction || interaction.pointerId !== event.pointerId) return
+    event.preventDefault()
+    const relativeX = event.clientX - interaction.rowBounds.left
+    const pointerSlot = clamp(
+      Math.floor(relativeX / (interaction.rowBounds.width / TIMELINE_SLOT_COUNT)),
+      0,
+      TIMELINE_SLOT_COUNT - 1,
+    )
+    if (pointerSlot === interaction.currentSlot) return
+    interaction.currentSlot = pointerSlot
+    interaction.moved = true
+    const nextStart = Math.min(interaction.originSlot, pointerSlot)
+    const nextEnd = Math.max(interaction.originSlot, pointerSlot) + 1
+    const startMinutes = LAB_OPEN_MINUTES + nextStart * TIMELINE_SLOT_MINUTES
+    const endMinutes = LAB_OPEN_MINUTES + nextEnd * TIMELINE_SLOT_MINUTES
+    if (!overlapsBooking(interaction.activeBookings, startMinutes, endMinutes)) {
+      onSelect(createSelection(interaction.pcId, date, nextStart, nextEnd))
+    }
+  }
+
+  const finishSlotSelection = (event) => {
+    const interaction = createDrag.current
+    if (!interaction || interaction.pointerId !== event.pointerId) return
+    if (!interaction.moved) {
+      onSelect(getSuggestedSelection(interaction.pcId, date, interaction.originSlot, interaction.activeBookings))
+    }
+    createDrag.current = null
+  }
+
   return (
     <div className="flex w-full bg-white">
       <div className="w-40 shrink-0 border-r border-slate-200 bg-white sm:w-48">
@@ -234,10 +462,12 @@ function TimelineView({ date, bookings, canOpenAll, userId }) {
 
           {mockPcs.map((pc) => {
             const activeBookings = getActiveBookings(bookings, pc.id, date)
+            const isSelectedPc = selection?.pcId === pc.id
             return (
               <div
                 key={pc.id}
-                className="border-b border-slate-100 bg-white"
+                data-timeline-row={pc.id}
+                className={`border-b border-slate-100 ${isSelectedPc ? 'bg-mfu-50/30' : 'bg-white'}`}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: `repeat(${TIMELINE_SLOT_COUNT}, minmax(22.5px, 1fr))`,
@@ -250,7 +480,29 @@ function TimelineView({ date, bookings, canOpenAll, userId }) {
                   <div className="mx-2 my-2.5 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700" style={{ gridColumn: '1 / -1', gridRow: '1' }}><ShieldAlert size={15} />Maintenance · unavailable all day</div>
                 ) : (
                   <>
-                    {!activeBookings.length && <div className="flex items-center px-3" style={{ gridColumn: '1 / -1', gridRow: '1' }}><span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"><span className="size-1.5 rounded-full bg-emerald-500" />Available all day</span></div>}
+                    {canBook && Array.from({ length: TIMELINE_SLOT_COUNT }, (_, slotIndex) => {
+                      const slotStart = LAB_OPEN_MINUTES + slotIndex * TIMELINE_SLOT_MINUTES
+                      const slotEnd = slotStart + TIMELINE_SLOT_MINUTES
+                      const available = !overlapsBooking(activeBookings, slotStart, slotEnd)
+                      return (
+                        <button
+                          key={slotIndex}
+                          type="button"
+                          disabled={!available}
+                          onPointerDown={(event) => startSlotSelection(event, pc.id, slotIndex, activeBookings)}
+                          onPointerMove={extendSlotSelection}
+                          onPointerUp={finishSlotSelection}
+                          onPointerCancel={finishSlotSelection}
+                          className="z-0 h-full touch-pan-y transition hover:bg-mfu-100/60 focus-visible:z-[4] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-mfu-600 disabled:cursor-not-allowed"
+                          style={{ gridColumn: `${slotIndex + 1}`, gridRow: '1' }}
+                          aria-label={available ? `Select ${pc.id} at ${minutesToTime(slotStart)}` : `${pc.id} unavailable at ${minutesToTime(slotStart)}`}
+                        />
+                      )
+                    })}
+                    {!activeBookings.length && !canBook && <div className="flex items-center px-3" style={{ gridColumn: '1 / -1', gridRow: '1' }}><span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"><span className="size-1.5 rounded-full bg-emerald-500" />Available all day</span></div>}
+                    {isSelectedPc && (
+                      <TimelineSelection selection={selection} date={date} activeBookings={activeBookings} onChange={onSelect} />
+                    )}
                     {activeBookings.map((booking) => <TimelineBlock key={booking.id} booking={booking} canOpen={canOpenAll || booking.studentId === userId} />)}
                   </>
                 )}
@@ -296,36 +548,57 @@ export function CalendarPage() {
   const [view, setView] = useState('week')
   const [anchorDate, setAnchorDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [selection, setSelection] = useState(null)
+  const [preferredPcId, setPreferredPcId] = useState(null)
   const weekDays = useMemo(() => {
     const start = startOfWeek(anchorDate, { weekStartsOn: 1 })
     return eachDayOfInterval({ start, end: endOfWeek(start, { weekStartsOn: 1 }) })
   }, [anchorDate])
   const canOpenAll = user.role === 'advisor' || user.role === 'dean'
+  const canBook = user.role === 'student' && format(selectedDate, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')
 
   const changeView = (nextView) => {
     if (nextView === 'week') setAnchorDate(selectedDate)
+    setSelection(null)
+    setPreferredPcId(null)
     setView(nextView)
   }
-  const openTimeline = (day) => {
+  const openTimeline = (day, pcId = null) => {
     setSelectedDate(day)
+    setSelection(null)
+    setPreferredPcId(pcId)
     setView('timeline')
   }
   const movePeriod = (amount) => {
     if (view === 'week') setAnchorDate((date) => addWeeks(date, amount))
     else setSelectedDate((date) => addDays(date, amount))
+    setSelection(null)
+    setPreferredPcId(null)
   }
   const goToday = () => {
     const today = new Date()
     setAnchorDate(today)
     setSelectedDate(today)
+    setSelection(null)
+    setPreferredPcId(null)
   }
+
+  const bookingSearch = selection
+    ? new URLSearchParams({
+        pc: selection.pcId,
+        date: selection.date,
+        start: selection.startTime,
+        end: selection.endTime,
+        source: 'calendar',
+      }).toString()
+    : ''
 
   return (
     <div className="space-y-5">
       <PageHeader
         eyebrow="Lab availability"
         title="PC booking calendar"
-        description="Check every workstation by week or exact booking time."
+        description={user.role === 'student' ? 'Check availability, choose an open time slot, and start a booking directly from the calendar.' : 'Check every workstation by week or exact booking time.'}
         action={<ViewToggle view={view} setView={changeView} />}
       />
 
@@ -347,14 +620,36 @@ export function CalendarPage() {
 
         <CalendarLegend />
 
+        {view === 'timeline' && user.role === 'student' && (
+          <div className={`flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${selection ? 'border-mfu-200 bg-mfu-50' : 'border-slate-200 bg-white'}`} aria-live="polite">
+            <div className="flex items-start gap-3">
+              <span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${selection ? 'bg-mfu-700 text-white' : 'bg-slate-100 text-slate-500'}`}><MousePointer2 size={16} /></span>
+              <div>
+                <p className="text-sm font-bold text-slate-900">
+                  {selection ? `${selection.pcId} · ${selection.startTime}–${selection.endTime}` : preferredPcId ? `Choose an available time for ${preferredPcId}` : 'Select an available time slot'}
+                </p>
+                <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                  {selection ? `${format(selectedDate, 'EEEE, d MMMM yyyy')} · ${formatSelectionDuration(selection)} · Drag the block to move it or drag either edge to resize.` : canBook ? 'Drag across any open workstation row to select a time range. A single click selects one hour when available.' : 'Past dates are read-only. Choose today or a future date to make a booking.'}
+                </p>
+              </div>
+            </div>
+            {selection && (
+              <div className="flex shrink-0 items-center gap-2">
+                <button onClick={() => setSelection(null)} className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800" aria-label="Clear selected time"><X size={17} /></button>
+                <Link to={`/book?${bookingSearch}`}><Button size="sm">Book selected time <ArrowRight size={16} /></Button></Link>
+              </div>
+            )}
+          </div>
+        )}
+
         {view === 'week' ? (
-          <WeekView weekDays={weekDays} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} openTimeline={openTimeline} />
+          <WeekView weekDays={weekDays} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} openTimeline={openTimeline} canBook={user.role === 'student'} />
         ) : (
-          <TimelineView date={selectedDate} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} />
+          <TimelineView date={selectedDate} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} canBook={canBook} selection={selection} onSelect={setSelection} />
         )}
 
         <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-2.5 text-[11px] leading-5 text-slate-500">
-          {view === 'week' ? 'Select a date heading to open its detailed timeline. ' : 'Scroll horizontally to see all lab hours. '}
+          {view === 'week' ? `${user.role === 'student' ? 'Select an available cell to choose a booking time, or select a date heading to open its timeline. ' : 'Select a date heading to open its detailed timeline. '}` : `${canBook ? 'Drag to select; move the selected block or resize it with the edge handles. ' : 'Scroll horizontally to see all lab hours. '}`}
           Rejected, cancelled, and completed requests do not block availability.
         </div>
       </Card>

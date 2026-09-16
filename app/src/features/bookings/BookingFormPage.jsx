@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { ArrowLeft, CalendarDays, Clock3, Info, Monitor, Wifi } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
@@ -48,7 +48,25 @@ const bookingSchema = z
 export function BookingFormPage() {
   const { bookings, createBooking } = useApp()
   const navigate = useNavigate()
-  const [selectedPc, setSelectedPc] = useState(null)
+  const [searchParams] = useSearchParams()
+  const requestedPc = mockPcs.find((pc) => pc.id === searchParams.get('pc') && pc.status !== 'Maintenance') || null
+  const requestedDate = searchParams.get('date')
+  const requestedStart = searchParams.get('start')
+  const requestedEnd = searchParams.get('end')
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate || '') && requestedDate >= today ? requestedDate : ''
+  const validTimeSelection = /^\d{2}:\d{2}$/.test(requestedStart || '') && /^\d{2}:\d{2}$/.test(requestedEnd || '') && requestedStart >= '08:00' && requestedStart < requestedEnd && requestedEnd <= '18:00'
+  const fromCalendar = searchParams.get('source') === 'calendar' && Boolean(requestedPc && validDate && validTimeSelection)
+  const initialValues = {
+    pcId: fromCalendar ? requestedPc.id : '',
+    startDate: fromCalendar ? validDate : '',
+    endDate: fromCalendar ? validDate : '',
+    startTime: fromCalendar ? requestedStart : '',
+    endTime: fromCalendar ? requestedEnd : '',
+    purpose: '',
+    course: '',
+  }
+  const [selectedPc, setSelectedPc] = useState(fromCalendar ? requestedPc : null)
   const {
     register,
     handleSubmit,
@@ -57,7 +75,7 @@ export function BookingFormPage() {
     getValues,
     control,
     formState: { errors, isSubmitting },
-  } = useForm({ resolver: zodResolver(bookingSchema), defaultValues: { pcId: '', startDate: '', endDate: '', startTime: '', endTime: '', purpose: '', course: '' } })
+  } = useForm({ resolver: zodResolver(bookingSchema), defaultValues: initialValues })
   const [startDate, endDate] = useWatch({ control, name: ['startDate', 'endDate'] })
   const isMultiDay = Boolean(startDate && endDate && startDate !== endDate)
 
@@ -93,6 +111,15 @@ export function BookingFormPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card className="p-5 sm:p-7">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+            {fromCalendar && (
+              <div className="flex gap-3 rounded-xl border border-mfu-200 bg-mfu-50 p-4 text-sm text-mfu-900">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-mfu-700 text-white"><CalendarDays size={17} /></span>
+                <div>
+                  <p className="font-bold">Time selected from calendar</p>
+                  <p className="mt-1 leading-6 text-mfu-700">{requestedPc.id} · {format(new Date(`${validDate}T00:00:00`), 'EEEE, d MMMM yyyy')} · {requestedStart}–{requestedEnd}. You can adjust these details before submitting.</p>
+                </div>
+              </div>
+            )}
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Field label="PC" required error={errors.pcId?.message}>
@@ -137,7 +164,7 @@ export function BookingFormPage() {
               <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert"><Info className="mt-0.5 shrink-0" size={18} /><div><p className="font-semibold">Booking conflict</p><p className="mt-1">{errors.root.conflict.message}</p></div></div>
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
-              <Link to="/dashboard"><Button type="button" variant="ghost"><ArrowLeft size={17} />Cancel</Button></Link>
+              <Link to={fromCalendar ? '/calendar' : '/dashboard'}><Button type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? 'Back to calendar' : 'Cancel'}</Button></Link>
               <Button type="submit" disabled={isSubmitting}>Submit booking request</Button>
             </div>
           </form>
