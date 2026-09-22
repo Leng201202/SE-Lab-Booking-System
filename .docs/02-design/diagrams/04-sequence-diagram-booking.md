@@ -8,38 +8,25 @@ sequenceDiagram
     participant A as Advisor
     participant D as Dean
 
-    S->>W: Select PC, date range, time, purpose and course
+    S->>W: Select PC, date, time, purpose, and course
     W->>LS: Read current bookings
-    LS-->>W: Return seeded or saved bookings
-    W->>W: Validate PC, dates, hours and overlap
-    alt invalid or overlapping request
-        W-->>S: Show validation error; keep form open
-    else valid request
-        W->>LS: Save booking with pending_advisor status
-        LS-->>W: Return saved booking
-        W->>W: Refresh booking state
+    LS-->>W: Return bookings
+    W->>W: Validate PC, dates, hours, and overlap
+    alt Invalid or overlapping request
+        W-->>S: Show validation error and keep form open
+    else Valid request
+        W->>LS: Save booking as pending_advisor
+        LS-->>W: Confirm saved booking
         W-->>S: Show submission toast
-        A->>W: Open pending_advisor request
+        A->>W: Review pending_advisor request
+        A->>W: Approve or reject with reason
+        W->>LS: Save advisor decision
         alt Advisor approves
-            A->>W: Approve request
-            W->>LS: Save pending_dean decision
-            W->>W: Refresh booking state
-            D->>W: Open pending_dean request
-            alt Dean approves
-                D->>W: Approve request
-                W->>LS: Save approved decision
-                W->>W: Refresh booking state
-                W-->>S: Show approved status
-            else Dean rejects
-                D->>W: Reject with required reason
-                W->>LS: Save rejected status and reason
-                W->>W: Refresh booking state
-                W-->>S: Show rejection reason
-            end
+            D->>W: Review pending_dean request
+            D->>W: Approve or reject final request
+            W->>LS: Save dean decision
+            W-->>S: Show final status
         else Advisor rejects
-            A->>W: Reject with required reason
-            W->>LS: Save rejected status and reason
-            W->>W: Refresh booking state
             W-->>S: Show rejection reason
         end
     end
