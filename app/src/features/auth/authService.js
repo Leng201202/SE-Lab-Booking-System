@@ -28,13 +28,29 @@ export async function signOut() {
 }
 
 export async function getCurrentProfile(userId) {
-  const { data, error } = await requireSupabase()
+  const supabase = requireSupabase()
+  const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, display_name, university_id, role, advisor_id, advisor:profiles!profiles_advisor_fk(display_name)')
+    .select('id, email, display_name, university_id, role, advisor_id')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
+  if (!data) {
+    throw new Error('Your Google account is authenticated, but its application profile is missing. Deploy the latest Supabase migrations and sign in again.')
+  }
+
+  let advisorName = null
+  if (data.advisor_id) {
+    const { data: advisor, error: advisorError } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', data.advisor_id)
+      .maybeSingle()
+
+    if (advisorError) throw advisorError
+    advisorName = advisor?.display_name || null
+  }
 
   return {
     id: data.id,
@@ -43,7 +59,7 @@ export async function getCurrentProfile(userId) {
     studentId: data.university_id,
     role: data.role,
     advisorId: data.advisor_id,
-    advisor: data.advisor?.display_name || null,
+    advisor: advisorName,
     department: 'School of Applied Digital Technology',
   }
 }

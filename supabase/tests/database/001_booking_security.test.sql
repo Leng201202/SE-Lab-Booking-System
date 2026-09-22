@@ -1,13 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(37);
-
-insert into private.role_allowlist (email, role)
-values
-  ('advisor.one@example.edu', 'advisor'),
-  ('advisor.two@example.edu', 'advisor'),
-  ('dean.one@example.edu', 'dean');
+select plan(39);
 
 select throws_ok(
   $$
@@ -43,6 +37,23 @@ values
   ('20000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'advisor.one@example.edu', now(), '{"provider":"google"}', '{"full_name":"Advisor One"}', now(), now(), false, false),
   ('20000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'advisor.two@example.edu', now(), '{"provider":"google"}', '{"full_name":"Advisor Two"}', now(), now(), false, false),
   ('30000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'dean.one@example.edu', now(), '{"provider":"google"}', '{"full_name":"Dean One"}', now(), now(), false, false);
+
+select is(
+  (select role::text from public.profiles where id = '20000000-0000-0000-0000-000000000001'),
+  'student',
+  'a future Advisor starts as Student'
+);
+select is(
+  (select role::text from public.profiles where id = '30000000-0000-0000-0000-000000000001'),
+  'student',
+  'a future Dean starts as Student'
+);
+
+insert into private.role_allowlist (email, role)
+values
+  ('advisor.one@example.edu', 'advisor'),
+  ('advisor.two@example.edu', 'advisor'),
+  ('dean.one@example.edu', 'dean');
 
 update public.profiles
 set university_id = case

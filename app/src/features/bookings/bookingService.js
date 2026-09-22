@@ -72,9 +72,9 @@ const bookingSelect = `
   dean_decision_at,
   rejection_reason,
   rejected_by,
-  student:profiles!bookings_student_id_fkey(display_name, university_id),
-  advisor:profiles!bookings_advisor_id_fkey(display_name),
-  pc:pcs!bookings_pc_id_fkey(code, room)
+  student:profiles!student_id(display_name, university_id),
+  advisor:profiles!advisor_id(display_name),
+  pc:pcs!pc_id(code, room)
 `
 
 export async function getBookings() {

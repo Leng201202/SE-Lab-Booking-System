@@ -4,7 +4,7 @@
 
 1. User opens the application and chooses Continue with Google.
 2. Supabase completes OAuth and creates a trusted profile.
-3. A new user receives the Student role unless their verified email is allowlisted.
+3. Every new user receives the Student role.
 4. The app restores the session and loads only records allowed by RLS.
 5. A Student without an assigned Advisor can inspect the system but receives an actionable error if they try to submit a request.
 
@@ -19,19 +19,21 @@
 
 ## Journey 3 — Advisor reviews
 
-1. Advisor signs in with an allowlisted Google account.
-2. Advisor opens requests for assigned Students.
-3. Advisor inspects Student, PC, dates, purpose, and course.
-4. Approval moves the request to pending Dean and writes an audit event.
-5. Rejection requires a reason, closes the request, and writes an audit event.
+1. The future Advisor signs in with Google and initially receives the Student role.
+2. An administrator adds the existing profile's email to the protected allowlist, promoting it to Advisor.
+3. Advisor opens requests for assigned Students.
+4. Advisor inspects Student, PC, dates, purpose, and course.
+5. Approval moves the request to pending Dean and writes an audit event.
+6. Rejection requires a reason, closes the request, and writes an audit event.
 
 ## Journey 4 — Dean gives the final decision
 
-1. Dean signs in with an allowlisted Google account.
-2. Dean sees only requests that passed Advisor review.
-3. Dean approves the booking or rejects it with a reason.
-4. The transaction updates the booking and writes the Dean audit event.
-5. Student sees the final state on the next authoritative refresh.
+1. The future Dean signs in with Google and initially receives the Student role.
+2. An administrator adds the existing profile's email to the protected allowlist, promoting it to Dean.
+3. Dean sees only requests that passed Advisor review.
+4. Dean approves the booking or rejects it with a reason.
+5. The transaction updates the booking and writes the Dean audit event.
+6. Student sees the final state on the next authoritative refresh.
 
 ## Journey 5 — Another user checks availability
 

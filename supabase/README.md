@@ -46,6 +46,7 @@ http://127.0.0.1:5173/auth/callback
 1. Create or select a Supabase project.
 2. Link this repository with `supabase link --project-ref <project-ref>`.
 3. Preview migrations with `supabase db push --dry-run`, then run `supabase db push`.
+   The migrations also backfill profiles for verified Google users who signed in before the profile trigger was installed.
 4. Configure Google as an Auth provider in the Supabase dashboard.
 5. In Google, set the authorized redirect URI to `https://<project-ref>.supabase.co/auth/v1/callback`.
 6. Set the Supabase Site URL to the production Vercel origin and allow `/auth/callback` for each explicitly supported origin.
@@ -55,7 +56,7 @@ Never expose the Google Client Secret, database password, Supabase secret key, o
 
 ## Roles and Advisor assignment
 
-All new Google users default to Student. Add elevated users through a protected SQL/admin connection:
+All new Google users default to Student, even if their email already appears in the allowlist. Have the user sign in once, then promote the existing profile through a protected SQL/admin connection:
 
 ```sql
 insert into private.role_allowlist (email, role)
@@ -65,7 +66,7 @@ values
 on conflict (email) do update set role = excluded.role;
 ```
 
-The allowlist trigger also updates an existing matching profile. After both a Student and Advisor have signed in, assign the relationship:
+The allowlist trigger updates the existing matching Student profile. After both a Student and Advisor have signed in, assign the relationship:
 
 ```sql
 update public.profiles as student

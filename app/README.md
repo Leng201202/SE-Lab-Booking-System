@@ -19,7 +19,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY
 
 Only the project URL and publishable key belong in the browser. Never add a Google client secret, Supabase secret key, or `service_role` key to a `VITE_` variable.
 
-The app signs users in through Google OAuth. New users receive the Student role unless their verified email is present in the backend role allowlist. See [../supabase/README.md](../supabase/README.md) for backend setup.
+The app signs users in through Google OAuth. Every new user receives the Student role; an administrator may promote an existing profile through the protected backend role allowlist. See [../supabase/README.md](../supabase/README.md) for backend setup.
 
 ## Checks
 

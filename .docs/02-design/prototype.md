@@ -58,5 +58,5 @@ External verification still required:
 - hosted Supabase migration
 - real Google OAuth redirect
 - production Vercel environment
-- initial allowlist and Advisor assignments
+- post-first-login role promotions and Advisor assignments
 - visual regression on supported browsers and devices

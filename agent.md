@@ -57,7 +57,7 @@ Required production configuration that is intentionally not committed:
 - Supabase project URL and publishable key
 - Google OAuth client ID and secret
 - production site/callback URLs
-- initial Advisor and Dean email allowlist
+- post-first-login Advisor and Dean role promotions through the email allowlist
 - Student-to-Advisor assignments
 
 ## Database model

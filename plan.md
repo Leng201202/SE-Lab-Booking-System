@@ -64,7 +64,7 @@ Users should always be able to understand the requested PC and time, access mode
 ```text
 Google OAuth
 → Supabase Auth
-→ profile trigger + trusted role allowlist
+→ profile trigger assigns Student → privileged role update when required
 → PostgreSQL grants/RLS/RPCs
 → frontend feature services
 → AppContext session and workspace state
@@ -112,7 +112,7 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 ### Trusted roles
 
 - A verified Google identity creates a profile.
-- New users receive `student` unless their normalized email is allowlisted.
+- Every new user receives `student`; a privileged administrator may promote the existing profile afterward.
 - Advisor and Dean roles never come from the browser.
 - Students require a privileged Student-to-Advisor assignment before booking.
 - Users cannot promote themselves or change protected profile relationships.
@@ -161,7 +161,7 @@ The code foundation is complete; these external configuration steps remain:
 4. Configure Google as a Supabase Auth provider.
 5. Set exact production Site URL and `/auth/callback` redirect URLs.
 6. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel.
-7. Add trusted Advisor/Dean emails to `private.role_allowlist`.
+7. After each intended Advisor/Dean signs in once as Student, add their trusted email to `private.role_allowlist`.
 8. Let users sign in, then assign each Student to an Advisor through a protected admin connection.
 9. Verify real Google sign-in, session restoration, role-scoped views, and direct route refreshes.
 10. Run a two-client overlap test and the full production smoke test before launch.

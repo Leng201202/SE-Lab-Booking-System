@@ -3,7 +3,7 @@
 | Feature | Current behavior | Status |
 |---|---|---|
 | Google OAuth | Redirects through Supabase Auth; sessions persist and restore | Implemented; provider deployment configuration required |
-| Trusted roles | New Google users default to Student; Advisor/Dean require protected allowlist entries | Done |
+| Trusted roles | Every new Google user starts as Student; Advisor/Dean require a later protected allowlist update | Done |
 | Signed-out gate | Visitors see the sign-in page and cannot read application tables or calendar RPC output | Done |
 | Role-specific navigation | Student, Advisor, and Dean receive appropriate pages and actions | Done |
 | PC inventory | Ten seeded PCs with room, specification, available/maintenance/inactive state | Done |
