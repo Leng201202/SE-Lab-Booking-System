@@ -6,11 +6,11 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 |---|---|---|---|
 | PDPA — purpose and data minimization | Collect only fields needed for authentication, role assignment, contact/identification, booking, approval, and audit | profiles/bookings schema; sanitized calendar RPC | Technical minimization implemented; field-by-field university approval pending |
 | PDPA — lawful basis and transparency | Identify the controller, purpose, basis, recipients, retention, rights, and contact before collection | No approved production privacy notice in repository | Gap |
-| PDPA — access control/security | Prevent anonymous, cross-Student, unassigned-Advisor, and wrong-stage access | Explicit grants, RLS, trusted role allowlist, RPC validation, 37 pgTAP tests | Enforced locally |
+| PDPA — access control/security | Prevent anonymous, cross-user, unassigned-Advisor, wrong-stage, and unauthorized administration access | Explicit grants, RLS, trusted role allowlist, RPC validation, 56 pgTAP assertions | Core controls enforced; institutional-domain, MFA, suspension, and anti-abuse remediation open |
 | PDPA — disclosure control | Availability should not disclose unrelated personal booking details | get_booking_calendar omits Student identity, university ID, purpose, course, and rejection reason | Enforced locally |
-| PDPA — data quality/correction | Allow appropriate correction without self-promotion or relationship tampering | Limited profile column grant; role/Advisor protected | Partially enforced; operational correction process pending |
+| PDPA — data quality/correction | Allow appropriate correction without self-promotion, relationship tampering, or unverified identity claims | Role/Advisor protected; university ID is currently self-writable | Gap: make university ID trusted/admin-controlled and define correction process |
 | PDPA — data-subject rights | Handle access, correction, export, restriction, objection, and deletion where applicable | Users see their own records; no request-management process | Gap |
-| PDPA — retention/deletion | Keep records only for an approved period and dispose safely | User deletion cascades profile; approval history follows booking; no schedule or automated job | Gap |
+| PDPA — retention/deletion | Keep records only for an approved period and dispose safely | Booking/reviewer foreign keys may prevent user deletion; no approved retention, pseudonymization, or automated disposal process | Gap |
 | PDPA — incident response | Detect, assess, document, and respond to personal-data incidents | Database authorization and secret separation reduce risk; response process absent | Gap |
 | Computer-Related Crime Act §26 | Determine whether operator is an in-scope service provider and any traffic/user-data retention duty | Booking/audit records exist but are not claimed as compliant traffic logs | Applicability pending legal review |
 | Electronic Transactions Act | Avoid misrepresenting ordinary booking approval as a legally qualified signature | UI describes booking approval/status only; no signature claim | Current scope avoids signature claim; institutional record policy pending |
@@ -18,6 +18,7 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 ## Engineering evidence
 
 - supabase/migrations/20260922000100_initial_production_backend.sql
+- supabase/migrations/20260922000400_expand_role_capabilities.sql
 - supabase/tests/database/001_booking_security.test.sql
 - app/src/lib/supabase.js
 - app/src/features/auth/authService.js
@@ -36,6 +37,7 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 7. Assess cross-border/third-party processing for Google, Supabase, and Vercel.
 8. Determine Computer-Related Crime Act applicability and logging obligations.
 9. Record legal/supervisor reviewer, decision, and date.
+10. Approve the institutional-domain, privileged MFA, session/offboarding, and booking anti-abuse policies tracked in B24–B28.
 
 ## Official references
 

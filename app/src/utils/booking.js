@@ -105,6 +105,6 @@ export function isBookingConflict(bookings, { pcId, date, startDate, endDate, st
   })
 }
 
-export function isStudentBooking(booking, user) {
-  return booking.studentId === user?.id
+export function isOwnBooking(booking, user) {
+  return booking.requesterId === user?.id
 }

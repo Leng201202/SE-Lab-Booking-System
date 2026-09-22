@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { formatBookingDateRange, formatBookingTime } from '../../utils/booking'
 import { Badge, StatusBadge } from './StatusBadge'
 
-export function BookingTable({ bookings, showStudent = false, showAdvisor = false }) {
+export function BookingTable({ bookings, showRequester = false, showAdvisor = false }) {
   return (
     <>
       <div className="divide-y divide-slate-100 md:hidden">
@@ -20,10 +20,10 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
               </div>
             </div>
 
-            {showStudent && (
+            {showRequester && (
               <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                <p className="text-sm font-semibold text-slate-800">{booking.studentName}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{booking.studentNumber}</p>
+                <p className="text-sm font-semibold text-slate-800">{booking.requesterName}</p>
+                <p className="mt-0.5 text-xs capitalize text-slate-500">{booking.requesterRole} · {booking.requesterNumber}</p>
               </div>
             )}
 
@@ -41,7 +41,7 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
                 <p className="mt-1 break-words leading-5 text-slate-600">{booking.purpose}</p>
               </div>
             </div>
-            {showAdvisor && <div className="mt-3"><Badge tone="green">Advisor approved</Badge></div>}
+            {showAdvisor && <div className="mt-3"><Badge tone={booking.advisorDecision === 'not_required' ? 'slate' : 'green'}>{booking.advisorDecision === 'not_required' ? 'Advisor review skipped' : 'Advisor approved'}</Badge></div>}
           </Link>
         ))}
       </div>
@@ -51,7 +51,7 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
         <thead className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-5 py-3.5 font-semibold">Request</th>
-            {showStudent && <th className="px-5 py-3.5 font-semibold">Student</th>}
+            {showRequester && <th className="px-5 py-3.5 font-semibold">Requester</th>}
             {showAdvisor && <th className="px-5 py-3.5 font-semibold">Advisor review</th>}
             <th className="px-5 py-3.5 font-semibold">PC & dates</th>
             <th className="px-5 py-3.5 font-semibold">Time</th>
@@ -64,13 +64,13 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
           {bookings.map((booking) => (
             <tr key={booking.id} className="transition hover:bg-slate-50/70">
               <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-900">{booking.requestNumber}</td>
-              {showStudent && (
+              {showRequester && (
                 <td className="px-5 py-4">
-                  <p className="font-medium text-slate-800">{booking.studentName}</p>
-                  <p className="text-xs text-slate-400">{booking.studentNumber}</p>
+                  <p className="font-medium text-slate-800">{booking.requesterName}</p>
+                  <p className="text-xs capitalize text-slate-400">{booking.requesterRole} · {booking.requesterNumber}</p>
                 </td>
               )}
-              {showAdvisor && <td className="px-5 py-4"><Badge tone="green">Advisor approved</Badge></td>}
+              {showAdvisor && <td className="px-5 py-4"><Badge tone={booking.advisorDecision === 'not_required' ? 'slate' : 'green'}>{booking.advisorDecision === 'not_required' ? 'Not required' : 'Advisor approved'}</Badge></td>}
               <td className="px-5 py-4">
                 <p className="font-semibold text-mfu-700">{booking.pcId}</p>
                 <p className="mt-0.5 text-xs text-slate-500">{formatBookingDateRange(booking)}</p>

@@ -66,7 +66,7 @@ values
 on conflict (email) do update set role = excluded.role;
 ```
 
-The allowlist trigger updates the existing matching Student profile. After both a Student and Advisor have signed in, assign the relationship:
+The allowlist trigger updates the existing matching Student profile. Use it to bootstrap the first Dean; that Dean can promote later users in the User Management screen. Advisor assignments are also available in the UI. A protected SQL fallback is:
 
 ```sql
 update public.profiles as student
@@ -79,14 +79,26 @@ where student.email = 'student@university.example'
 
 Students without an assigned Advisor can sign in and inspect their profile, but the database rejects booking creation until the assignment exists.
 
+After bootstrap, Advisors manage unassigned/their own advisees in the application. Deans manage all roles and Advisor assignments through the User Management screen; direct private-schema access remains unavailable to the browser.
+
+Booking routing is role-aware:
+
+```text
+Student → Advisor → Dean
+Advisor → Dean
+Dean → immediately approved after availability validation
+```
+
+Only Deans can add or edit PC inventory. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history.
+
 ## Security model
 
 - Application tables deny anonymous access.
-- Students see only their own private booking records.
-- Advisors see only bookings assigned to them.
-- Deans can see records required for final review.
+- Every role sees its own private booking records.
+- Advisors additionally see bookings for assigned Students.
+- Deans see final-review records and all profiles required for user management.
 - Shared calendar RPC output contains occupancy data but no Student identity, purpose, or rejection details.
-- Booking creation, approval, and rejection are database functions that derive the actor from `auth.uid()`.
+- Booking, approval, rejection, user-management, relationship-management, and PC-management functions derive the actor from `auth.uid()`.
 - An exclusion constraint prevents concurrent active bookings from overlapping.
 - Every approval/rejection creates an immutable `approval_events` record.
 

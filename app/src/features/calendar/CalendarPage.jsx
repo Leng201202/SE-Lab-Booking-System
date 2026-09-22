@@ -557,7 +557,7 @@ function CalendarLegend() {
 }
 
 export function CalendarPage() {
-  const { user, calendarBookings: bookings, pcs, refreshCalendar } = useApp()
+  const { calendarBookings: bookings, pcs, refreshCalendar } = useApp()
   const [view, setView] = useState('week')
   const [anchorDate, setAnchorDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(() => new Date())
@@ -568,7 +568,7 @@ export function CalendarPage() {
     const start = startOfWeek(anchorDate, { weekStartsOn: 1 })
     return eachDayOfInterval({ start, end: endOfWeek(start, { weekStartsOn: 1 }) })
   }, [anchorDate])
-  const canBook = user.role === 'student' && format(selectedDate, 'yyyy-MM-dd') >= getBangkokDateKey()
+  const canBook = format(selectedDate, 'yyyy-MM-dd') >= getBangkokDateKey()
 
   useEffect(() => {
     const rangeStart = view === 'week' ? weekDays[0] : selectedDate
@@ -619,7 +619,7 @@ export function CalendarPage() {
       <PageHeader
         eyebrow="Lab availability"
         title="PC booking calendar"
-        description={user.role === 'student' ? 'Check availability, choose an open time slot, and start a booking directly from the calendar.' : 'Check every workstation by week or exact booking time.'}
+        description="Check availability, choose an open time slot, and start a booking directly from the calendar."
         action={<ViewToggle view={view} setView={changeView} />}
       />
 
@@ -642,7 +642,7 @@ export function CalendarPage() {
 
         <CalendarLegend />
 
-        {view === 'timeline' && user.role === 'student' && (
+        {view === 'timeline' && (
           <div className={`flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${selection ? 'border-mfu-200 bg-mfu-50' : 'border-slate-200 bg-white'}`} aria-live="polite">
             <div className="flex items-start gap-3">
               <span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${selection ? 'bg-mfu-700 text-white' : 'bg-slate-100 text-slate-500'}`}><MousePointer2 size={16} /></span>
@@ -665,13 +665,13 @@ export function CalendarPage() {
         )}
 
         {view === 'week' ? (
-          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} canBook={user.role === 'student'} />
+          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} canBook />
         ) : (
           <TimelineView date={selectedDate} bookings={bookings} pcs={pcs} canBook={canBook} selection={selection} onSelect={setSelection} />
         )}
 
         <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-[11px] leading-5 text-slate-500 sm:px-5">
-          {view === 'week' ? `${user.role === 'student' ? 'Select an available cell to choose a booking time, or select a date heading to open its timeline. ' : 'Select a date heading to open its detailed timeline. '}` : `${canBook ? 'Drag to select; move the selected block or resize it with the edge handles. ' : 'Scroll horizontally to see all lab hours. '}`}
+          {view === 'week' ? 'Select an available cell to choose a booking time, or select a date heading to open its timeline. ' : `${canBook ? 'Drag to select; move the selected block or resize it with the edge handles. ' : 'Scroll horizontally to see all lab hours. '}`}
           Rejected, cancelled, and completed requests do not block availability.
         </div>
       </Card>

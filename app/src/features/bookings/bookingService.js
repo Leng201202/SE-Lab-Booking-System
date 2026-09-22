@@ -8,11 +8,12 @@ export function mapBookingRow(row) {
   return {
     id: row.id,
     requestNumber: row.request_number,
-    studentId: row.student_id,
-    studentName: row.student?.display_name || 'Unknown student',
-    studentNumber: row.student?.university_id || 'Not provided',
+    requesterId: row.requester_id,
+    requesterRole: row.requester_role,
+    requesterName: row.requester?.display_name || 'Unknown requester',
+    requesterNumber: row.requester?.university_id || 'Not provided',
     advisorId: row.advisor_id,
-    advisorName: row.advisor?.display_name || 'Unassigned advisor',
+    advisorName: row.advisor?.display_name || 'Not required',
     pcDatabaseId: row.pc_id,
     pcId: row.pc?.code || row.pc_code,
     room: row.pc?.room || '',
@@ -54,7 +55,8 @@ export function mapCalendarRow(row) {
 const bookingSelect = `
   id,
   request_number,
-  student_id,
+  requester_id,
+  requester_role,
   advisor_id,
   pc_id,
   start_date,
@@ -72,7 +74,7 @@ const bookingSelect = `
   dean_decision_at,
   rejection_reason,
   rejected_by,
-  student:profiles!student_id(display_name, university_id),
+  requester:profiles!requester_id(display_name, university_id),
   advisor:profiles!advisor_id(display_name),
   pc:pcs!pc_id(code, room)
 `

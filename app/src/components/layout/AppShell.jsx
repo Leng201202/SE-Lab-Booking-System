@@ -10,6 +10,8 @@ import {
   LogOut,
   Menu,
   MonitorCog,
+  Settings2,
+  Users,
   X,
 } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -26,15 +28,24 @@ const roleNavigation = {
   ],
   advisor: [
     { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+    { label: 'Book a PC', to: '/book', icon: MonitorCog },
+    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
     { label: 'Pending Requests', to: '/requests/pending', icon: ClipboardCheck },
     { label: 'Request History', to: '/requests/history', icon: History },
+    { label: 'Manage Advisees', to: '/manage/advisees', icon: Users },
+    { label: 'PC Inventory', to: '/pcs', icon: MonitorCog },
     { label: 'Calendar', to: '/calendar', icon: CalendarDays },
     { label: 'Profile', to: '/profile', icon: CircleUserRound },
   ],
   dean: [
     { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+    { label: 'Book a PC', to: '/book', icon: MonitorCog },
+    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
     { label: 'Pending Approval', to: '/requests/pending', icon: ClipboardCheck },
     { label: 'Approval History', to: '/requests/history', icon: History },
+    { label: 'User Management', to: '/admin/users', icon: Users },
+    { label: 'PC Management', to: '/admin/pcs', icon: Settings2 },
+    { label: 'PC Inventory', to: '/pcs', icon: MonitorCog },
     { label: 'Calendar', to: '/calendar', icon: CalendarDays },
     { label: 'Profile', to: '/profile', icon: CircleUserRound },
   ],

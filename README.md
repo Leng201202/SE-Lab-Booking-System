@@ -4,6 +4,8 @@ A Supabase-backed web application for booking computers in the Software Engineer
 
 ```text
 Student request → Advisor review → Dean review → Approved booking
+Advisor request → Dean review → Approved booking
+Dean request → Immediate approval after availability validation
 ```
 
 The application uses Google OAuth for identity, trusted database roles for authorization, PostgreSQL Row Level Security for data access, and transactional database functions for booking and approval changes.
@@ -16,11 +18,12 @@ The production foundation is implemented locally:
 - Supabase Auth with Google OAuth
 - PostgreSQL migrations, seed data, RLS policies, and RPC functions under `supabase/`
 - Conflict-safe bookings enforced by a PostgreSQL exclusion constraint
-- Student, assigned-Advisor, and Dean authorization boundaries
+- role-aware booking, assigned-Advisor review, and Dean administration boundaries
+- Advisor advisee management and Dean user/PC management
 - Sanitized shared calendar data and immutable approval history
 - Database and frontend automated checks
 
-Hosted rollout still requires a Supabase project, a Google OAuth client, production redirect URLs, Vercel environment variables, and the initial Advisor/Dean allowlist.
+Hosted rollout still requires a Supabase project, a Google OAuth client, production redirect URLs, Vercel environment variables, and a protected post-login promotion for the first Dean.
 
 ## Local setup
 

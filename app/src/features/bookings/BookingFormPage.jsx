@@ -44,7 +44,7 @@ const bookingSchema = z
   })
 
 export function BookingFormPage() {
-  const { createBooking, pcs } = useApp()
+  const { createBooking, pcs, user } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const requestedPc = pcs.find((pc) => pc.id === searchParams.get('pc') && pc.status === 'Available') || null
@@ -98,7 +98,15 @@ export function BookingFormPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="New request" title="Book a lab PC" description="Your request will be sent to your advisor first, then to the dean for final approval." />
+      <PageHeader
+        eyebrow="New request"
+        title="Book a lab PC"
+        description={user.role === 'student'
+          ? 'Your request will be sent to your Advisor first, then to the Dean for final approval.'
+          : user.role === 'advisor'
+            ? 'Your request skips Advisor review and goes directly to the Dean.'
+            : 'Your booking is approved immediately when the workstation and time are available.'}
+      />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card className="p-4 sm:p-7">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
@@ -172,7 +180,7 @@ export function BookingFormPage() {
               <li className="flex gap-2"><CalendarDays size={16} className="mt-0.5 shrink-0 text-mfu-700" /> One day uses normal lab opening hours.</li>
               <li className="flex gap-2"><Wifi size={16} className="mt-0.5 shrink-0 text-mfu-700" /> Two or more days enable 24-hour remote access.</li>
               <li className="flex gap-2"><Clock3 size={16} className="mt-0.5 shrink-0 text-mfu-700" /> Conflicts are checked for the entire reservation.</li>
-              <li className="flex gap-2"><Info size={16} className="mt-0.5 shrink-0 text-mfu-700" /> Approval is required before use.</li>
+              <li className="flex gap-2"><Info size={16} className="mt-0.5 shrink-0 text-mfu-700" /> {user.role === 'student' ? 'Advisor and Dean approval are required.' : user.role === 'advisor' ? 'Dean approval is required.' : 'Available times are approved immediately.'}</li>
             </ul>
           </Card>
         </div>

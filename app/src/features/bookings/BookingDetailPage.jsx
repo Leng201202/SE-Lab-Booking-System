@@ -37,6 +37,7 @@ function ProgressStep({ title, state, detail, last }) {
     rejected: { icon: X, wrap: 'bg-red-500 text-white', text: 'text-red-700', label: 'Rejected' },
     current: { icon: Clock3, wrap: 'bg-mfu-700 text-white ring-4 ring-mfu-100', text: 'text-mfu-700', label: 'Pending' },
     waiting: { icon: Clock3, wrap: 'bg-slate-100 text-slate-400', text: 'text-slate-400', label: 'Waiting' },
+    skipped: { icon: Check, wrap: 'bg-slate-200 text-slate-500', text: 'text-slate-500', label: 'Not required' },
   }[state]
   const Icon = stateStyle.icon
   return (
@@ -49,7 +50,7 @@ function ProgressStep({ title, state, detail, last }) {
 }
 
 function ApprovalProgress({ booking }) {
-  const advisorState = booking.advisorDecision === 'approved' ? 'complete' : booking.advisorDecision === 'rejected' ? 'rejected' : 'current'
+  const advisorState = booking.advisorDecision === 'not_required' ? 'skipped' : booking.advisorDecision === 'approved' ? 'complete' : booking.advisorDecision === 'rejected' ? 'rejected' : 'current'
   const deanState = booking.deanDecision === 'approved' ? 'complete' : booking.deanDecision === 'rejected' ? 'rejected' : booking.status === 'pending_dean' ? 'current' : 'waiting'
   const finalState = booking.status === 'approved' || booking.status === 'completed' ? 'complete' : booking.status === 'rejected' || booking.status === 'cancelled' ? 'rejected' : 'waiting'
 
@@ -57,9 +58,9 @@ function ApprovalProgress({ booking }) {
     <Card className="p-4 sm:p-6">
       <h2 className="font-bold text-slate-900">Approval progress</h2>
       <div className="mt-6">
-        <ProgressStep title="Student submitted" state="complete" detail={formatRequestDate(booking.requestedAt)} />
-        <ProgressStep title="Advisor review" state={advisorState} detail={booking.advisorDecision === 'approved' ? `Approved by ${booking.advisorName}` : booking.advisorDecision === 'rejected' ? 'Request returned to the student' : `Waiting for ${booking.advisorName}`} />
-        <ProgressStep title="Dean review" state={deanState} detail={booking.deanDecision === 'approved' ? 'Final approval granted' : booking.deanDecision === 'rejected' ? 'Final approval declined' : booking.status === 'pending_dean' ? 'Ready for final review' : 'Begins after advisor approval'} />
+        <ProgressStep title={`${booking.requesterRole === 'student' ? 'Student' : booking.requesterRole === 'advisor' ? 'Advisor' : 'Dean'} submitted`} state="complete" detail={formatRequestDate(booking.requestedAt)} />
+        <ProgressStep title="Advisor review" state={advisorState} detail={booking.advisorDecision === 'not_required' ? 'Skipped for Advisor and Dean requests' : booking.advisorDecision === 'approved' ? `Approved by ${booking.advisorName}` : booking.advisorDecision === 'rejected' ? 'Request returned to the requester' : `Waiting for ${booking.advisorName}`} />
+        <ProgressStep title="Dean review" state={deanState} detail={booking.requesterRole === 'dean' ? 'Approved immediately after availability validation' : booking.deanDecision === 'approved' ? 'Final approval granted' : booking.deanDecision === 'rejected' ? 'Final approval declined' : booking.status === 'pending_dean' ? 'Ready for final review' : 'Begins after Advisor approval'} />
         <ProgressStep title="Final booking" state={finalState} detail={finalState === 'complete' ? 'PC booking is confirmed' : finalState === 'rejected' ? 'Booking is not active' : 'Confirmation pending'} last />
       </div>
     </Card>
@@ -116,7 +117,7 @@ export function BookingDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <Link to={user.role === 'student' ? '/bookings' : '/requests/pending'} className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-mfu-700"><ArrowLeft size={16} />Back to requests</Link>
+          <Link to={booking.requesterId === user.id ? '/bookings' : '/requests/pending'} className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-mfu-700"><ArrowLeft size={16} />Back to requests</Link>
           <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{booking.requestNumber}</h1><StatusBadge status={booking.status} /></div>
           <p className="mt-2 text-sm text-slate-500">Submitted {formatRequestDate(booking.requestedAt)}</p>
         </div>
@@ -133,8 +134,8 @@ export function BookingDetailPage() {
               <span className="grid size-11 place-items-center rounded-xl bg-mfu-50 text-mfu-700"><Monitor size={22} /></span>
             </div>
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
-              <DetailItem icon={UserRound} label="Student" value={`${booking.studentName} · ${booking.studentNumber}`} />
-              <DetailItem icon={GraduationCap} label="Advisor" value={booking.advisorName} />
+              <DetailItem icon={UserRound} label="Requester" value={`${booking.requesterName} · ${booking.requesterRole} · ${booking.requesterNumber}`} />
+              <DetailItem icon={GraduationCap} label="Advisor review" value={booking.advisorName} />
               <DetailItem icon={MapPin} label="Room" value={booking.room} />
               <DetailItem icon={CalendarDays} label="Booking dates" value={formatBookingDateRange(booking)} />
               <DetailItem icon={Clock3} label={isRemoteBooking(booking) ? 'Access' : 'Lab time'} value={formatBookingTime(booking)} />
@@ -149,8 +150,8 @@ export function BookingDetailPage() {
         <ApprovalProgress booking={booking} />
       </div>
 
-      <ConfirmDialog open={confirmOpen} onClose={() => !busy && setConfirmOpen(false)} onConfirm={approve} title={`Approve ${booking.requestNumber}?`} description={user.role === 'advisor' ? 'This request will move to the dean for final review.' : 'This will confirm the PC booking for the student.'} confirmLabel={busy ? 'Approving…' : 'Approve request'} disabled={busy} />
-      <Modal open={rejectOpen} onClose={() => !busy && setRejectOpen(false)} title={`Reject ${booking.requestNumber}`} description="The student will be able to see this reason in their booking details.">
+      <ConfirmDialog open={confirmOpen} onClose={() => !busy && setConfirmOpen(false)} onConfirm={approve} title={`Approve ${booking.requestNumber}?`} description={user.role === 'advisor' ? 'This request will move to the Dean for final review.' : 'This will confirm the PC booking for the requester.'} confirmLabel={busy ? 'Approving…' : 'Approve request'} disabled={busy} />
+      <Modal open={rejectOpen} onClose={() => !busy && setRejectOpen(false)} title={`Reject ${booking.requestNumber}`} description="The requester will be able to see this reason in their booking details.">
         <label className="block text-sm font-semibold text-slate-700">Rejection reason</label>
         <Textarea className="mt-2" value={reason} onChange={(event) => { setReason(event.target.value); setReasonError('') }} placeholder="Explain why this request cannot be approved…" autoFocus />
         {reasonError && <p className="mt-1.5 text-sm text-red-600">{reasonError}</p>}

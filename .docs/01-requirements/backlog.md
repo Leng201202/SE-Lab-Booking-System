@@ -1,6 +1,6 @@
 # Product backlog — SE Lab PC Booking System
 
-Status reflects the repository as of 22 September 2026.
+Status reflects the repository as of 23 September 2026.
 
 Legend: **Done** = implemented and locally verified · **Configured deployment required** = code exists but external credentials/configuration remain · **Planned** = accepted but not built · **Proposed** = candidate requiring validation.
 
@@ -8,8 +8,8 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 |---|---|---|---|---|
 | B1 | As a university user, I sign in with Google so my identity is not controlled by browser state. | Must | Configured deployment required | Security/product requirement |
 | B2 | As an authenticated user, I can view week and day availability for all managed PCs. | Must | Done | Research #1, #2, #5 |
-| B3 | As a Student, I can request an available PC for a valid date and time. | Must | Done | Research #3, #4 |
-| B4 | As a Student, I can request a one-day in-lab session or a continuous multi-day remote reservation. | Must | Done | Research #1, #2 |
+| B3 | As an authenticated user, I can request an available PC for a valid date and time. | Must | Done | Research #3, #4; institutional workflow |
+| B4 | As an authenticated user, I can request a one-day in-lab session or a continuous multi-day remote reservation. | Must | Done | Research #1, #2 |
 | B5 | As an authenticated user, I can see occupied periods without seeing unrelated Student identity or purpose. | Must | Done | Privacy requirement derived from research #1, #2 |
 | B6 | As a Student, I can see my request status and any rejection reason. | Must | Done | Workflow requirement |
 | B7 | As an Advisor, I can approve or reject requests from assigned Students only. | Must | Done | Institutional approval workflow |
@@ -21,10 +21,24 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 | B13 | As a Student, I can cancel an eligible future request. | Should | Planned | Research #3, #4 |
 | B14 | As a Student, I can safely change a booking's PC or interval without losing the original slot mid-operation. | Should | Planned | Research #3, #4 |
 | B15 | As a user, I receive clear success or failure feedback after a workflow action. | Should | Done (in-app) | Trust/usability requirement |
-| B16 | As an operator, I can manage maintenance/inactive PC state through a protected administrative process. | Should | Planned UI; database model done | Operational requirement |
+| B16 | As a Dean, I can add PCs and manage their room, specification, status, and maintenance notes. | Should | Done | Operational requirement |
 | B17 | As a user, I receive email or in-app notifications when a decision is made. | Could | Proposed | Not yet supported by interviews |
 | B18 | As a lab operator, I can configure limits, blackout periods, and no-show rules. | Could | Proposed | Requires stakeholder policy |
 | B19 | As a user, I can create recurring weekly reservations. | Won't this cycle | Proposed | Not supported by current research |
+| B20 | As an Advisor, I can request a PC and send it directly to Dean review. | Must | Done | Institutional workflow |
+| B21 | As a Dean, I can reserve an available PC immediately without a separate approval step. | Must | Done | Institutional workflow |
+| B22 | As an Advisor, I can assign unassigned Students to myself and release my own advisees. | Must | Done | Institutional relationship management |
+| B23 | As a Dean, I can view all users, manage roles, and assign Students to Advisors. | Must | Done | Institutional administration |
+| B24 | As the university, I allow account creation only for the approved institutional Google domain. | Must | Planned | Security review H1 |
+| B25 | As a privileged user, I must complete MFA before approval, role, assignment, or inventory-management operations selected by policy. | Must | Planned | Security review H2 |
+| B26 | As a lab operator, I can enforce booking duration, advance-window, active-request, and rate limits so one requester cannot monopolize inventory. | Must | Planned | Security review H3 |
+| B27 | As the university, I treat university ID as trusted data that Students cannot self-assert through the API. | Must | Planned | Security review H4 |
+| B28 | As an operator, I can suspend/offboard a user and revoke access even when an earlier Supabase session exists. | Must | Planned | Security review H5 |
+| B29 | As an auditor, I can trace role changes, Advisor assignments, PC changes, and suspensions to an actor and session/request. | Must | Planned | Security review M1 |
+| B30 | As a user, the production frontend is protected by a tested CSP and standard browser security headers. | Must | Planned | Security review M2 |
+| B31 | As the security owner, I keep only Google enabled and detect drift between repository and hosted Auth configuration. | Must | Configured deployment required | Security review M3 |
+| B32 | As a privacy owner, I minimize calendar identifiers and the profile data exposed to Advisors managing unassigned Students. | Should | Planned | Security review M4/M5 |
+| B33 | As a requester, PC operational state and booking creation remain consistent under concurrent changes. | Must | Planned | Security review M6 |
 
 ## Acceptance notes
 
@@ -32,5 +46,9 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 - One-day lab bookings use 08:00–18:00 in 15-minute increments.
 - A multi-day request is remote and reserves the complete inclusive Bangkok date range.
 - Students need an assigned Advisor before creating a request.
+- Advisor requests start at pending Dean; Dean requests become approved immediately after availability validation.
 - Google identity does not grant an elevated application role; Advisor and Dean roles come from a protected allowlist.
-- Cancellation, rebooking, notifications, and administrative UI are not implemented and must not be described as shipped.
+- Current Google-provider validation does not yet enforce the approved university domain; B24 is required before broad production use.
+- Current privileged RPCs do not yet enforce MFA assurance level `aal2`; B25 is open.
+- Current pending requests block availability without duration or per-user quotas; B26 is open.
+- Cancellation, rebooking, and notifications are not implemented and must not be described as shipped.

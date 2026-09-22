@@ -15,6 +15,9 @@ flowchart LR
     OwnRecords((View own requests))
     AdvisorReview((Review assigned Student request))
     DeanReview((Give final decision))
+    Advisees((Manage own advisees))
+    Users((Manage users and roles))
+    PCs((Manage PC inventory))
     Audit((Record approval event))
     Validate((Validate role, PC, interval, and conflict))
     Configure((Configure roles, assignments, and PCs))
@@ -25,9 +28,16 @@ flowchart LR
     Student --> Submit
     Student --> OwnRecords
     Advisor --> Availability
+    Advisor --> Submit
+    Advisor --> OwnRecords
     Advisor --> AdvisorReview
+    Advisor --> Advisees
     Dean --> Availability
+    Dean --> Submit
+    Dean --> OwnRecords
     Dean --> DeanReview
+    Dean --> Users
+    Dean --> PCs
     Operator --> Configure
 
     Submit -. includes .-> Validate
@@ -37,4 +47,4 @@ flowchart LR
     DeanReview -. includes .-> Validate
 ~~~
 
-Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Advisors cannot review unassigned Students, and Deans cannot bypass the Advisor stage.
+Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Advisors cannot review unassigned Students, and only Deans manage roles or PC inventory. Student requests use both review stages, Advisor requests skip Advisor review, and Dean requests are immediately approved only after database validation.

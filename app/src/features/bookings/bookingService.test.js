@@ -38,7 +38,8 @@ test('maps a database booking to the existing page contract', () => {
   const booking = mapBookingRow({
     id: '8bce9953-74ac-4e60-878c-f6f7e489f380',
     request_number: 'REQ-2026-000001',
-    student_id: 'student-uuid',
+    requester_id: 'student-uuid',
+    requester_role: 'student',
     advisor_id: 'advisor-uuid',
     pc_id: 'pc-uuid',
     start_date: '2026-09-24',
@@ -52,13 +53,14 @@ test('maps a database booking to the existing page contract', () => {
     status: 'pending_advisor',
     advisor_decision: 'pending',
     dean_decision: 'waiting',
-    student: { display_name: 'Student One', university_id: '65315000' },
+    requester: { display_name: 'Student One', university_id: '65315000' },
     advisor: { display_name: 'Advisor One' },
     pc: { code: 'PC-06', room: 'SE Lab B · 402' },
   })
 
   assert.equal(booking.requestNumber, 'REQ-2026-000001')
   assert.equal(booking.status, 'pending_advisor')
+  assert.equal(booking.requesterRole, 'student')
   assert.equal(booking.accessMode, 'remote')
   assert.equal(booking.startTime, '00:00')
   assert.equal(booking.endTime, '24:00')
@@ -68,7 +70,7 @@ test('maps a database booking to the existing page contract', () => {
   assert.equal(bookingOccursOnDate(booking, '2026-10-03'), false)
 })
 
-test('maps sanitized calendar rows without private student data', () => {
+test('maps sanitized calendar rows without private requester data', () => {
   const booking = mapCalendarRow({
     id: 'booking-uuid',
     request_number: 'REQ-2026-000002',
@@ -87,7 +89,7 @@ test('maps sanitized calendar rows without private student data', () => {
   assert.equal(booking.pcId, 'PC-02')
   assert.equal(booking.startTime, '09:15')
   assert.equal(booking.canViewDetails, false)
-  assert.equal('studentName' in booking, false)
+  assert.equal('requesterName' in booking, false)
 })
 
 test('uses the Bangkok calendar date at UTC day boundaries', () => {

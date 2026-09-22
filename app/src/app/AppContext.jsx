@@ -151,7 +151,11 @@ export function AppProvider({ children }) {
   const actions = {
     createBooking: (input, pc) => runMutation(
       () => createBookingService(input, pc),
-      'Request submitted for advisor approval.',
+      user?.role === 'student'
+        ? 'Request submitted for Advisor approval.'
+        : user?.role === 'advisor'
+          ? 'Request submitted for Dean approval.'
+          : 'Booking approved and reserved.',
     ),
     approveAsAdvisor: (id) => runMutation(
       () => approveBooking(id),

@@ -25,6 +25,8 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 - Session and shared workspace state: app/src/app/AppContext.jsx
 - Booking request and detail: app/src/features/bookings/
 - Advisor/Dean queues: app/src/features/approvals/
+- Advisor/Dean user management: app/src/features/users/
+- Dean PC management: app/src/features/pcs/PcManagementPage.jsx
 - Availability calendar: app/src/features/calendar/
 - Browser client: app/src/lib/supabase.js
 - Database migration: supabase/migrations/
@@ -41,6 +43,9 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 7. Advisor pending queue
 8. Dean final review
 9. Profile showing trusted role and Advisor assignment
+10. Advisor advisee management
+11. Dean user management
+12. Dean PC maintenance editor
 
 Screenshots must come from the current app and must not contain real personal data or secrets.
 
@@ -49,7 +54,7 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- RLS and workflow behavior through 37 pgTAP tests
+- RLS and workflow behavior through 56 pgTAP assertions
 - frontend lint, unit tests, and production build
 - schema lint and dependency audit
 

@@ -12,7 +12,7 @@ Provide one trusted system that answers:
 
 - Which PCs are operational?
 - Which periods are occupied?
-- Which PC and interval did a Student request?
+- Which PC and interval did a user request?
 - Is the request waiting for the Advisor or Dean?
 - Was it approved or rejected, and why?
 - Can another request safely reserve the same PC?
@@ -21,20 +21,20 @@ Provide one trusted system that answers:
 
 | Role | Responsibility |
 |---|---|
-| Student | View availability, submit one-day lab or multi-day remote requests, and track their own decisions |
-| Advisor | Review requests belonging only to assigned Students and approve or reject at the first stage |
-| Dean | Review Advisor-approved requests and give final approval or rejection |
-| University operator | Configure trusted roles, Student-to-Advisor assignments, PC state, OAuth settings, and deployment secrets through protected administration |
+| Student | View availability, submit requests, and track Advisor/Dean decisions |
+| Advisor | Review assigned Students, manage own advisees, submit requests directly to Dean review, and track decisions |
+| Dean | Give final decisions, reserve available PCs directly, manage users/roles/assignments, and manage PC inventory |
+| University operator | Bootstrap the first Dean, OAuth settings, and deployment secrets through protected administration |
 
 ## Proposed solution
 
 ~~~text
 Google OAuth
 → trusted Supabase profile and role
-→ Student booking request
-→ assigned Advisor decision
-→ Dean final decision
-→ approved booking
+→ role-aware booking request
+→ Student: Advisor then Dean decision
+→ Advisor: Dean decision
+→ Dean: immediate approval after availability validation
 ~~~
 
 The shared calendar exposes occupancy, PC, time, access mode, and status to authenticated users while withholding unrelated Student identity, purpose, course, and rejection information. Authorized Students and reviewers can open the full record through RLS-protected queries.
@@ -68,10 +68,13 @@ The production foundation is implemented locally:
 - versioned PostgreSQL migration and deterministic PC seed
 - RLS and explicit grants
 - booking, approval, rejection, and calendar RPCs
+- protected user/Advisor relationship and PC-management RPCs
 - immutable approval events
-- 37 pgTAP database tests and frontend verification
+- 56 pgTAP database assertions and frontend verification
 
-Hosted rollout still requires a Supabase project, Google OAuth credentials, exact redirect URLs, Vercel public environment variables, the initial elevated-role allowlist, and Student-to-Advisor assignments.
+The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
+
+The 23 September 2026 security review also makes institutional-domain enforcement, privileged MFA, booking anti-abuse limits, trusted university-ID handling, and account offboarding mandatory before broad production use. Administrative audit coverage, production browser headers, data minimization, and concurrency hardening follow as Priority 1 work. See [the security review](../03-compliance/security-review.md) and backlog B24–B33.
 
 ## Scope
 
@@ -79,8 +82,9 @@ In scope:
 
 - authentication and trusted roles
 - PC availability and operational state
-- Student request creation
+- role-aware request creation for Students, Advisors, and Deans
 - Advisor and Dean decisions
+- Advisor advisee management and Dean user/PC administration
 - private request history and sanitized calendar occupancy
 - one-day lab and multi-day remote reservations
 - database conflict prevention and audit events
@@ -90,6 +94,6 @@ Out of scope for this cycle:
 - Student cancellation and rebooking
 - recurring reservations
 - email/push notifications
-- admin/technician management UI
+- technician-specific administration role
 - check-in/check-out and no-show enforcement
 - usage analytics and reporting

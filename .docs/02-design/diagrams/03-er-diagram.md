@@ -4,7 +4,7 @@
 erDiagram
     AUTH_USERS ||--|| PROFILES : "creates"
     PROFILES ||--o{ PROFILES : "advises"
-    PROFILES ||--o{ BOOKINGS : "student submits"
+    PROFILES ||--o{ BOOKINGS : "requester submits"
     PROFILES ||--o{ BOOKINGS : "advisor owns queue"
     PCS ||--o{ BOOKINGS : "reserved by"
     BOOKINGS ||--o{ APPROVAL_EVENTS : "has"
@@ -36,8 +36,9 @@ erDiagram
     BOOKINGS {
         uuid id PK
         text request_number UK
-        uuid student_id FK
-        uuid advisor_id FK
+        uuid requester_id FK
+        app_role requester_role
+        uuid advisor_id FK nullable
         uuid pc_id FK
         date start_date
         date end_date
@@ -70,6 +71,8 @@ Important integrity rules:
 
 - Profile IDs reference auth.users and cascade on user deletion.
 - Only Student profiles may have an Advisor, and the referenced profile must have the Advisor role.
+- Booking requester role is snapshotted so later role changes do not rewrite historical workflow.
+- Student bookings require an Advisor; Advisor and Dean bookings have no booking-level Advisor assignment.
 - Active booking ranges use half-open [start, end) semantics.
 - A PostgreSQL exclusion constraint prevents overlapping active ranges for the same PC.
 - Approval events are append-only through application permissions.

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(39);
+select plan(56);
 
 select throws_ok(
   $$
@@ -17,6 +17,23 @@ select throws_ok(
   'A verified Google account is required.',
   'non-Google identities cannot create application profiles'
 );
+
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at, raw_app_meta_data,
+  raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous
+) values (
+  '40000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated',
+  'new.google.user@example.edu', null, '{"provider":"google"}', '{"full_name":"New Google User"}',
+  now(), now(), false, false
+);
+
+select is(
+  (select role::text from public.profiles where id = '40000000-0000-0000-0000-000000000002'),
+  'student',
+  'Google signup creates a Student profile before email confirmation is finalized'
+);
+
+delete from auth.users where id = '40000000-0000-0000-0000-000000000002';
 
 insert into auth.users (
   id,
@@ -121,6 +138,11 @@ select throws_ok(
   'permission denied for table bookings',
   'Students cannot bypass the booking RPC with a direct insert'
 );
+select throws_ok(
+  $$ select public.create_pc('PC-11', 'SE Lab C', 'Test PC', 'available', null) $$,
+  'Only a Dean can add PCs.',
+  'Students cannot manage PC inventory'
+);
 select lives_ok(
   $$
     select public.create_booking(
@@ -136,7 +158,7 @@ select lives_ok(
   'assigned Student can create a valid booking'
 );
 select is(
-  (select status::text from public.bookings where student_id = '10000000-0000-0000-0000-000000000001'),
+  (select status::text from public.bookings where requester_id = '10000000-0000-0000-0000-000000000001'),
   'pending_advisor',
   'new booking starts at the Advisor stage'
 );
@@ -211,7 +233,7 @@ select set_config(
   true
 );
 select is((select count(*) from public.bookings), 0::bigint, 'Dean cannot read requests that have not passed Advisor review');
-select is((select count(*) from public.profiles), 1::bigint, 'Dean cannot browse unrelated Student or Advisor profiles');
+select is((select count(*) from public.profiles), 5::bigint, 'Dean can browse all profiles for user management');
 select throws_ok(
   $$ select public.approve_booking((select id from public.get_booking_calendar(date '2099-01-10', date '2099-01-10') limit 1)) $$,
   'Only requests pending Dean review can receive final approval.',
@@ -237,7 +259,7 @@ select set_config(
   true
 );
 select is((select count(*) from public.bookings where status = 'pending_dean'), 1::bigint, 'Dean can read requests awaiting final review');
-select is((select count(*) from public.profiles), 3::bigint, 'Dean can read only profiles participating in visible requests plus their own');
+select is((select count(*) from public.profiles), 5::bigint, 'Dean retains access to all profiles during review');
 select lives_ok(
   $$ select public.approve_booking((select id from public.bookings where status = 'pending_dean' limit 1)) $$,
   'Dean can grant final approval'
@@ -285,6 +307,106 @@ select is(
   'Advisor rejection closes the request'
 );
 select is((select count(*) from public.approval_events), 3::bigint, 'rejection adds an immutable audit event');
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002') $$,
+  'Advisor can assign an unassigned Student to themselves'
+);
+select is(
+  (select advisor_id from public.profiles where id = '10000000-0000-0000-0000-000000000002'),
+  '20000000-0000-0000-0000-000000000002'::uuid,
+  'Advisor assignment is persisted'
+);
+select throws_ok(
+  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002') $$,
+  'This Student is already assigned to another Advisor.',
+  'Advisor cannot take another Advisor''s Student'
+);
+select throws_ok(
+  $$ select public.set_user_role('10000000-0000-0000-0000-000000000002', 'dean') $$,
+  'Only a Dean can manage user roles.',
+  'Advisor cannot manage roles'
+);
+select lives_ok(
+  $$
+    select public.create_booking(
+      (select id from public.pcs where code = 'PC-03'),
+      date '2099-01-10',
+      date '2099-01-10',
+      '09:00',
+      '11:00',
+      'Advisor booking requiring Dean approval',
+      'SE Test'
+    )
+  $$,
+  'Advisor can create a booking request'
+);
+select is(
+  (select status::text from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002'),
+  'pending_dean',
+  'Advisor booking starts at Dean review'
+);
+select is(
+  (select advisor_decision::text from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002'),
+  'not_required',
+  'Advisor booking skips Advisor review'
+);
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"30000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002')) $$,
+  'Dean can approve an Advisor booking'
+);
+select lives_ok(
+  $$
+    select public.create_booking(
+      (select id from public.pcs where code = 'PC-04'),
+      date '2099-01-10',
+      date '2099-01-10',
+      '09:00',
+      '11:00',
+      'Dean direct booking',
+      'SE Test'
+    )
+  $$,
+  'Dean can create a booking'
+);
+select is(
+  (select status::text from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'),
+  'approved',
+  'Dean booking is approved immediately'
+);
+select lives_ok(
+  $$ select public.create_pc('PC-11', 'SE Lab C', '32 GB RAM', 'available', null) $$,
+  'Dean can add a PC'
+);
+select lives_ok(
+  $$ select public.update_pc((select id from public.pcs where code = 'PC-11'), 'PC-11', 'SE Lab C', '32 GB RAM', 'maintenance', 'Power supply failure') $$,
+  'Dean can mark a PC for maintenance'
+);
+select is(
+  (select status::text from public.pcs where code = 'PC-11'),
+  'maintenance',
+  'maintenance status is persisted'
+);
+select lives_ok(
+  $$ select public.set_user_role('10000000-0000-0000-0000-000000000002', 'advisor') $$,
+  'Dean can promote an existing Student'
+);
+select is(
+  (select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000002'),
+  'advisor',
+  'Dean role update is persisted'
+);
 
 select * from finish();
 rollback;

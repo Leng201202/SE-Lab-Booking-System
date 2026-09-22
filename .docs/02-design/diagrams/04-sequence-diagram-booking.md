@@ -44,3 +44,16 @@ sequenceDiagram
 ~~~
 
 The exclusion constraint remains authoritative if two clients submit simultaneously. Approval functions lock the target row and perform the status transition plus audit insertion in one transaction.
+
+Role variations:
+
+~~~mermaid
+flowchart LR
+    S[Student submits] --> PA[pending_advisor]
+    PA --> PD[pending_dean]
+    A[Advisor submits] --> PD
+    PD --> OK[approved]
+    D[Dean submits] --> V{PC and interval valid?}
+    V -->|yes| OK
+    V -->|no| X[rejected before insert]
+~~~

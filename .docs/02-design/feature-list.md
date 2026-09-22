@@ -13,15 +13,19 @@
 | One-day lab request | Valid time within 08:00–18:00 | Done |
 | Multi-day remote request | Continuous full-day reservation over an inclusive date range | Done |
 | Conflict prevention | PostgreSQL exclusion constraint rejects overlapping active intervals | Done |
-| Student request history/detail | Students see only their own private records and rejection reasons | Done |
+| Own request history/detail | Every role sees its own private records and rejection reasons | Done |
 | Advisor review | Assigned Advisor approves to Dean or rejects with a reason | Done |
-| Dean review | Dean sees Advisor-approved requests and gives final decision | Done |
+| Advisor booking | Skips Advisor review and begins at pending Dean | Done |
+| Dean booking | Immediately approved after PC/rule/conflict validation | Done |
+| Dean review | Dean sees Student requests approved by Advisors plus direct Advisor requests | Done |
 | Approval audit | Append-only event for every approval/rejection | Done |
 | Maintenance/inactive blocking | Non-available PCs cannot be selected or booked | Done |
 | Student cancellation | Cancel an eligible request | Planned |
 | Rebook/edit | Atomically change PC or interval | Planned |
 | Notifications | Email or durable in-app decision notifications | Proposed |
-| Admin operations UI | Manage PCs, allowlist, and Advisor assignments | Proposed |
+| Advisor relationship management | Advisor claims unassigned Students or releases own advisees | Done |
+| Dean user management | View all profiles, change roles, and assign Advisors | Done |
+| Dean PC management | Add PCs and update room, specification, status, and notes | Done |
 | Realtime refresh | Automatic cross-device refresh | Optional follow-up; current app refetches after mutations |
 
 Database authorization is authoritative. Frontend route guards and disabled controls are usability features only.

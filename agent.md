@@ -4,11 +4,13 @@
 
 This is the contributor guide for the SE Lab PC Booking System. The current implementation is a React/Vite application backed by Supabase PostgreSQL and Supabase Auth with Google OAuth. Do not reintroduce mock identity, role switching, seeded browser users, or `localStorage` booking persistence.
 
-The application workflow is:
+The application workflows are:
 
 ```text
 Student request → pending_advisor → pending_dean → approved
                       ↘ rejected       ↙
+Advisor request → pending_dean → approved | rejected
+Dean request → approved immediately after availability validation
 ```
 
 The deployable frontend is under `app/`; reproducible backend infrastructure is under the repository-root `supabase/` directory.
@@ -32,6 +34,8 @@ app/src/lib/supabase.js                     # Browser client
 app/src/features/auth/authService.js        # Session and OAuth operations
 app/src/features/bookings/bookingService.js # Booking reads and workflow RPCs
 app/src/features/pcs/pcService.js           # PC inventory reads
+app/src/features/pcs/PcManagementPage.jsx   # Dean inventory administration
+app/src/features/users/                     # Dean user and Advisor advisee management
 app/src/app/AppContext.jsx                  # Session/profile/workspace coordination
 supabase/migrations/                        # Versioned schema and policies
 supabase/seed.sql                           # Development PC inventory
@@ -60,6 +64,21 @@ Required production configuration that is intentionally not committed:
 - post-first-login Advisor and Dean role promotions through the email allowlist
 - Student-to-Advisor assignments
 
+## Security hardening guardrails
+
+The 23 September 2026 security review is recorded in `.docs/03-compliance/security-review.md`; remediation is tracked as backlog B24–B33. Do not describe these controls as implemented until their migrations, application behavior, hosted settings, and negative tests are complete.
+
+Priority 0 release gates are:
+
+- enforce the approved university domain before Auth user creation
+- disable unused Auth providers
+- require `aal2` for privileged operations selected by university policy
+- prevent users from self-asserting a trusted university ID
+- enforce booking duration, advance-window, active-request, and abuse limits
+- enforce suspended/offboarded account state in RLS and every exposed RPC
+
+Privileged role, Advisor assignment, PC, and suspension mutations must eventually produce immutable audit events. Production frontend changes must preserve a strict CSP and browser security headers once introduced. Security enforcement belongs in Auth configuration and PostgreSQL; UI hiding, route guards, and client validation never satisfy these requirements alone.
+
 ## Database model
 
 The backend owns:
@@ -82,8 +101,12 @@ React route guards improve navigation only. PostgreSQL grants, RLS policies, con
 
 - Anonymous users cannot read application data.
 - Students can read only their own private bookings and can create only for themselves.
-- Advisors can read and review only assigned Students at `pending_advisor`.
-- Deans can read records needed for final review and act only at `pending_dean`.
+- Every role can create and read its own bookings.
+- Advisors can read and review only assigned Students at `pending_advisor`; their own requests skip Advisor review and require Dean approval.
+- Deans can read records needed for final review and act only at `pending_dean`; their own requests are immediately approved only when all booking and availability rules pass.
+- Advisors may attach only unassigned Students to themselves and may release only their own advisees.
+- Deans may view and manage all profiles, roles, and Advisor assignments.
+- Only Deans may create PCs or update PC code, room, specification, status, and maintenance notes.
 - Shared calendar output omits Student identity, university ID, purpose, course, and rejection information.
 - Direct table writes cannot bypass ownership or workflow rules.
 - Approval events are append-only application audit records.
@@ -94,6 +117,10 @@ Consequential mutations use these database functions:
 create_booking
 approve_booking
 reject_booking
+create_pc
+update_pc
+set_user_role
+assign_student_advisor
 ```
 
 They derive the actor from `auth.uid()`, validate the trusted role and current stage, and change workflow/audit state atomically. Security-definer functions must keep `search_path = ''`, schema-qualify referenced objects, and expose execution only to intended roles.
@@ -120,7 +147,7 @@ The database exclusion constraint is the final authority for overlapping active 
 
 One-day in-lab bookings must be within `08:00–18:00`, use a valid increasing time range, and remain on one date. Multi-day bookings use remote access and reserve the full inclusive Bangkok date range as a half-open timestamp interval ending at midnight after the final selected date.
 
-Past dates, unavailable PCs, missing Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database.
+Past dates, unavailable PCs, missing Student Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database. Advisor and Dean requesters do not require an assigned Advisor.
 
 `cancelled` and `completed` exist in the status model, but user cancellation and automatic completion are not implemented yet.
 
@@ -142,7 +169,7 @@ Authenticated shared routes:
 /profile
 ```
 
-Student routes:
+Authenticated booking routes for every role:
 
 ```text
 /book
@@ -157,7 +184,20 @@ Advisor and Dean routes:
 /requests/history
 ```
 
-Students must not receive review actions. Advisors act only at the Advisor stage; Deans act only at the Dean stage.
+Advisor management route:
+
+```text
+/manage/advisees
+```
+
+Dean administration routes:
+
+```text
+/admin/users
+/admin/pcs
+```
+
+Students must not receive review actions. Advisors act only at the Advisor stage for assigned Students; Deans act only at the Dean stage. Management pages never substitute for database authorization.
 
 ## Frontend and UI rules
 
@@ -205,8 +245,13 @@ Maintain tests for:
 - booking overlap and unavailable-PC rejection
 - sanitized calendar output
 - approval audit creation and attribution
+- external-domain signup denial
+- wrong-assurance (`aal1`) denial for privileged operations
+- suspended-user denial with an otherwise valid session
+- trusted university-ID write denial
+- booking duration, quota, and abuse boundaries
 
-Google provider configuration and production callback behavior require external credentials and must be verified separately during deployment.
+Hosted Auth settings, Google audience, MFA, session policy, hooks, redirect allowlists, and production callback behavior must be verified separately during deployment and checked for drift from repository policy.
 
 ## Deployment
 

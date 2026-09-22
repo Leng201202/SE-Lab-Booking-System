@@ -11,6 +11,8 @@ import { MyBookingsPage } from '../features/bookings/MyBookingsPage'
 import { CalendarPage } from '../features/calendar/CalendarPage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { PcListPage } from '../features/pcs/PcListPage'
+import { PcManagementPage } from '../features/pcs/PcManagementPage'
+import { AdviseeManagementPage, UserManagementPage } from '../features/users/UserManagementPage'
 import { useApp } from './AppContext'
 
 function RequireSession() {
@@ -31,9 +33,14 @@ function FullPageStatus({ message, action }) {
   )
 }
 
-function StudentOnly({ children }) {
+function AdvisorOnly({ children }) {
   const { user } = useApp()
-  return user?.role === 'student' ? children : <Navigate to="/dashboard" replace />
+  return user?.role === 'advisor' ? children : <Navigate to="/dashboard" replace />
+}
+
+function DeanOnly({ children }) {
+  const { user } = useApp()
+  return user?.role === 'dean' ? children : <Navigate to="/dashboard" replace />
 }
 
 function ReviewerOnly({ children }) {
@@ -55,12 +62,15 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/book', element: <StudentOnly><BookingFormPage /></StudentOnly> },
-      { path: '/bookings', element: <StudentOnly><MyBookingsPage /></StudentOnly> },
+      { path: '/book', element: <BookingFormPage /> },
+      { path: '/bookings', element: <MyBookingsPage /> },
       { path: '/bookings/:id', element: <BookingDetailPage /> },
       { path: '/requests/pending', element: <ReviewerOnly><PendingRequestsPage /></ReviewerOnly> },
       { path: '/requests/history', element: <ReviewerOnly><ApprovalHistoryPage /></ReviewerOnly> },
-      { path: '/pcs', element: <StudentOnly><PcListPage /></StudentOnly> },
+      { path: '/pcs', element: <PcListPage /> },
+      { path: '/manage/advisees', element: <AdvisorOnly><AdviseeManagementPage /></AdvisorOnly> },
+      { path: '/admin/users', element: <DeanOnly><UserManagementPage /></DeanOnly> },
+      { path: '/admin/pcs', element: <DeanOnly><PcManagementPage /></DeanOnly> },
       { path: '/calendar', element: <CalendarPage /> },
       { path: '/profile', element: <ProfilePage /> },
     ],

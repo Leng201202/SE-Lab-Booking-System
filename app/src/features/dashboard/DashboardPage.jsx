@@ -28,7 +28,7 @@ function SectionTitle({ title, link, linkLabel = 'View all' }) {
 
 function StudentDashboard() {
   const { user, bookings } = useApp()
-  const mine = bookings.filter((booking) => booking.studentId === user.id)
+  const mine = bookings.filter((booking) => booking.requesterId === user.id)
   const count = (status) => mine.filter((booking) => booking.status === status).length
   const today = getBangkokDateKey()
   const upcoming = mine
@@ -95,7 +95,7 @@ function ReviewerDashboard({ role }) {
       </div>
       <Card className="overflow-hidden">
         <SectionTitle title="Requests requiring attention" link="/requests/pending" />
-        {pending.length ? <BookingTable bookings={pending.slice(0, 5)} showStudent showAdvisor={!isAdvisor} /> : <EmptyState title="You're all caught up" description="No booking requests currently need your review." />}
+        {pending.length ? <BookingTable bookings={pending.slice(0, 5)} showRequester showAdvisor={!isAdvisor} /> : <EmptyState title="You're all caught up" description="No booking requests currently need your review." />}
       </Card>
       <Card className="overflow-hidden">
         <SectionTitle title="Recent requests" link="/requests/history" linkLabel="View history" />
@@ -103,7 +103,7 @@ function ReviewerDashboard({ role }) {
           {bookings.slice(0, 4).map((booking) => (
             <Link key={booking.id} to={`/bookings/${booking.id}`} className="flex flex-col items-start gap-3 px-4 py-4 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900">{booking.studentName} · {booking.pcId}</p>
+                <p className="text-sm font-semibold text-slate-900">{booking.requesterName} · {booking.pcId}</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{formatBookingDateRange(booking)} · {formatBookingTime(booking)}</p>
               </div>
               <StatusBadge status={booking.status} />

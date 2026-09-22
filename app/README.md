@@ -21,6 +21,8 @@ Only the project URL and publishable key belong in the browser. Never add a Goog
 
 The app signs users in through Google OAuth. Every new user receives the Student role; an administrator may promote an existing profile through the protected backend role allowlist. See [../supabase/README.md](../supabase/README.md) for backend setup.
 
+All roles can book PCs. Student requests require Advisor then Dean approval, Advisor requests require Dean approval, and Dean requests are immediately approved when available. Advisors manage their advisees; Deans manage users, role assignments, and PC inventory.
+
 ## Checks
 
 ```bash

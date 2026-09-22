@@ -16,9 +16,9 @@ flowchart LR
     end
 
     Student -->|availability and requests| Web
-    Advisor -->|assigned reviews| Web
-    Dean -->|final reviews| Web
-    Operator -->|protected configuration| DB
+    Advisor -->|requests, reviews, advisees| Web
+    Dean -->|requests, final reviews, users, PCs| Web
+    Operator -->|bootstrap and deployment configuration| DB
 
     Web -->|OAuth redirect| Auth
     Auth <--> Google
