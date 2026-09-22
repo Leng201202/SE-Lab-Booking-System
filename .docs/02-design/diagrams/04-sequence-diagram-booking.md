@@ -2,27 +2,50 @@
 
 ```mermaid
 sequenceDiagram
-    actor U as User (student/teacher)
-    participant W as Web app (LabCalendar)
-    participant DB as Supabase Postgres
+    actor S as Student
+    participant W as Vite React app
+    participant LS as Browser localStorage
+    participant A as Advisor
+    participant D as Dean
 
-    U->>W: Tap an open slot (computer, hour)
-    W->>U: Open booking dialog (choose end hour, onsite/remote, purpose)
-    U->>W: Confirm booking
-    W->>DB: INSERT INTO bookings (...)
-    DB->>DB: trigger prevent_booking_overlap()
-    alt overlaps an existing booking
-        DB-->>W: error "already booked during part of that range"
-        W-->>U: toast error, dialog stays open
-    else no overlap
-        DB-->>W: insert succeeds
-        W->>DB: re-fetch bookings for that day
-        DB-->>W: updated booking list
-        W-->>U: toast "Computer booked", tile now shows holder student ID + mode
+    S->>W: Select PC, date range, time, purpose and course
+    W->>LS: Read current bookings
+    LS-->>W: Return seeded or saved bookings
+    W->>W: Validate PC, dates, hours and overlap
+    alt invalid or overlapping request
+        W-->>S: Show validation error; keep form open
+    else valid request
+        W->>LS: Save booking with pending_advisor status
+        LS-->>W: Return saved booking
+        W->>W: Refresh booking state
+        W-->>S: Show submission toast
+        A->>W: Open pending_advisor request
+        alt Advisor approves
+            A->>W: Approve request
+            W->>LS: Save pending_dean decision
+            W->>W: Refresh booking state
+            D->>W: Open pending_dean request
+            alt Dean approves
+                D->>W: Approve request
+                W->>LS: Save approved decision
+                W->>W: Refresh booking state
+                W-->>S: Show approved status
+            else Dean rejects
+                D->>W: Reject with required reason
+                W->>LS: Save rejected status and reason
+                W->>W: Refresh booking state
+                W-->>S: Show rejection reason
+            end
+        else Advisor rejects
+            A->>W: Reject with required reason
+            W->>LS: Save rejected status and reason
+            W->>W: Refresh booking state
+            W-->>S: Show rejection reason
+        end
     end
 ```
 
-This is the mechanism that makes the shared calendar trustworthy: even if
-two users submit conflicting bookings at nearly the same instant, the
-database trigger — not client-side logic — is the single source of truth
-that rejects the second one.
+This sequence describes the current demo. Its conflict check is local to the
+browser, so it is not concurrency-safe across different users or devices.
+The planned Supabase phase must move the overlap rule and role authorization
+to the server/database.

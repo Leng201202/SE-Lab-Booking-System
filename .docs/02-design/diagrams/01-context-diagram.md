@@ -3,24 +3,27 @@
 ```mermaid
 flowchart LR
     Student([Student])
-    Teacher([Teacher])
-    Visitor([Signed-out visitor])
+    Advisor([Advisor])
+    Dean([Dean])
+    Visitor([Visitor])
 
     subgraph System["SE Lab Booking (this app)"]
-        Web[Web app\nTanStack Start + React]
+        Web[SE Lab PC Booking\nVite + React demo]
     end
 
-    Auth[(Supabase Auth\nemail/password + Google)]
-    DB[(Supabase Postgres\nprofiles, bookings)]
+    Store[(Browser localStorage\nmock users, PCs, bookings)]
 
-    Visitor -->|sees sign-in only| Web
-    Student -->|sign in, view calendar, book/cancel| Web
-    Teacher -->|sign in, view calendar, book/cancel| Web
-    Web <--> Auth
-    Web <--> DB
+    Visitor -->|opens role-selection screen| Web
+    Student -->|select role, submit/cancel requests| Web
+    Advisor -->|approve/reject requests| Web
+    Dean -->|give final approval/rejection| Web
+    Web <--> Store
+
+    Student -.->|pending_advisor| Advisor
+    Advisor -.->|pending_dean| Dean
 ```
 
-Signed-out visitors reach only the sign-in screen; the live calendar and
-booking actions require an authenticated session (`src/routes/index.tsx`).
-Booking holder identity (**student ID + role**, agreed 9 Sep 2026) is shown
-to signed-in users only and not to signed-out visitors.
+This repository currently delivers a frontend-only demo. The login screen
+selects one of three seeded roles; it is a demo role selector, not real authentication. Booking
+data is persisted in the browser with `localStorage`, and the planned
+Supabase Auth/Postgres implementation is described in `agent.md`.
