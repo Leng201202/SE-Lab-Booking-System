@@ -1,21 +1,22 @@
-import { ArrowRight, GraduationCap, ShieldCheck, UserRoundCheck } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { ArrowRight, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
+import { Navigate, Link } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
-import { demoUsers, roleLabels } from '../../data/mockUsers'
-
-const roleDetails = {
-  student: { icon: GraduationCap, description: 'Request a lab PC and follow approval progress.', accent: 'bg-mfu-500/15 text-emerald-200', hover: 'hover:border-mfu-400/60', link: 'text-emerald-300' },
-  advisor: { icon: UserRoundCheck, description: 'Review student requests before dean approval.', accent: 'bg-blue-500/15 text-blue-200', hover: 'hover:border-blue-400/60', link: 'text-blue-300' },
-  dean: { icon: ShieldCheck, description: 'Give final approval to reviewed bookings.', accent: 'bg-amber-400/15 text-amber-200', hover: 'hover:border-amber-300/60', link: 'text-amber-300' },
-}
 
 export function LoginPage() {
-  const { selectRole } = useApp()
-  const navigate = useNavigate()
+  const { signInWithGoogle, isSupabaseConfigured, appError } = useApp()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  const login = (role) => {
-    selectRole(role)
-    navigate('/dashboard')
+  const login = async () => {
+    setSubmitting(true)
+    setError('')
+    try {
+      await signInWithGoogle()
+    } catch (nextError) {
+      setError(nextError.message)
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -28,24 +29,37 @@ export function LoginPage() {
           <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-white p-2 shadow-xl shadow-black/30 sm:mb-5 sm:size-16"><img src="/SE_Logo.png" alt="Software Engineering logo" className="h-full w-auto object-contain" /></div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Mae Fah Luang University · ADT</p>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-4xl">SE Lab PC Booking System</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-100/60">Choose a demo role to explore the complete student request and university approval workflow.</p>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-100/60">Sign in with your university Google account to request, review, and manage lab PC bookings.</p>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {Object.entries(roleDetails).map(([role, detail]) => {
-            const Icon = detail.icon
-            const user = demoUsers[role]
-            return (
-              <button key={role} onClick={() => login(role)} className={`group rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-left shadow-2xl backdrop-blur transition hover:-translate-y-1 hover:bg-white/[0.09] sm:p-6 ${detail.hover}`}>
-                <span className={`grid size-11 place-items-center rounded-xl ${detail.accent}`}><Icon size={22} /></span>
-                <h2 className="mt-4 text-lg font-bold sm:mt-5">Continue as {roleLabels[role]}</h2>
-                <p className="mt-1 text-sm font-medium text-slate-300">{user.shortName || user.name}</p>
-                <p className="mt-3 text-sm leading-6 text-slate-400 md:min-h-12">{detail.description}</p>
-                <span className={`mt-4 flex items-center gap-2 text-sm font-semibold sm:mt-5 ${detail.link}`}>Enter dashboard <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
-              </button>
-            )
-          })}
+        <div className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl backdrop-blur sm:p-7">
+          <span className="grid size-11 place-items-center rounded-xl bg-mfu-500/15 text-emerald-200"><ShieldCheck size={22} /></span>
+          <h2 className="mt-5 text-xl font-bold">Secure university access</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-300">Your application role is assigned securely after sign-in. New accounts begin as Students unless an administrator has approved another role.</p>
+          <button disabled={!isSupabaseConfigured || submitting} onClick={login} className="group mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-white font-bold text-slate-900 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50">
+            <span className="grid size-6 place-items-center rounded-full bg-white text-sm font-black text-blue-600 ring-1 ring-slate-200">G</span>
+            {submitting ? 'Redirecting to Google…' : 'Continue with Google'}
+            {!submitting && <ArrowRight size={17} className="transition group-hover:translate-x-1" />}
+          </button>
+          {!isSupabaseConfigured && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">Supabase is not configured. Add the values from <code>app/.env.example</code> to <code>app/.env.local</code>.</p>}
+          {(error || appError) && <p className="mt-4 rounded-xl border border-red-300/20 bg-red-300/10 p-3 text-xs leading-5 text-red-100" role="alert">{error || appError}</p>}
         </div>
-        <p className="mt-6 text-center text-xs leading-5 text-emerald-100/35 sm:mt-8">Demo data is stored only in this browser. No real account or backend is connected.</p>
+        <p className="mt-6 text-center text-xs leading-5 text-emerald-100/35 sm:mt-8">Authentication and access are protected by Supabase Auth and database authorization policies.</p>
+      </div>
+    </main>
+  )
+}
+
+export function AuthCallbackPage() {
+  const { user, authReady, workspaceLoading, appError } = useApp()
+  if (user) return <Navigate to="/dashboard" replace />
+
+  return (
+    <main className="grid min-h-screen place-items-center bg-mfu-950 p-4 text-white">
+      <div className="max-w-md text-center">
+        <img src="/SE_Logo.png" alt="Software Engineering logo" className="mx-auto h-16 w-auto rounded-xl bg-white p-2" />
+        <h1 className="mt-5 text-xl font-bold">Completing secure sign-in</h1>
+        <p className="mt-2 text-sm leading-6 text-emerald-100/65">{appError || (!authReady || workspaceLoading ? 'Loading your account and permissions…' : 'No active session was returned.')}</p>
+        {authReady && !workspaceLoading && !user && <Link to="/login" className="mt-5 inline-flex text-sm font-semibold text-emerald-300">Return to sign in</Link>}
       </div>
     </main>
   )

@@ -1,64 +1,75 @@
 # Diagram 3 — Entity-relationship diagram
 
-Describes the data model used by the current frontend demo.
-
-```mermaid
+~~~mermaid
 erDiagram
-    USERS ||--o{ BOOKINGS : "submits"
-    PCS ||--o{ BOOKINGS : "is reserved in"
-    USERS {
-        text id PK
-        text name
-        text student_id
-        enum role "student | advisor | dean"
-        text advisor_name
-        text department
+    AUTH_USERS ||--|| PROFILES : "creates"
+    PROFILES ||--o{ PROFILES : "advises"
+    PROFILES ||--o{ BOOKINGS : "student submits"
+    PROFILES ||--o{ BOOKINGS : "advisor owns queue"
+    PCS ||--o{ BOOKINGS : "reserved by"
+    BOOKINGS ||--o{ APPROVAL_EVENTS : "has"
+    PROFILES ||--o{ APPROVAL_EVENTS : "reviews"
+
+    AUTH_USERS {
+        uuid id PK
         text email
+        jsonb provider_metadata
     }
-    BOOKINGS {
-        text id PK
-        text student_id FK "user id"
-        text student_name
-        text student_number
-        text advisor_name
-        text pc_id FK
-        text room
-        date date "seed data; single-day"
-        date start_date "multi-day requests"
-        date end_date "multi-day requests"
-        text start_time
-        text end_time
-        enum access_mode "lab | remote"
-        text purpose
-        text course
-        datetime requested_at
-        enum status "pending_advisor | pending_dean | approved | rejected | cancelled | completed"
-        enum advisor_decision "pending | approved | rejected | waiting"
-        enum dean_decision "pending | approved | rejected | waiting | not_required"
-        datetime advisor_decision_at
-        datetime dean_decision_at
-        text rejection_reason
-        text rejected_by
+    PROFILES {
+        uuid id PK,FK
+        text email UK
+        text display_name
+        text university_id UK
+        app_role role
+        uuid advisor_id FK
+        timestamptz created_at
+        timestamptz updated_at
     }
     PCS {
-        text id PK "PC-01 to PC-10"
+        uuid id PK
+        text code UK
         text room
-        enum status "Available | Booked | Maintenance | Inactive"
         text specification
+        pc_status status
+        text notes
     }
-```
+    BOOKINGS {
+        uuid id PK
+        text request_number UK
+        uuid student_id FK
+        uuid advisor_id FK
+        uuid pc_id FK
+        date start_date
+        date end_date
+        time start_time
+        time end_time
+        timestamptz starts_at
+        timestamptz ends_at
+        access_mode access_mode
+        text purpose
+        text course
+        booking_status status
+        advisor_decision advisor_decision
+        dean_decision dean_decision
+        text rejection_reason
+    }
+    APPROVAL_EVENTS {
+        uuid id PK
+        uuid booking_id FK
+        uuid reviewer_id FK
+        app_role reviewer_role
+        review_decision decision
+        text reason
+        timestamptz decided_at
+    }
+~~~
 
-Notes:
+The private role_allowlist table maps normalized verified Google emails to Advisor or Dean roles and is intentionally outside the exposed API schema.
 
-- The demo stores seeded user, PC, and booking objects in browser
-  `localStorage`; it has no live database or persistent user table.
-- Existing seed bookings use `date`; newly created bookings use
-  `startDate`/`endDate`, with the utility layer supporting both shapes.
-- New requests start at `pending_advisor`, move to `pending_dean`, and then
-  become `approved` or `rejected`.
-- Advisor and Dean decisions are stored on the booking object rather than in
-  a separate approval-history entity.
-- `isBookingConflict` blocks overlapping `pending_advisor`, `pending_dean`,
-  and `approved` bookings for the same PC and date range.
-- Supabase tables, RLS, and server-side conflict enforcement are planned for
-  a later phase.
+Important integrity rules:
+
+- Profile IDs reference auth.users and cascade on user deletion.
+- Only Student profiles may have an Advisor, and the referenced profile must have the Advisor role.
+- Active booking ranges use half-open [start, end) semantics.
+- A PostgreSQL exclusion constraint prevents overlapping active ranges for the same PC.
+- Approval events are append-only through application permissions.

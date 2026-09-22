@@ -1,29 +1,31 @@
 # Diagram 1 — System context
 
-```mermaid
+~~~mermaid
 flowchart LR
     Student([Student])
     Advisor([Advisor])
     Dean([Dean])
-    Visitor([Visitor])
+    Operator([University operator])
+    Google[Google OAuth]
 
-    subgraph System["SE Lab Booking (this app)"]
-        Web[SE Lab PC Booking\nVite + React demo]
+    subgraph System["SE Lab PC Booking System"]
+        Web[React + Vite web application]
+        Auth[Supabase Auth]
+        API[Supabase Data API and RPC]
+        DB[(PostgreSQL\nRLS, constraints, audit)]
     end
 
-    Store[(Browser localStorage\nmock users, PCs, bookings)]
+    Student -->|availability and requests| Web
+    Advisor -->|assigned reviews| Web
+    Dean -->|final reviews| Web
+    Operator -->|protected configuration| DB
 
-    Visitor -->|opens role-selection screen| Web
-    Student -->|select role, submit/cancel requests| Web
-    Advisor -->|approve/reject requests| Web
-    Dean -->|give final approval/rejection| Web
-    Web <--> Store
+    Web -->|OAuth redirect| Auth
+    Auth <--> Google
+    Web -->|authenticated queries| API
+    API --> DB
+    DB -->|role-scoped results| API
+    API --> Web
+~~~
 
-    Student -.->|pending_advisor| Advisor
-    Advisor -.->|pending_dean| Dean
-```
-
-This repository currently delivers a frontend-only demo. The login screen
-selects one of three seeded roles; it is a demo role selector, not real authentication. Booking
-data is persisted in the browser with `localStorage`, and the planned
-Supabase Auth/Postgres implementation is described in `agent.md`.
+The browser contains only the Supabase project URL and publishable key. Google provider secrets and privileged database credentials remain outside the frontend. React route guards tailor the interface; PostgreSQL grants, RLS, functions, and constraints enforce authorization and booking integrity.

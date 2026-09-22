@@ -1,93 +1,90 @@
-# Rules — SE Lab Booking
+# System and compliance rules — SE Lab PC Booking System
 
-Operating rules the system enforces or should enforce. Mark each as
-**Enforced** (in code/DB today), **Policy-only** (stated but not enforced
-by the system), or **TODO**.
+Statuses: **Enforced** = implemented in code/database and locally tested · **Operational** = requires a protected administrator process · **Policy pending** = requires university/legal decision.
 
-## Lab & booking rules
+This document is an engineering compliance register, not legal advice. Final applicability and approval belong to the university data owner and qualified reviewer.
 
-| Rule | Status | Where |
+## Authentication and authorization
+
+| Rule | Status | Evidence |
 |---|---|---|
-| Lab is open 09:00–20:00 (on-site). **Bookings may span 24h**, but an **onsite** session is allowed only during lab-open hours; outside 09:00–20:00 the booking must be **remote** | Policy (agreed) — *not yet enforced as described*: current DB check `bookings_hours_valid` locks all bookings to 09:00–20:00 and the UI constants `OPEN_HOUR=9`/`CLOSE_HOUR=20` show only 11 hourly slots; needs a mode-aware rule (onsite within lab hours; remote allowed 24h) | `bookings_hours_valid`; `src/components/LabCalendar.tsx` (`OPEN_HOUR`/`CLOSE_HOUR`) |
-| A computer can't be double-booked for an overlapping time range | Enforced | DB trigger `prevent_booking_overlap` |
-| Only the booking's owner can cancel or modify it | Enforced | RLS policies on `bookings` (`auth.uid() = user_id`) |
-| Every booking must declare onsite or remote use | Enforced | `bookings.mode` is `NOT NULL`, UI requires a selection |
-| The calendar (who booked what — **student ID + role**, when, onsite/remote) is visible to every **signed-in** user; signed-out visitors are not shown the calendar or any booking data — only the sign-in screen | Enforced (gate) / **needs RLS change** — UI gates on `user` in `src/routes/index.tsx`, but RLS still grants `anon` SELECT | `src/routes/index.tsx`; `supabase/migrations/*_292b4570*.sql` (revoke anon read) |
-| Computer IDs are limited to the lab's 10 physical machines (1–10) | Enforced | DB check `bookings_computer_range` |
-| TODO (team): max booking length per user/day, if the lab wants one | TODO | — |
-| TODO (team): no-show policy (unused onsite booking after N minutes) | TODO | — |
+| Application profiles are created only for confirmed Google identities | Enforced | Supabase Auth trigger in the initial migration |
+| New users default to Student | Enforced | Profile creation trigger |
+| Advisor and Dean roles come only from the private email allowlist or privileged administration | Enforced / Operational | private.role_allowlist; no browser write access |
+| Only Students may have an Advisor assignment, and the target must have the Advisor role | Enforced | Profile relationship trigger |
+| Anonymous users cannot read application tables or calendar occupancy | Enforced | Explicit grants and RLS; pgTAP tests |
+| Frontend route guards are not treated as the security boundary | Enforced by design | PostgreSQL grants, RLS, functions, and constraints |
 
-## Data rules
+## Booking and workflow rules
 
-Enforcement table follows; the full W2 legal basis (Thai legislation with
-official sources) is reproduced in the [W2 Legal Annex](#w2-legal-annex) below.
-
-| Rule | Status | Where |
+| Rule | Status | Evidence |
 |---|---|---|
-| Only the holder's **8-digit student ID** and **role** are stored and shown; the full name is **not** collected or displayed (data minimization) | Policy (agreed) — *not yet enforced*: schema still stores `profiles.full_name`; planned change is to store only `student_id` + `role` and drop `full_name` | `profiles` table (`student_id`, `role`), `AuthPanel` sign-up |
-| Users can only edit their own profile | Enforced | RLS policy `Users can update own profile` |
-| TODO (team): data retention — how long are past bookings kept? | TODO | — |
-| TODO (team): who can access the Supabase project/service-role key, and how is it kept out of the client bundle | TODO | `.env` (`VITE_*` keys are public by design; service-role key must never be `VITE_`-prefixed) |
+| One-day in-lab bookings are within 08:00–18:00 and use an increasing 15-minute interval | Enforced | create_booking RPC and table constraints |
+| Multi-day bookings use remote access and reserve the full inclusive Bangkok date range | Enforced | create_booking RPC; half-open timestamp range |
+| Past dates and maintenance/inactive PCs cannot be booked | Enforced | create_booking RPC |
+| Purpose is required and bounded; course/project is optional and bounded | Enforced | RPC normalization and constraints |
+| Students need an assigned eligible Advisor before submitting | Enforced | create_booking RPC |
+| Pending Advisor, pending Dean, and approved records block availability | Enforced | Partial exclusion constraint |
+| The same PC cannot have overlapping active intervals, even under concurrent submission | Enforced | PostgreSQL GiST exclusion constraint |
+| Advisors act only on assigned Student requests at pending Advisor | Enforced | approve_booking/reject_booking |
+| Deans act only after Advisor approval at pending Dean | Enforced | RLS and workflow functions |
+| Rejection requires a reason | Enforced | Function and table constraints |
+| Every decision appends an attributable approval event in the same transaction | Enforced | Workflow functions and pgTAP tests |
+| Student cancellation, rebooking, automatic completion, and no-show handling | Policy pending / not implemented | Backlog B13, B14, B18 |
 
----
+## Privacy and data rules
 
-## W2 Legal Annex
+| Rule | Status | Evidence |
+|---|---|---|
+| Calendar output exposes occupancy without unrelated Student identity, university ID, purpose, course, or rejection details | Enforced | get_booking_calendar RPC and mapper tests |
+| Students read only their own private bookings | Enforced | bookings RLS |
+| Advisors read only assigned Students' bookings | Enforced | bookings RLS |
+| Deans read only requests that passed Advisor review | Enforced | bookings RLS |
+| Dean profile visibility is limited to their own profile and profiles participating in visible requests | Enforced | private helper used by profiles RLS |
+| Users cannot change their role or Advisor assignment | Enforced | Column grants and RLS |
+| The frontend contains no Google secret, database password, Supabase secret key, or service_role key | Enforced by repository policy; verify per deployment | Environment templates, ignore rules, credential scan |
+| Display name, email, optional university ID, role, and Advisor relationship have documented operational purposes | Policy pending | University data inventory/owner approval required |
+| Privacy notice and lawful basis are approved before production collection | Policy pending | No approved notice recorded |
+| Retention/deletion schedule for profiles, bookings, and audit events | Policy pending | No approved schedule recorded |
+| Data-subject access, correction, export, restriction, and deletion procedure | Policy pending | Operational process not defined |
+| Incident and breach response procedure | Policy pending | Operational process not defined |
 
-Recovered from the project history (Week-2 compliance register). Official
-sources; **applicability to this system still pending university/supervisor
-review** — these are not legal conclusions. See the enforcement trace in
-[legal-requirement-trace.md](legal-requirement-trace.md).
+## Infrastructure rules
 
-### Personal Data Protection Act (PDPA) B.E. 2562 (2019)
+- Schema and policy changes must be versioned under supabase/migrations/.
+- Production credentials must be configured in Supabase/Google/Vercel, not committed.
+- The browser receives only VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.
+- Security-definer functions use an empty search_path, schema-qualified objects, and limited execution grants.
+- Database changes must pass clean rebuild, pgTAP, and application-schema lint.
 
-Thailand's PDPA regulates collection, use, and disclosure of personal data.
-Relevant to this system: lawful basis, informing users, collecting only
-necessary data, protecting it, data-subject rights, disclosure control, and
-retention.
+## Legal reference register
 
-**Official source:** [MDES — PDPA B.E. 2562](https://www.mdes.go.th/content/download-detail/4240)
+### Personal Data Protection Act B.E. 2562 (2019)
 
-Implications for this SE Lab booking app:
-- Map each collected field (now **student ID + role**) to a documented purpose.
-- Do not assume consent is the only lawful basis — university/data owner must approve it.
-- Present approved privacy notice at/before collection.
-- Availability views must not expose another user's identity (currently the
-  app shows `full_name` and lets `anon` read — a known gap; agreed target is
-  signed-in-only + student ID).
-- No sensitive personal data in scope.
-- Enforce least privilege (owner-only writes; restrict reads to `authenticated`).
-- Support applicable access/correct/delete/export requests.
-- Retain data only per an approved schedule (none defined yet — gap).
-- Handle personal-data breaches per approved process.
+The system processes identifiers and booking records and therefore requires a university-approved assessment of controller/processor roles, purpose, lawful basis, notice, security, rights handling, disclosure, and retention.
 
-### Computer-Related Crime Act B.E. 2550 (2007), as amended B.E. 2560 (2017), §26
+Official text: [Royal Gazette — Personal Data Protection Act B.E. 2562](https://ratchakitcha.soc.go.th/documents/17082307.pdf)
 
-Section 26 requires **in-scope service providers** to retain computer traffic
-data ≥90 days (up to 2 years on a lawful preservation order) and to retain
-user-identification data.
+### Computer-Related Crime Act B.E. 2550/2560
 
-**Official source:** [MDES — Computer-Related Crime Act](https://www.mdes.go.th/law/detail/3618-)
+Whether the university/operator is an in-scope service provider and whether traffic or identification-data retention obligations apply must be determined by qualified university/legal review. This project does not infer that application booking history satisfies any statutory traffic-data obligation.
 
-**Open:** whether this web app/operator is an in-scope service provider under
-the applicable Ministerial notification is **to be validated** — see trace gap.
+Official reference retained from W2: [MDES — Computer-Related Crime Act](https://www.mdes.go.th/law/detail/3618-)
 
-### Electronic Transactions Act B.E. 2544 (2001), as amended
+### Electronic Transactions Act B.E. 2544, as amended
 
-Recognizes electronic records and conditions for electronic writing/original
-signatures (§9 electronic message approval; §26 reliable electronic signature;
-§27–28 signature-data/certification responsibilities).
+The application produces electronic booking records but does not present an approval or toast as an electronic signature. Any institutional reliance on these records requires separate policy/legal review.
 
-**Official source:** [ETDA — Electronic Transactions Act](https://www.etda.or.th/getattachment/f2c20e25-bcd4-4920-a7b0-b6c350833c43/Electronic-Transactions-Act-B-E-2544-%28Amendment%29.aspx)
+Official source index: [ETDA — Electronic Transactions laws](https://www.etda.or.th/th/Useful-Resource/laws-sharing.aspx)
 
-A normal booking confirmation is **not** an electronic signature and must not
-be presented as one — consistent with the current toast-based confirmation.
+## Review record
 
-## Source and Review Record
-
-| Source | Issuer | Reviewed on | Applicability status |
-|---|---|---|---|
-| PDPA B.E. 2562 (2019) | Ministry of Digital Economy and Society | W2 (2 Sep 2026) | To Be Validated by university data owner |
-| Computer-Related Crime Act B.E. 2550, as amended B.E. 2560 | Ministry of Digital Economy and Society | W2 (2 Sep 2026) | Service-provider scope To Be Validated |
-| Electronic Transactions Act B.E. 2544, as amended | Electronic Transactions Development Agency | W2 (2 Sep 2026) | Not triggered by current scope |
-
-Final approval owner and date: **Pending university/supervisor review**.
+| Item | Status |
+|---|---|
+| Engineering control review | Updated 22 Sep 2026 |
+| University data owner | Not recorded |
+| Legal/supervisor reviewer | Pending |
+| Approved lawful basis and notice | Pending |
+| Approved retention schedule | Pending |
+| Computer-Related Crime Act applicability | Pending |
+| Production security owner | Pending |

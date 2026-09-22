@@ -1,15 +1,25 @@
-# SE Lab PC Booking System · Phase 1 Demo
+# SE Lab PC Booking frontend
 
-A frontend-only demonstration of the student request → advisor approval → dean approval → confirmed booking workflow.
+React 19 and Vite frontend for the Supabase-backed SE Lab PC Booking System.
 
-## Run locally
+## Configure and run
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Open the local URL and choose Student, Advisor, or Dean. The selected role and booking data persist in `localStorage`. Use **Reset demo data** in the profile menu to restore the seeded requests.
+Set these values in `.env.local`:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+```
+
+Only the project URL and publishable key belong in the browser. Never add a Google client secret, Supabase secret key, or `service_role` key to a `VITE_` variable.
+
+The app signs users in through Google OAuth. New users receive the Student role unless their verified email is present in the backend role allowlist. See [../supabase/README.md](../supabase/README.md) for backend setup.
 
 ## Checks
 
@@ -19,13 +29,12 @@ npm test
 npm run build
 ```
 
-## Demo scope
+Backend lifecycle commands are also available here and operate on the repository-root `supabase/` directory:
 
-- Fake role-based login and easy role switching
-- Student dashboard, PC inventory, lab-hours single-day bookings, 24-hour remote multi-day bookings, booking list, and request detail
-- Advisor and dean queues, approval history, approve/reject actions, and required rejection reasons
-- Booking conflict detection across every date in a multi-day request
-- Date-grouped schedule view
-- Mock data covering pending advisor, pending dean, approved, rejected, cancelled, and completed states
-
-This phase intentionally has no Supabase client, database, backend API, migrations, RLS, or real authentication.
+```bash
+npm run supabase:start
+npm run supabase:reset
+npm run supabase:test
+npm run supabase:lint
+npm run supabase:stop
+```

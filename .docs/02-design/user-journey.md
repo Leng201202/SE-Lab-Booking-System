@@ -1,33 +1,43 @@
-# User journeys — SE Lab Booking
+# User journeys — SE Lab PC Booking System
 
-## Journey 1 — Student submits a booking request
+## Journey 1 — First Google sign-in
 
-1. Opens the demo and selects the Student role.
-2. Reviews the dashboard and available PCs.
-3. Opens the booking form, selects a PC, date, time, course, and purpose.
-4. Submits the request and sees `Pending Advisor`.
-5. Opens the request later to follow Advisor and Dean decisions.
+1. User opens the application and chooses Continue with Google.
+2. Supabase completes OAuth and creates a trusted profile.
+3. A new user receives the Student role unless their verified email is allowlisted.
+4. The app restores the session and loads only records allowed by RLS.
+5. A Student without an assigned Advisor can inspect the system but receives an actionable error if they try to submit a request.
 
-## Journey 2 — Advisor reviews a request
+## Journey 2 — Student requests a PC
 
-1. Selects the Advisor role from the demo login screen.
-2. Opens Pending requests and reviews the student, PC, dates, purpose, and course.
-3. Approves a valid request, forwarding it to the Dean, or rejects it with a reason.
+1. Student reviews PC inventory or the availability calendar.
+2. Student chooses an available one-day lab interval or a multi-day date range.
+3. The form collects PC, dates/times, purpose, and optional course/project.
+4. The database validates identity, Advisor assignment, PC state, interval, purpose, and overlap.
+5. A valid request is created as pending Advisor.
+6. Student sees the request detail and approval progress.
 
-## Journey 3 — Dean gives final approval
+## Journey 3 — Advisor reviews
 
-1. Selects the Dean role.
-2. Opens requests already approved by an Advisor.
-3. Approves the request to confirm it, or rejects it with a required reason.
+1. Advisor signs in with an allowlisted Google account.
+2. Advisor opens requests for assigned Students.
+3. Advisor inspects Student, PC, dates, purpose, and course.
+4. Approval moves the request to pending Dean and writes an audit event.
+5. Rejection requires a reason, closes the request, and writes an audit event.
 
-## Journey 4 — Student handles a rejected or cancelled request
+## Journey 4 — Dean gives the final decision
 
-1. Opens My bookings and checks the decision reason.
-2. Cancels an eligible request when the plan changes.
-3. Submits a new request with the corrected details.
+1. Dean signs in with an allowlisted Google account.
+2. Dean sees only requests that passed Advisor review.
+3. Dean approves the booking or rejects it with a reason.
+4. The transaction updates the booking and writes the Dean audit event.
+5. Student sees the final state on the next authoritative refresh.
 
-The demo does not yet provide in-place editing or rebooking.
+## Journey 5 — Another user checks availability
 
-> TODO (team): once ≥5 interviews are in, replace/extend these journeys
-> with ones that match what real users actually described, and note which
-> user-research row each journey is drawn from.
+1. Authenticated user opens the week or day calendar.
+2. Occupied periods show PC, access mode, and status.
+3. Unrelated Student identity, university ID, purpose, course, and rejection data remain hidden.
+4. If a Student submits against a newly occupied interval, the database rejects the race safely.
+
+Cancellation, rebooking, notifications, and administrative management screens are not part of the current journeys.

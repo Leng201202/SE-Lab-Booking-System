@@ -1,8 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
+import { Card } from '../components/ui/Card'
 import { ApprovalHistoryPage, PendingRequestsPage } from '../features/approvals/ApprovalListPage'
-import { LoginPage } from '../features/auth/LoginPage'
+import { AuthCallbackPage, LoginPage } from '../features/auth/LoginPage'
 import { ProfilePage } from '../features/auth/ProfilePage'
 import { BookingDetailPage } from '../features/bookings/BookingDetailPage'
 import { BookingFormPage } from '../features/bookings/BookingFormPage'
@@ -13,8 +14,21 @@ import { PcListPage } from '../features/pcs/PcListPage'
 import { useApp } from './AppContext'
 
 function RequireSession() {
-  const { user } = useApp()
+  const { user, authReady, workspaceLoading, appError, logout } = useApp()
+  if (!authReady || workspaceLoading) return <FullPageStatus message="Loading your secure workspace…" />
+  if (appError && !user) return <FullPageStatus message={appError} action={logout} />
   return user ? <AppShell /> : <Navigate to="/login" replace />
+}
+
+function FullPageStatus({ message, action }) {
+  return (
+    <main className="grid min-h-screen place-items-center bg-[#f5f8f5] p-4">
+      <Card className="max-w-lg p-6 text-center">
+        <p className="text-sm leading-6 text-slate-600">{message}</p>
+        {action && <button className="mt-4 text-sm font-semibold text-mfu-700" onClick={action}>Return to sign in</button>}
+      </Card>
+    </main>
+  )
 }
 
 function StudentOnly({ children }) {
@@ -28,12 +42,14 @@ function ReviewerOnly({ children }) {
 }
 
 function LoginRoute() {
-  const { user } = useApp()
+  const { user, authReady } = useApp()
+  if (!authReady) return <FullPageStatus message="Checking your session…" />
   return user ? <Navigate to="/dashboard" replace /> : <LoginPage />
 }
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginRoute /> },
+  { path: '/auth/callback', element: <AuthCallbackPage /> },
   {
     element: <RequireSession />,
     children: [

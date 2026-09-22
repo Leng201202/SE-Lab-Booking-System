@@ -11,7 +11,7 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
           <Link key={booking.id} to={`/bookings/${booking.id}`} className="block p-4 transition active:bg-slate-50">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-400">{booking.id}</p>
+                <p className="truncate text-xs font-semibold text-slate-400">{booking.requestNumber}</p>
                 <p className="mt-1 text-lg font-bold text-mfu-700">{booking.pcId}</p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
@@ -63,7 +63,7 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
         <tbody className="divide-y divide-slate-100">
           {bookings.map((booking) => (
             <tr key={booking.id} className="transition hover:bg-slate-50/70">
-              <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-900">{booking.id}</td>
+              <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-900">{booking.requestNumber}</td>
               {showStudent && (
                 <td className="px-5 py-4">
                   <p className="font-medium text-slate-800">{booking.studentName}</p>
@@ -79,7 +79,7 @@ export function BookingTable({ bookings, showStudent = false, showAdvisor = fals
               <td className="max-w-56 truncate px-5 py-4 text-slate-600">{booking.purpose}</td>
               <td className="px-5 py-4"><StatusBadge status={booking.status} /></td>
               <td className="px-3 py-4">
-                <Link to={`/bookings/${booking.id}`} className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-mfu-50 hover:text-mfu-700" aria-label={`Open ${booking.id}`}>
+                <Link to={`/bookings/${booking.id}`} className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-mfu-50 hover:text-mfu-700" aria-label={`Open ${booking.requestNumber}`}>
                   <ChevronRight size={18} />
                 </Link>
               </td>

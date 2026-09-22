@@ -1,26 +1,21 @@
 import assert from 'node:assert/strict'
-import { beforeEach, test } from 'node:test'
-import { demoUsers } from '../../data/mockUsers.js'
-import { mockPcs } from '../../data/mockPcs.js'
-import { bookingOccursOnDate, formatBookingDateRange, formatBookingTime, isBookingConflict } from '../../utils/booking.js'
+import { test } from 'node:test'
+import { mapBookingRow, mapCalendarRow } from './bookingService.js'
+import {
+  bookingOccursOnDate,
+  formatBookingDateRange,
+  formatBookingTime,
+  getBangkokDateKey,
+  isBookingConflict,
+} from '../../utils/booking.js'
 
-const memory = new Map()
-globalThis.localStorage = {
-  getItem: (key) => memory.get(key) ?? null,
-  setItem: (key, value) => memory.set(key, value),
-  removeItem: (key) => memory.delete(key),
-}
-
-const service = await import('./bookingService.js')
-
-beforeEach(() => {
-  memory.clear()
-  service.resetDemoBookings()
-})
-
-test('rejects an overlapping active booking interval', () => {
+test('detects overlap only for active booking statuses', () => {
+  const bookings = [
+    { pcId: 'PC-03', startDate: '2026-09-20', endDate: '2026-09-20', startTime: '10:00', endTime: '12:00', status: 'approved' },
+    { pcId: 'PC-03', startDate: '2026-09-21', endDate: '2026-09-21', startTime: '10:00', endTime: '12:00', status: 'rejected' },
+  ]
   assert.equal(
-    isBookingConflict(service.getBookings(), {
+    isBookingConflict(bookings, {
       pcId: 'PC-03',
       date: '2026-09-20',
       startTime: '10:30',
@@ -29,72 +24,40 @@ test('rejects an overlapping active booking interval', () => {
     true,
   )
   assert.equal(
-    isBookingConflict(service.getBookings(), {
+    isBookingConflict(bookings, {
       pcId: 'PC-03',
-      date: '2026-09-20',
-      startTime: '12:00',
-      endTime: '13:00',
+      date: '2026-09-21',
+      startTime: '10:30',
+      endTime: '11:30',
     }),
     false,
   )
-  assert.equal(
-    isBookingConflict(service.getBookings(), {
-      pcId: 'PC-03',
-      startDate: '2026-09-15',
-      endDate: '2026-10-02',
-      startTime: '11:00',
-      endTime: '11:30',
-    }),
-    true,
-  )
 })
 
-test('service blocks conflicts, invalid times, and maintenance PCs', () => {
-  const common = {
-    pcId: 'PC-03',
-    date: '2026-09-20',
-    startTime: '10:30',
-    endTime: '11:30',
-    purpose: 'Service validation test',
+test('maps a database booking to the existing page contract', () => {
+  const booking = mapBookingRow({
+    id: '8bce9953-74ac-4e60-878c-f6f7e489f380',
+    request_number: 'REQ-2026-000001',
+    student_id: 'student-uuid',
+    advisor_id: 'advisor-uuid',
+    pc_id: 'pc-uuid',
+    start_date: '2026-09-24',
+    end_date: '2026-10-02',
+    start_time: '00:00:00',
+    end_time: '24:00:00',
+    access_mode: 'remote',
+    purpose: 'Automated workflow test',
     course: 'SE Demo',
-  }
-  assert.throws(
-    () => service.createBooking(common, demoUsers.student, mockPcs.find((pc) => pc.id === 'PC-03')),
-    /unavailable/,
-  )
-  assert.throws(
-    () => service.createBooking({ ...common, pcId: 'PC-06', startTime: '12:00', endTime: '11:00' }, demoUsers.student, mockPcs.find((pc) => pc.id === 'PC-06')),
-    /start time/,
-  )
-  assert.throws(
-    () => service.createBooking({ ...common, pcId: 'PC-06', date: '2026-09-25', startTime: '07:00', endTime: '09:00' }, demoUsers.student, mockPcs.find((pc) => pc.id === 'PC-06')),
-    /lab hours/,
-  )
-  assert.throws(
-    () => service.createBooking({ ...common, pcId: 'PC-06', date: '2026-09-25', startTime: '17:00', endTime: '19:00' }, demoUsers.student, mockPcs.find((pc) => pc.id === 'PC-06')),
-    /lab hours/,
-  )
-  assert.throws(
-    () => service.createBooking({ ...common, pcId: 'PC-04', date: '2026-09-25' }, demoUsers.student, mockPcs.find((pc) => pc.id === 'PC-04')),
-    /not available/,
-  )
-})
+    created_at: '2026-09-22T01:00:00Z',
+    status: 'pending_advisor',
+    advisor_decision: 'pending',
+    dean_decision: 'waiting',
+    student: { display_name: 'Student One', university_id: '65315000' },
+    advisor: { display_name: 'Advisor One' },
+    pc: { code: 'PC-06', room: 'SE Lab B · 402' },
+  })
 
-test('moves a new request through advisor and dean approval', () => {
-  const booking = service.createBooking(
-    {
-      pcId: 'PC-06',
-      startDate: '2026-09-24',
-      endDate: '2026-10-02',
-      startTime: '09:00',
-      endTime: '11:00',
-      purpose: 'Automated workflow test',
-      course: 'SE Demo',
-    },
-    demoUsers.student,
-    mockPcs.find((pc) => pc.id === 'PC-06'),
-  )
-
+  assert.equal(booking.requestNumber, 'REQ-2026-000001')
   assert.equal(booking.status, 'pending_advisor')
   assert.equal(booking.accessMode, 'remote')
   assert.equal(booking.startTime, '00:00')
@@ -103,30 +66,30 @@ test('moves a new request through advisor and dean approval', () => {
   assert.equal(formatBookingDateRange(booking), '24 Sep–2 Oct 2026')
   assert.equal(bookingOccursOnDate(booking, '2026-09-30'), true)
   assert.equal(bookingOccursOnDate(booking, '2026-10-03'), false)
-  service.approveAsAdvisor(booking.id)
-  assert.equal(service.getBookings().find((item) => item.id === booking.id).status, 'pending_dean')
-  service.approveAsDean(booking.id)
-  assert.equal(service.getBookings().find((item) => item.id === booking.id).status, 'approved')
 })
 
-test('advisor rejection records a required reason', () => {
-  service.rejectAsAdvisor('REQ-2026-001', 'Course information needs correction.')
-  const booking = service.getBookings().find((item) => item.id === 'REQ-2026-001')
-  assert.equal(booking.status, 'rejected')
-  assert.equal(booking.rejectedBy, 'advisor')
-  assert.equal(booking.rejectionReason, 'Course information needs correction.')
+test('maps sanitized calendar rows without private student data', () => {
+  const booking = mapCalendarRow({
+    id: 'booking-uuid',
+    request_number: 'REQ-2026-000002',
+    pc_id: 'pc-uuid',
+    pc_code: 'PC-02',
+    start_date: '2026-09-28',
+    end_date: '2026-09-28',
+    start_time: '09:15:00',
+    end_time: '10:30:00',
+    access_mode: 'lab',
+    status: 'approved',
+    is_own: false,
+    can_view_details: false,
+  })
+
+  assert.equal(booking.pcId, 'PC-02')
+  assert.equal(booking.startTime, '09:15')
+  assert.equal(booking.canViewDetails, false)
+  assert.equal('studentName' in booking, false)
 })
 
-test('dean rejection records the final reviewer and reason', () => {
-  service.rejectAsDean('REQ-2026-002', 'The lab is reserved for an examination.')
-  const booking = service.getBookings().find((item) => item.id === 'REQ-2026-002')
-  assert.equal(booking.status, 'rejected')
-  assert.equal(booking.rejectedBy, 'dean')
-  assert.equal(booking.rejectionReason, 'The lab is reserved for an examination.')
-})
-
-test('service refuses invalid approval transitions and blank rejection reasons', () => {
-  assert.throws(() => service.approveAsDean('REQ-2026-001'), /pending dean review/)
-  assert.throws(() => service.approveAsAdvisor('REQ-2026-002'), /pending advisor review/)
-  assert.throws(() => service.rejectAsAdvisor('REQ-2026-001', '  '), /reason is required/)
+test('uses the Bangkok calendar date at UTC day boundaries', () => {
+  assert.equal(getBangkokDateKey('2026-09-21T18:30:00.000Z'), '2026-09-22')
 })

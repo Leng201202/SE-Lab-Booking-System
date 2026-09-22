@@ -9,14 +9,13 @@ import {
   MonitorUp,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { format } from 'date-fns'
 import { useApp } from '../../app/AppContext'
 import { BookingTable } from '../../components/ui/BookingTable'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader, StatCard } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { StatusBadge } from '../../components/ui/StatusBadge'
-import { formatBookingDateRange, formatBookingTime } from '../../utils/booking'
+import { formatBookingDateRange, formatBookingTime, getBangkokDateKey } from '../../utils/booking'
 
 function SectionTitle({ title, link, linkLabel = 'View all' }) {
   return (
@@ -31,7 +30,10 @@ function StudentDashboard() {
   const { user, bookings } = useApp()
   const mine = bookings.filter((booking) => booking.studentId === user.id)
   const count = (status) => mine.filter((booking) => booking.status === status).length
-  const upcoming = mine.find((booking) => booking.status === 'approved')
+  const today = getBangkokDateKey()
+  const upcoming = mine
+    .filter((booking) => booking.status === 'approved' && booking.endDate >= today)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
 
   return (
     <div className="space-y-6">
@@ -77,8 +79,10 @@ function ReviewerDashboard({ role }) {
   const isAdvisor = role === 'advisor'
   const pendingStatus = isAdvisor ? 'pending_advisor' : 'pending_dean'
   const pending = bookings.filter((booking) => booking.status === pendingStatus)
-  const today = format(new Date(), 'yyyy-MM-dd')
-  const approved = bookings.filter((booking) => isAdvisor ? booking.advisorDecisionAt?.startsWith(today) : booking.deanDecision === 'approved')
+  const today = getBangkokDateKey()
+  const approved = bookings.filter((booking) => isAdvisor
+    ? booking.advisorDecisionAt && getBangkokDateKey(booking.advisorDecisionAt) === today
+    : booking.deanDecision === 'approved')
   const rejected = bookings.filter((booking) => booking.rejectedBy === role)
 
   return (

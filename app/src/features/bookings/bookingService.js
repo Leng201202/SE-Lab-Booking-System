@@ -1,138 +1,130 @@
-import { mockBookings } from '../../data/mockBookings.js'
-import { isBookingConflict } from '../../utils/booking.js'
+import { requireSupabase } from '../../lib/supabase.js'
 
-const STORAGE_KEY = 'se-lab-demo-bookings-v1'
-
-function persist(bookings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings))
-  return bookings
+function shortTime(value, fallback = '') {
+  return value ? String(value).slice(0, 5) : fallback
 }
 
-export function getBookings() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) return JSON.parse(saved)
-  } catch {
-    // Invalid local demo data is safely replaced by the seed set.
+export function mapBookingRow(row) {
+  return {
+    id: row.id,
+    requestNumber: row.request_number,
+    studentId: row.student_id,
+    studentName: row.student?.display_name || 'Unknown student',
+    studentNumber: row.student?.university_id || 'Not provided',
+    advisorId: row.advisor_id,
+    advisorName: row.advisor?.display_name || 'Unassigned advisor',
+    pcDatabaseId: row.pc_id,
+    pcId: row.pc?.code || row.pc_code,
+    room: row.pc?.room || '',
+    startDate: row.start_date,
+    endDate: row.end_date,
+    accessMode: row.access_mode,
+    startTime: shortTime(row.start_time, '00:00'),
+    endTime: row.access_mode === 'remote' ? '24:00' : shortTime(row.end_time, '24:00'),
+    purpose: row.purpose,
+    course: row.course,
+    requestedAt: row.created_at,
+    status: row.status,
+    advisorDecision: row.advisor_decision,
+    advisorDecisionAt: row.advisor_decision_at,
+    deanDecision: row.dean_decision,
+    deanDecisionAt: row.dean_decision_at,
+    rejectionReason: row.rejection_reason,
+    rejectedBy: row.rejected_by,
   }
-  return persist(mockBookings)
 }
 
-export function createBooking(input, student, pc) {
-  const bookings = getBookings()
-  const startDate = input.startDate || input.date
-  const endDate = input.endDate || input.startDate || input.date
-  const isMultiDay = startDate && endDate && startDate !== endDate
-  const startTime = isMultiDay ? '00:00' : input.startTime
-  const endTime = isMultiDay ? '24:00' : input.endTime
-  if (!pc) throw new Error('The selected PC could not be found.')
-  if (pc.status === 'Maintenance' || pc.status === 'Inactive') {
-    throw new Error('The selected PC is not available for booking.')
+export function mapCalendarRow(row) {
+  return {
+    id: row.id,
+    requestNumber: row.request_number,
+    pcDatabaseId: row.pc_id,
+    pcId: row.pc_code,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    startTime: shortTime(row.start_time, '00:00'),
+    endTime: row.access_mode === 'remote' ? '24:00' : shortTime(row.end_time, '24:00'),
+    accessMode: row.access_mode,
+    status: row.status,
+    isOwn: row.is_own,
+    canViewDetails: row.can_view_details,
   }
-  if (!startDate || !endDate || startDate > endDate) {
-    throw new Error('The booking end date must be on or after the start date.')
-  }
-  if (!isMultiDay && (!startTime || !endTime || startTime >= endTime)) {
-    throw new Error('The booking start time must be before the end time.')
-  }
-  if (!isMultiDay && (startTime < '08:00' || endTime > '18:00')) {
-    throw new Error('One-day bookings must be within lab hours, 08:00–18:00.')
-  }
-  if (isBookingConflict(bookings, { ...input, startDate, endDate, startTime, endTime })) {
-    throw new Error(isMultiDay ? 'This PC is unavailable for part of the selected date range.' : 'This PC is unavailable during the selected time.')
-  }
-  const booking = {
-    id: `REQ-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`,
-    studentId: student.id,
-    studentName: student.name,
-    studentNumber: student.studentId,
-    advisorName: student.advisor,
-    pcId: pc.id,
-    room: pc.room,
-    startDate,
-    endDate,
-    accessMode: isMultiDay ? 'remote' : 'lab',
-    startTime,
-    endTime,
-    purpose: input.purpose.trim(),
-    course: input.course?.trim() || 'Not specified',
-    requestedAt: new Date().toISOString(),
-    status: 'pending_advisor',
-    advisorDecision: 'pending',
-    deanDecision: 'waiting',
-  }
-  persist([booking, ...bookings])
-  return booking
 }
 
-function updateBooking(id, updater) {
-  let updated
-  const next = getBookings().map((booking) => {
-    if (booking.id !== id) return booking
-    updated = updater(booking)
-    return updated
+const bookingSelect = `
+  id,
+  request_number,
+  student_id,
+  advisor_id,
+  pc_id,
+  start_date,
+  end_date,
+  start_time,
+  end_time,
+  access_mode,
+  purpose,
+  course,
+  created_at,
+  status,
+  advisor_decision,
+  advisor_decision_at,
+  dean_decision,
+  dean_decision_at,
+  rejection_reason,
+  rejected_by,
+  student:profiles!bookings_student_id_fkey(display_name, university_id),
+  advisor:profiles!bookings_advisor_id_fkey(display_name),
+  pc:pcs!bookings_pc_id_fkey(code, room)
+`
+
+export async function getBookings() {
+  const { data, error } = await requireSupabase()
+    .from('bookings')
+    .select(bookingSelect)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data.map(mapBookingRow)
+}
+
+export async function getCalendarBookings(startDate, endDate) {
+  const { data, error } = await requireSupabase().rpc('get_booking_calendar', {
+    p_from: startDate,
+    p_to: endDate,
   })
-  if (!updated) throw new Error(`Booking ${id} was not found.`)
-  persist(next)
-  return updated
+
+  if (error) throw error
+  return data.map(mapCalendarRow)
 }
 
-export function approveAsAdvisor(id) {
-  return updateBooking(id, (booking) => {
-    if (booking.status !== 'pending_advisor') throw new Error('Only requests pending advisor review can be approved by an advisor.')
-    return {
-      ...booking,
-      status: 'pending_dean',
-      advisorDecision: 'approved',
-      advisorDecisionAt: new Date().toISOString(),
-      deanDecision: 'pending',
-    }
+export async function createBooking(input, pc) {
+  if (!pc?.databaseId) throw new Error('The selected PC could not be found.')
+
+  const { data, error } = await requireSupabase().rpc('create_booking', {
+    p_pc_id: pc.databaseId,
+    p_start_date: input.startDate,
+    p_end_date: input.endDate,
+    p_start_time: input.startTime || null,
+    p_end_time: input.endTime || null,
+    p_purpose: input.purpose,
+    p_course: input.course || null,
   })
+
+  if (error) throw new Error(error.message)
+  return data
 }
 
-export function rejectAsAdvisor(id, reason) {
-  if (!reason?.trim()) throw new Error('A rejection reason is required.')
-  return updateBooking(id, (booking) => {
-    if (booking.status !== 'pending_advisor') throw new Error('Only requests pending advisor review can be rejected by an advisor.')
-    return {
-      ...booking,
-      status: 'rejected',
-      advisorDecision: 'rejected',
-      advisorDecisionAt: new Date().toISOString(),
-      deanDecision: 'not_required',
-      rejectionReason: reason.trim(),
-      rejectedBy: 'advisor',
-    }
+export async function approveBooking(id) {
+  const { data, error } = await requireSupabase().rpc('approve_booking', { p_booking_id: id })
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function rejectBooking(id, reason) {
+  const { data, error } = await requireSupabase().rpc('reject_booking', {
+    p_booking_id: id,
+    p_reason: reason,
   })
-}
-
-export function approveAsDean(id) {
-  return updateBooking(id, (booking) => {
-    if (booking.status !== 'pending_dean') throw new Error('Only requests pending dean review can receive final approval.')
-    return {
-      ...booking,
-      status: 'approved',
-      deanDecision: 'approved',
-      deanDecisionAt: new Date().toISOString(),
-    }
-  })
-}
-
-export function rejectAsDean(id, reason) {
-  if (!reason?.trim()) throw new Error('A rejection reason is required.')
-  return updateBooking(id, (booking) => {
-    if (booking.status !== 'pending_dean') throw new Error('Only requests pending dean review can be rejected by the dean.')
-    return {
-      ...booking,
-      status: 'rejected',
-      deanDecision: 'rejected',
-      deanDecisionAt: new Date().toISOString(),
-      rejectionReason: reason.trim(),
-      rejectedBy: 'dean',
-    }
-  })
-}
-
-export function resetDemoBookings() {
-  return persist(mockBookings)
+  if (error) throw new Error(error.message)
+  return data
 }

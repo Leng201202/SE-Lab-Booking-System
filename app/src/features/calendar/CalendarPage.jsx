@@ -19,15 +19,19 @@ import {
   isToday,
   startOfWeek,
 } from 'date-fns'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
-import { mockPcs } from '../../data/mockPcs'
-import { bookingOccursOnDate, formatBookingTime, getBookingTimeBounds } from '../../utils/booking'
+import {
+  BLOCKING_BOOKING_STATUSES,
+  bookingOccursOnDate,
+  formatBookingTime,
+  getBangkokDateKey,
+  getBookingTimeBounds,
+} from '../../utils/booking'
 
-const BLOCKING_STATUSES = ['pending_advisor', 'pending_dean', 'approved']
 const LAB_OPEN_MINUTES = 8 * 60
 const LAB_CLOSE_MINUTES = 18 * 60
 const LAB_DURATION = LAB_CLOSE_MINUTES - LAB_OPEN_MINUTES
@@ -61,7 +65,7 @@ function getActiveBookings(bookings, pcId, date) {
       (booking) =>
         booking.pcId === pcId &&
         bookingOccursOnDate(booking, dateKey) &&
-        BLOCKING_STATUSES.includes(booking.status),
+        BLOCKING_BOOKING_STATUSES.includes(booking.status),
     )
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
 }
@@ -82,6 +86,13 @@ function overlapsBooking(activeBookings, startMinutes, endMinutes) {
     const bounds = getBookingTimeBounds(booking)
     return startMinutes < timeToMinutes(bounds.endTime) && endMinutes > timeToMinutes(bounds.startTime)
   })
+}
+
+function hasAvailableLabSlot(activeBookings) {
+  return Array.from({ length: TIMELINE_SLOT_COUNT }, (_, slotIndex) => {
+    const start = LAB_OPEN_MINUTES + slotIndex * TIMELINE_SLOT_MINUTES
+    return !overlapsBooking(activeBookings, start, start + TIMELINE_SLOT_MINUTES)
+  }).some(Boolean)
 }
 
 function clamp(value, minimum, maximum) {
@@ -176,13 +187,14 @@ function BookingContent({ booking }) {
   )
 }
 
-function AvailabilityCell({ pc, date, bookings, canOpenAll, userId, canBook, onChooseTime }) {
-  if (pc.status === 'Maintenance') {
+function AvailabilityCell({ pc, date, bookings, canBook, onChooseTime }) {
+  if (pc.status !== 'Available') {
+    const isMaintenance = pc.status === 'Maintenance'
     return (
-      <div className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-red-100 bg-red-50/70 px-2 text-center">
-        <ShieldAlert size={17} className="text-red-500" />
-        <span className="mt-1.5 text-xs font-bold text-red-700">Maintenance</span>
-        <span className="mt-0.5 text-[10px] text-red-500">Unavailable</span>
+      <div className={`flex min-h-20 flex-col items-center justify-center rounded-lg border px-2 text-center ${isMaintenance ? 'border-red-100 bg-red-50/70' : 'border-slate-200 bg-slate-100/80'}`}>
+        <ShieldAlert size={17} className={isMaintenance ? 'text-red-500' : 'text-slate-500'} />
+        <span className={`mt-1.5 text-xs font-bold ${isMaintenance ? 'text-red-700' : 'text-slate-700'}`}>{pc.status}</span>
+        <span className={`mt-0.5 text-[10px] ${isMaintenance ? 'text-red-500' : 'text-slate-500'}`}>Unavailable</span>
       </div>
     )
   }
@@ -205,11 +217,14 @@ function AvailabilityCell({ pc, date, bookings, canOpenAll, userId, canBook, onC
     )
   }
 
+  const hasOpenTime = hasAvailableLabSlot(activeBookings)
+  const canChooseTime = canBook && hasOpenTime
+
   return (
     <div className="min-h-20 space-y-1.5">
       {activeBookings.map((booking) => {
         const style = BOOKING_STYLES[booking.status]
-        const canOpen = canOpenAll || booking.studentId === userId
+        const canOpen = booking.canViewDetails
         return canOpen ? (
           <Link key={booking.id} to={`/bookings/${booking.id}`} className={`block rounded-lg border p-2 text-[11px] transition ${style.className}`} title={`Open ${booking.id}`}>
             <BookingContent booking={booking} />
@@ -220,18 +235,18 @@ function AvailabilityCell({ pc, date, bookings, canOpenAll, userId, canBook, onC
           </div>
         )
       })}
-      {canBook ? (
+      {canChooseTime ? (
         <button onClick={onChooseTime} className="flex w-full items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] font-bold text-mfu-700 transition hover:bg-mfu-50 focus-visible:outline-2 focus-visible:outline-mfu-600">
           Choose another time <ArrowRight size={11} />
         </button>
       ) : (
-        <p className="px-1 pt-1 text-center text-[10px] font-medium text-emerald-600">Available at other times</p>
+        <p className={`px-1 pt-1 text-center text-[10px] font-medium ${hasOpenTime ? 'text-emerald-600' : 'text-slate-500'}`}>{hasOpenTime ? 'Available at other times' : 'No open lab time'}</p>
       )}
     </div>
   )
 }
 
-function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline, canBook }) {
+function WeekView({ weekDays, bookings, pcs, openTimeline, canBook }) {
   return (
     <div className="overflow-x-auto overscroll-x-contain">
       <table className="w-full min-w-[960px] border-separate border-spacing-0 text-left sm:min-w-[1120px]">
@@ -250,7 +265,7 @@ function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline, canBoo
           </tr>
         </thead>
         <tbody>
-          {mockPcs.map((pc) => (
+          {pcs.map((pc) => (
             <tr key={pc.id}>
               <th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-3 py-4 align-top sm:px-5"><PcLabel pc={pc} /></th>
               {weekDays.map((day) => (
@@ -259,9 +274,7 @@ function WeekView({ weekDays, bookings, canOpenAll, userId, openTimeline, canBoo
                     pc={pc}
                     date={day}
                     bookings={bookings}
-                    canOpenAll={canOpenAll}
-                    userId={userId}
-                    canBook={canBook && format(day, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')}
+                    canBook={canBook && format(day, 'yyyy-MM-dd') >= getBangkokDateKey()}
                     onChooseTime={() => openTimeline(day, pc.id)}
                   />
                 </td>
@@ -387,7 +400,7 @@ function TimelineSelection({ selection, date, activeBookings, onChange }) {
   )
 }
 
-function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, onSelect }) {
+function TimelineView({ date, bookings, pcs, canBook, selection, onSelect }) {
   const createDrag = useRef(null)
 
   const startSlotSelection = (event, pcId, slotIndex, activeBookings) => {
@@ -442,8 +455,8 @@ function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, 
   return (
     <div className="flex w-full bg-white">
       <div className="w-28 shrink-0 border-r border-slate-200 bg-white sm:w-48">
-        <div className="flex h-12 items-center border-b border-slate-200 bg-slate-50 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:px-4 sm:text-xs"><span className="sm:hidden">PCs</span><span className="hidden sm:inline">Workstations</span> <span className="ml-1 text-slate-400">({mockPcs.length})</span></div>
-        {mockPcs.map((pc) => (
+        <div className="flex h-12 items-center border-b border-slate-200 bg-slate-50 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:px-4 sm:text-xs"><span className="sm:hidden">PCs</span><span className="hidden sm:inline">Workstations</span> <span className="ml-1 text-slate-400">({pcs.length})</span></div>
+        {pcs.map((pc) => (
           <div key={pc.id} className="flex items-center border-b border-slate-100 px-2 sm:px-4" style={{ height: `${TIMELINE_ROW_HEIGHT}px` }}>
             <PcLabel pc={pc} />
           </div>
@@ -460,7 +473,7 @@ function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, 
             ))}
           </div>
 
-          {mockPcs.map((pc) => {
+          {pcs.map((pc) => {
             const activeBookings = getActiveBookings(bookings, pc.id, date)
             const isSelectedPc = selection?.pcId === pc.id
             return (
@@ -476,8 +489,8 @@ function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, 
                   backgroundSize: '10% 100%',
                 }}
               >
-                {pc.status === 'Maintenance' ? (
-                  <div className="mx-2 my-2.5 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700" style={{ gridColumn: '1 / -1', gridRow: '1' }}><ShieldAlert size={15} />Maintenance · unavailable all day</div>
+                {pc.status !== 'Available' ? (
+                  <div className={`mx-2 my-2.5 flex items-center gap-2 rounded-lg border px-3 text-xs font-semibold ${pc.status === 'Maintenance' ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-100 text-slate-700'}`} style={{ gridColumn: '1 / -1', gridRow: '1' }}><ShieldAlert size={15} />{pc.status} · unavailable all day</div>
                 ) : (
                   <>
                     {canBook && Array.from({ length: TIMELINE_SLOT_COUNT }, (_, slotIndex) => {
@@ -503,7 +516,7 @@ function TimelineView({ date, bookings, canOpenAll, userId, canBook, selection, 
                     {isSelectedPc && (
                       <TimelineSelection selection={selection} date={date} activeBookings={activeBookings} onChange={onSelect} />
                     )}
-                    {activeBookings.map((booking) => <TimelineBlock key={booking.id} booking={booking} canOpen={canOpenAll || booking.studentId === userId} />)}
+                    {activeBookings.map((booking) => <TimelineBlock key={booking.id} booking={booking} canOpen={booking.canViewDetails} />)}
                   </>
                 )}
               </div>
@@ -544,18 +557,26 @@ function CalendarLegend() {
 }
 
 export function CalendarPage() {
-  const { user, bookings } = useApp()
+  const { user, calendarBookings: bookings, pcs, refreshCalendar } = useApp()
   const [view, setView] = useState('week')
   const [anchorDate, setAnchorDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [selection, setSelection] = useState(null)
   const [preferredPcId, setPreferredPcId] = useState(null)
+  const [calendarError, setCalendarError] = useState('')
   const weekDays = useMemo(() => {
     const start = startOfWeek(anchorDate, { weekStartsOn: 1 })
     return eachDayOfInterval({ start, end: endOfWeek(start, { weekStartsOn: 1 }) })
   }, [anchorDate])
-  const canOpenAll = user.role === 'advisor' || user.role === 'dean'
-  const canBook = user.role === 'student' && format(selectedDate, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')
+  const canBook = user.role === 'student' && format(selectedDate, 'yyyy-MM-dd') >= getBangkokDateKey()
+
+  useEffect(() => {
+    const rangeStart = view === 'week' ? weekDays[0] : selectedDate
+    const rangeEnd = view === 'week' ? weekDays[weekDays.length - 1] : selectedDate
+    refreshCalendar(format(rangeStart, 'yyyy-MM-dd'), format(rangeEnd, 'yyyy-MM-dd'))
+      .then(() => setCalendarError(''))
+      .catch((error) => setCalendarError(error.message))
+  }, [refreshCalendar, selectedDate, view, weekDays])
 
   const changeView = (nextView) => {
     if (nextView === 'week') setAnchorDate(selectedDate)
@@ -603,6 +624,7 @@ export function CalendarPage() {
       />
 
       <Card className="overflow-hidden shadow-sm">
+        {calendarError && <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{calendarError}</div>}
         <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="flex items-center gap-3">
             <span className="grid size-9 place-items-center rounded-lg bg-mfu-50 text-mfu-700"><CalendarDays size={17} /></span>
@@ -643,9 +665,9 @@ export function CalendarPage() {
         )}
 
         {view === 'week' ? (
-          <WeekView weekDays={weekDays} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} openTimeline={openTimeline} canBook={user.role === 'student'} />
+          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} canBook={user.role === 'student'} />
         ) : (
-          <TimelineView date={selectedDate} bookings={bookings} canOpenAll={canOpenAll} userId={user.id} canBook={canBook} selection={selection} onSelect={setSelection} />
+          <TimelineView date={selectedDate} bookings={bookings} pcs={pcs} canBook={canBook} selection={selection} onSelect={setSelection} />
         )}
 
         <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-[11px] leading-5 text-slate-500 sm:px-5">

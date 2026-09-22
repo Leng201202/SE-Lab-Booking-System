@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { ArrowLeft, CalendarDays, Clock3, Info, Monitor, Wifi } from 'lucide-react'
-import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
@@ -9,14 +8,13 @@ import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
 import { Field, Input, Select, Textarea } from '../../components/ui/FormFields'
-import { mockPcs } from '../../data/mockPcs'
-import { isBookingConflict } from '../../utils/booking'
+import { getBangkokDateKey } from '../../utils/booking'
 
 const bookingSchema = z
   .object({
     pcId: z.string().min(1, 'Please select a PC.'),
     startDate: z.string().min(1, 'Start date is required.').refine(
-      (date) => !date || date >= format(new Date(), 'yyyy-MM-dd'),
+      (date) => !date || date >= getBangkokDateKey(),
       'Past booking dates are not allowed.',
     ),
     endDate: z.string().min(1, 'End date is required.'),
@@ -46,14 +44,14 @@ const bookingSchema = z
   })
 
 export function BookingFormPage() {
-  const { bookings, createBooking } = useApp()
+  const { createBooking, pcs } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const requestedPc = mockPcs.find((pc) => pc.id === searchParams.get('pc') && pc.status !== 'Maintenance') || null
+  const requestedPc = pcs.find((pc) => pc.id === searchParams.get('pc') && pc.status === 'Available') || null
   const requestedDate = searchParams.get('date')
   const requestedStart = searchParams.get('start')
   const requestedEnd = searchParams.get('end')
-  const today = format(new Date(), 'yyyy-MM-dd')
+  const today = getBangkokDateKey()
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate || '') && requestedDate >= today ? requestedDate : ''
   const validTimeSelection = /^\d{2}:\d{2}$/.test(requestedStart || '') && /^\d{2}:\d{2}$/.test(requestedEnd || '') && requestedStart >= '08:00' && requestedStart < requestedEnd && requestedEnd <= '18:00'
   const fromCalendar = searchParams.get('source') === 'calendar' && Boolean(requestedPc && validDate && validTimeSelection)
@@ -66,7 +64,6 @@ export function BookingFormPage() {
     purpose: '',
     course: '',
   }
-  const [selectedPc, setSelectedPc] = useState(fromCalendar ? requestedPc : null)
   const {
     register,
     handleSubmit,
@@ -76,26 +73,20 @@ export function BookingFormPage() {
     control,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(bookingSchema), defaultValues: initialValues })
-  const [startDate, endDate] = useWatch({ control, name: ['startDate', 'endDate'] })
+  const [pcId, startDate, endDate] = useWatch({ control, name: ['pcId', 'startDate', 'endDate'] })
+  const selectedPc = pcs.find((pc) => pc.id === pcId) || null
   const isMultiDay = Boolean(startDate && endDate && startDate !== endDate)
 
-  const onSubmit = (values) => {
-    if (isBookingConflict(bookings, values)) {
-      setError('root.conflict', { message: 'This PC is unavailable during the selected time on one or more dates in this range.' })
-      return
-    }
-    const pc = mockPcs.find((item) => item.id === values.pcId)
+  const onSubmit = async (values) => {
+    const pc = pcs.find((item) => item.id === values.pcId)
     try {
-      const booking = createBooking(values, pc)
+      const booking = await createBooking(values, pc)
       navigate(`/bookings/${booking.id}`)
     } catch (error) {
-      setError('root.conflict', { message: error.message })
+      setError('root.server', { message: error.message })
     }
   }
 
-  const pcRegistration = register('pcId', {
-    onChange: (event) => setSelectedPc(mockPcs.find((pc) => pc.id === event.target.value) || null),
-  })
   const startDateRegistration = register('startDate', {
     onChange: (event) => {
       const currentEndDate = getValues('endDate')
@@ -123,9 +114,9 @@ export function BookingFormPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Field label="PC" required error={errors.pcId?.message}>
-                  <Select {...pcRegistration}>
+                  <Select {...register('pcId')}>
                     <option value="">Select a workstation</option>
-                    {mockPcs.map((pc) => <option key={pc.id} value={pc.id} disabled={pc.status === 'Maintenance'}>{pc.id} · {pc.room} {pc.status === 'Maintenance' ? '(Maintenance)' : ''}</option>)}
+                    {pcs.map((pc) => <option key={pc.id} value={pc.id} disabled={pc.status !== 'Available'}>{pc.id} · {pc.room} {pc.status !== 'Available' ? `(${pc.status})` : ''}</option>)}
                   </Select>
                 </Field>
               </div>
@@ -160,8 +151,8 @@ export function BookingFormPage() {
             <Field label="Course / Project" error={errors.course?.message}>
               <Input placeholder="e.g. SE 498 · Capstone Project" {...register('course')} />
             </Field>
-            {errors.root?.conflict && (
-              <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert"><Info className="mt-0.5 shrink-0" size={18} /><div><p className="font-semibold">Booking conflict</p><p className="mt-1">{errors.root.conflict.message}</p></div></div>
+            {errors.root?.server && (
+              <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert"><Info className="mt-0.5 shrink-0" size={18} /><div><p className="font-semibold">Request not submitted</p><p className="mt-1">{errors.root.server.message}</p></div></div>
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
               <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? 'Back to calendar' : 'Cancel'}</Button></Link>

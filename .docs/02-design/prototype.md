@@ -1,30 +1,62 @@
-# Prototype — SE Lab Booking
+# Prototype and implementation guide
 
-This project's prototype **is the working app**, not a separate mockup —
-it's built on Lovable/TanStack Start + Supabase and is live.
+The working prototype is the React/Vite application under app/, backed by the repository-root Supabase configuration. It is not the retired Lovable/TanStack prototype and no hosted URL is claimed until deployment is revalidated.
 
-- **Live app:** https://se-lab-slots.lovable.app
-- **Run locally:** `npm i && npm run dev` (see repo root `README.md`)
-- **Key screens:**
-  - Sign-in / sign-up — `src/components/AuthPanel.tsx`
-  - Timetable + booking dialog — `src/components/LabCalendar.tsx`
-  - Route/page shell (auth gate) — `src/routes/index.tsx`
+## Run locally
 
-## Screenshots
+Requirements: Node.js, npm, Docker, and Google OAuth credentials for a real sign-in.
 
-> TODO (team): add screenshots here (or a `screenshots/` subfolder) for:
-> 1. Sign-in screen (signed-out state)
-> 2. Live timetable, a day with a mix of onsite/remote/open tiles
-> 3. Booking dialog — creating a booking
-> 4. Booking dialog — viewing someone else's booking (mode + role visible)
+~~~bash
+cd app
+npm install
+cp .env.example .env.local
+cd ..
+export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID="your-google-client-id"
+export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET="your-google-client-secret"
+npm run supabase:start --prefix app
+npm run dev --prefix app
+~~~
 
-Identity note: the agreed design shows the holder's **student ID** (not
-`full_name`). The app currently renders `full_name`; update screenshots and
-labels once the student-ID change ships.
+Use the local Supabase project URL and publishable key in app/.env.local. See [../../supabase/README.md](../../supabase/README.md) for callback configuration and trusted-role setup.
 
-## What's real vs. simulated
+## Key implementation areas
 
-Everything in the feature list marked **Done** is real, working
-functionality against a live Supabase backend (not a clickable mockup) —
-bookings persist, overlap prevention is enforced server-side, and the
-calendar is genuinely shared across every signed-in user.
+- Sign-in and callback: app/src/features/auth/
+- Session and shared workspace state: app/src/app/AppContext.jsx
+- Booking request and detail: app/src/features/bookings/
+- Advisor/Dean queues: app/src/features/approvals/
+- Availability calendar: app/src/features/calendar/
+- Browser client: app/src/lib/supabase.js
+- Database migration: supabase/migrations/
+- Database tests: supabase/tests/database/
+
+## Suggested screenshots
+
+1. Google sign-in page
+2. Student dashboard
+3. Week availability
+4. Day timeline with an occupied and selected interval
+5. Booking request form
+6. Student request detail and approval progress
+7. Advisor pending queue
+8. Dean final review
+9. Profile showing trusted role and Advisor assignment
+
+Screenshots must come from the current app and must not contain real personal data or secrets.
+
+## Verified versus external
+
+Locally verified:
+
+- migration and seed rebuild
+- RLS and workflow behavior through 37 pgTAP tests
+- frontend lint, unit tests, and production build
+- schema lint and dependency audit
+
+External verification still required:
+
+- hosted Supabase migration
+- real Google OAuth redirect
+- production Vercel environment
+- initial allowlist and Advisor assignments
+- visual regression on supported browsers and devices

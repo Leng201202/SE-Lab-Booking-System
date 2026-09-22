@@ -1,5 +1,8 @@
 import { format, parseISO } from 'date-fns'
 
+export const APP_TIME_ZONE = 'Asia/Bangkok'
+export const BLOCKING_BOOKING_STATUSES = Object.freeze(['pending_advisor', 'pending_dean', 'approved'])
+
 export const statusMeta = {
   pending_advisor: { label: 'Pending Advisor', tone: 'amber' },
   pending_dean: { label: 'Pending Dean', tone: 'violet' },
@@ -61,11 +64,29 @@ export function formatShortDate(date) {
 }
 
 export function formatRequestDate(date) {
-  return format(new Date(date), 'd MMM yyyy, HH:mm')
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIME_ZONE,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(date))
+}
+
+export function getBangkokDateKey(value = new Date()) {
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: APP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value))
+  const part = (type) => parts.find((item) => item.type === type)?.value
+  return `${part('year')}-${part('month')}-${part('day')}`
 }
 
 export function isBookingConflict(bookings, { pcId, date, startDate, endDate, startTime, endTime }) {
-  const blockingStatuses = ['pending_advisor', 'pending_dean', 'approved']
   const requestedStartDate = startDate || date
   const requestedEndDate = endDate || startDate || date
   const requestedTime = requestedStartDate !== requestedEndDate
@@ -75,7 +96,7 @@ export function isBookingConflict(bookings, { pcId, date, startDate, endDate, st
     const existingTime = getBookingTimeBounds(booking)
     return (
       booking.pcId === pcId &&
-      blockingStatuses.includes(booking.status) &&
+      BLOCKING_BOOKING_STATUSES.includes(booking.status) &&
       requestedStartDate <= getBookingEndDate(booking) &&
       requestedEndDate >= getBookingStartDate(booking) &&
       requestedTime.startTime < existingTime.endTime &&

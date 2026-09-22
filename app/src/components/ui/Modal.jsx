@@ -21,12 +21,12 @@ export function Modal({ open, onClose, title, description, children }) {
   )
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel = 'Confirm' }) {
+export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel = 'Confirm', disabled = false }) {
   return (
     <Modal open={open} onClose={onClose} title={title} description={description}>
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button className="w-full sm:w-auto" variant="secondary" onClick={onClose}>Cancel</Button>
-        <Button className="w-full sm:w-auto" onClick={onConfirm}>{confirmLabel}</Button>
+        <Button className="w-full sm:w-auto" variant="secondary" disabled={disabled} onClick={onClose}>Cancel</Button>
+        <Button className="w-full sm:w-auto" disabled={disabled} onClick={onConfirm}>{confirmLabel}</Button>
       </div>
     </Modal>
   )

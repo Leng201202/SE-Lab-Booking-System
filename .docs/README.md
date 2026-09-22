@@ -1,24 +1,31 @@
-# W5 — User Validation Gate submission map
+# Project documentation map
 
-This folder holds the 4 required deliverables for the W5 gate. Everything
-prefilled comes straight from the working app/schema in this repo; every
-`TODO` is something only the team can supply (real interviews, the W2 legal
-spec, screenshots) — fill those in before submitting.
+This folder contains the requirements, design, and compliance evidence for the current SE Lab PC Booking System. It reflects the React/Vite frontend and repository-root Supabase backend as implemented on 22 September 2026.
 
-| # | Requirement | File |
-|---|---|---|
-| 1 | Updated Proposal (problem statement + target users) | [01-requirements/proposal.md](01-requirements/proposal.md) |
-| 2 | Product Backlog | [01-requirements/backlog.md](01-requirements/backlog.md) |
-| 3 | Design draft (feature list, user journey, prototype, 4 diagrams) | [02-design/](02-design/) |
-| 4 | Compliance (rule.md + legal spec traced from W2) | [03-compliance/](03-compliance/) |
+The system supports:
 
-Also included: [01-requirements/user-research.md](01-requirements/user-research.md)
-— the interview guide + findings template backing the "≥5 real users
-interviewed" pass criterion. It isn't one of the 4 named files but the gate
-can't pass without it, so fill it in first.
+- Google OAuth authentication
+- trusted Student, Advisor, and Dean roles
+- Student request → Advisor review → Dean review
+- one-day in-lab and multi-day remote reservations
+- authenticated, privacy-preserving PC availability
+- PostgreSQL RLS, transactional workflow functions, conflict prevention, and approval audit events
 
-## Pass criteria checklist (from the assignment)
+## Deliverables
 
-- [ ] ≥ 5 real users interviewed so far (final target for the month: ≥ 15) — see `user-research.md`
-- [ ] All 4 diagrams present — see `02-design/diagrams/`
-- [ ] Every requirement traces back to a real user pain — see `backlog.md` "Traced pain" column and `03-compliance/legal-requirement-trace.md`
+| Area | Contents |
+|---|---|
+| Requirements | [Proposal](01-requirements/proposal.md), [backlog](01-requirements/backlog.md), and [user research](01-requirements/user-research.md) |
+| Design | [Feature list](02-design/feature-list.md), [user journeys](02-design/user-journey.md), [prototype guide](02-design/prototype.md), and four diagrams |
+| Compliance | [System rules](03-compliance/rule.md) and [legal requirement trace](03-compliance/legal-requirement-trace.md) |
+
+## Evidence status
+
+- [x] Five interview records are present. The team must confirm they are genuine and retain consent/notes outside this public repository.
+- [x] Four design diagrams are present and aligned with the implementation.
+- [x] Implemented requirements trace to code, database rules, research pain, or an explicit institutional workflow source.
+- [x] Local verification includes a clean database rebuild, 37 pgTAP tests, schema lint, frontend lint, four unit tests, production build, and dependency audit.
+- [ ] Real hosted Google OAuth, production redirects, role allowlist, and Advisor assignments still require deployment configuration.
+- [ ] Privacy notice, retention schedule, legal applicability, and final university/supervisor approval remain open governance work.
+
+The root [README](../README.md), [plan](../plan.md), and [agent guide](../agent.md) are the technical sources of truth. Do not use older screenshots or hosted prototype claims unless they are revalidated against the current repository.

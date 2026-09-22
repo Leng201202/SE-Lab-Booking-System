@@ -1,38 +1,46 @@
-# Diagram 4 — Sequence diagram: booking a computer
+# Diagram 4 — Booking and approval sequence
 
-```mermaid
+~~~mermaid
 sequenceDiagram
     actor S as Student
-    participant W as Vite React app
-    participant LS as Browser localStorage
-    participant A as Advisor
-    participant D as Dean
+    participant W as React app
+    participant A as Supabase Auth
+    participant R as create_booking RPC
+    participant P as PostgreSQL
+    actor V as Advisor
+    actor D as Dean
 
-    S->>W: Select PC, date, time, purpose, and course
-    W->>LS: Read current bookings
-    LS-->>W: Return bookings
-    W->>W: Validate PC, dates, hours, and overlap
-    alt Invalid or overlapping request
-        W-->>S: Show validation error and keep form open
-    else Valid request
-        W->>LS: Save booking as pending_advisor
-        LS-->>W: Confirm saved booking
-        W-->>S: Show submission toast
-        A->>W: Review pending_advisor request
-        A->>W: Approve or reject with reason
-        W->>LS: Save advisor decision
+    S->>W: Continue with Google
+    W->>A: Start OAuth
+    A-->>W: Authenticated session
+    W->>P: Load RLS-scoped profile, PCs, and bookings
+    P-->>W: Student workspace
+
+    S->>W: Submit PC, dates/time, purpose, course
+    W->>R: create_booking(input)
+    R->>P: Validate actor, Advisor, PC, rules, and active overlap
+    alt Invalid or conflicting
+        P-->>R: Reject transaction
+        R-->>W: Actionable database error
+        W-->>S: Keep form and show error
+    else Valid
+        P->>P: Insert pending_advisor booking
+        P-->>R: Return booking
+        R-->>W: Success
+        W-->>S: Refresh and show request detail
+
+        V->>W: Review assigned request
+        W->>P: approve_booking or reject_booking
+        P->>P: Lock row, validate stage, update booking, append event
         alt Advisor approves
             D->>W: Review pending_dean request
-            D->>W: Approve or reject final request
-            W->>LS: Save dean decision
-            W-->>S: Show final status
+            W->>P: approve_booking or reject_booking
+            P->>P: Lock row, validate stage, update booking, append event
+            P-->>W: Final status
         else Advisor rejects
-            W-->>S: Show rejection reason
+            P-->>W: Rejected with reason
         end
     end
-```
+~~~
 
-This sequence describes the current demo. Its conflict check is local to the
-browser, so it is not concurrency-safe across different users or devices.
-The planned Supabase phase must move the overlap rule and role authorization
-to the server/database.
+The exclusion constraint remains authoritative if two clients submit simultaneously. Approval functions lock the target row and perform the status transition plus audit insertion in one transaction.

@@ -74,24 +74,42 @@ export function BookingDetailPage() {
   const [rejectOpen, setRejectOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [busy, setBusy] = useState(false)
   const booking = bookings.find((item) => item.id === id)
 
   if (!booking) {
-    return <Card className="p-6 text-center sm:p-10"><h1 className="text-xl font-bold text-slate-900">Request not found</h1><p className="mt-2 text-sm text-slate-500">This demo booking does not exist or was reset.</p><Button className="mt-5 w-full sm:w-auto" onClick={() => navigate('/dashboard')}>Back to dashboard</Button></Card>
+    return <Card className="p-6 text-center sm:p-10"><h1 className="text-xl font-bold text-slate-900">Request not found</h1><p className="mt-2 text-sm text-slate-500">This request does not exist or you do not have permission to view it.</p><Button className="mt-5 w-full sm:w-auto" onClick={() => navigate('/dashboard')}>Back to dashboard</Button></Card>
   }
 
   const canReview = (user.role === 'advisor' && booking.status === 'pending_advisor') || (user.role === 'dean' && booking.status === 'pending_dean')
-  const approve = () => {
-    if (user.role === 'advisor') approveAsAdvisor(booking.id)
-    else approveAsDean(booking.id)
-    setConfirmOpen(false)
+  const approve = async () => {
+    setBusy(true)
+    setActionError('')
+    try {
+      if (user.role === 'advisor') await approveAsAdvisor(booking.id)
+      else await approveAsDean(booking.id)
+      setConfirmOpen(false)
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setBusy(false)
+    }
   }
-  const reject = () => {
+  const reject = async () => {
     if (!reason.trim()) { setReasonError('A rejection reason is required.'); return }
-    if (user.role === 'advisor') rejectAsAdvisor(booking.id, reason)
-    else rejectAsDean(booking.id, reason)
-    setRejectOpen(false)
-    setReason('')
+    setBusy(true)
+    setActionError('')
+    try {
+      if (user.role === 'advisor') await rejectAsAdvisor(booking.id, reason)
+      else await rejectAsDean(booking.id, reason)
+      setRejectOpen(false)
+      setReason('')
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -99,11 +117,13 @@ export function BookingDetailPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <Link to={user.role === 'student' ? '/bookings' : '/requests/pending'} className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-mfu-700"><ArrowLeft size={16} />Back to requests</Link>
-          <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{booking.id}</h1><StatusBadge status={booking.status} /></div>
+          <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{booking.requestNumber}</h1><StatusBadge status={booking.status} /></div>
           <p className="mt-2 text-sm text-slate-500">Submitted {formatRequestDate(booking.requestedAt)}</p>
         </div>
         {canReview && <div className="grid grid-cols-2 gap-3 sm:flex"><Button className="w-full sm:w-auto" variant="secondary" onClick={() => setRejectOpen(true)}><XCircle size={17} />Reject</Button><Button className="w-full sm:w-auto" onClick={() => setConfirmOpen(true)}><CheckCircle2 size={17} />Approve</Button></div>}
       </div>
+
+      {actionError && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">{actionError}</div>}
 
       <div className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
         <div className="space-y-6">
@@ -129,12 +149,12 @@ export function BookingDetailPage() {
         <ApprovalProgress booking={booking} />
       </div>
 
-      <ConfirmDialog open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={approve} title={`Approve ${booking.id}?`} description={user.role === 'advisor' ? 'This request will move to the dean for final review.' : 'This will confirm the PC booking for the student.'} confirmLabel="Approve request" />
-      <Modal open={rejectOpen} onClose={() => setRejectOpen(false)} title={`Reject ${booking.id}`} description="The student will be able to see this reason in their booking details.">
+      <ConfirmDialog open={confirmOpen} onClose={() => !busy && setConfirmOpen(false)} onConfirm={approve} title={`Approve ${booking.requestNumber}?`} description={user.role === 'advisor' ? 'This request will move to the dean for final review.' : 'This will confirm the PC booking for the student.'} confirmLabel={busy ? 'Approving…' : 'Approve request'} disabled={busy} />
+      <Modal open={rejectOpen} onClose={() => !busy && setRejectOpen(false)} title={`Reject ${booking.requestNumber}`} description="The student will be able to see this reason in their booking details.">
         <label className="block text-sm font-semibold text-slate-700">Rejection reason</label>
         <Textarea className="mt-2" value={reason} onChange={(event) => { setReason(event.target.value); setReasonError('') }} placeholder="Explain why this request cannot be approved…" autoFocus />
         {reasonError && <p className="mt-1.5 text-sm text-red-600">{reasonError}</p>}
-        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button className="w-full sm:w-auto" variant="secondary" onClick={() => setRejectOpen(false)}>Cancel</Button><Button className="w-full sm:w-auto" variant="danger" onClick={reject}>Reject request</Button></div>
+        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button className="w-full sm:w-auto" variant="secondary" disabled={busy} onClick={() => setRejectOpen(false)}>Cancel</Button><Button className="w-full sm:w-auto" variant="danger" disabled={busy} onClick={reject}>{busy ? 'Rejecting…' : 'Reject request'}</Button></div>
       </Modal>
     </div>
   )

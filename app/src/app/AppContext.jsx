@@ -1,85 +1,198 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useMemo, useState } from 'react'
-import { demoUsers } from '../data/mockUsers'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { getCurrentProfile, getSession, onAuthStateChange, signInWithGoogle as signInService, signOut as signOutService } from '../features/auth/authService'
 import {
-  approveAsAdvisor as approveAdvisorService,
-  approveAsDean as approveDeanService,
+  approveBooking,
   createBooking as createBookingService,
   getBookings,
-  rejectAsAdvisor as rejectAdvisorService,
-  rejectAsDean as rejectDeanService,
-  resetDemoBookings,
+  getCalendarBookings,
+  rejectBooking,
 } from '../features/bookings/bookingService'
+import { getPcs } from '../features/pcs/pcService'
+import { isSupabaseConfigured } from '../lib/supabase'
 
-const USER_KEY = 'se-lab-demo-user-role'
 const AppContext = createContext(null)
 
-function initialUser() {
-  const role = localStorage.getItem(USER_KEY)
-  return demoUsers[role] || null
-}
-
 export function AppProvider({ children }) {
-  const [user, setUser] = useState(initialUser)
-  const [bookings, setBookings] = useState(getBookings)
+  const [session, setSession] = useState(null)
+  const [user, setUser] = useState(null)
+  const [bookings, setBookings] = useState([])
+  const [calendarBookings, setCalendarBookings] = useState([])
+  const [pcs, setPcs] = useState([])
+  const [authReady, setAuthReady] = useState(!isSupabaseConfigured)
+  const [appError, setAppError] = useState(null)
   const [toast, setToast] = useState(null)
+  const calendarRange = useRef(null)
+  const toastTimer = useRef(null)
 
-  const notify = (message, tone = 'success') => {
+  const notify = useCallback((message, tone = 'success') => {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
     setToast({ message, tone, id: Date.now() })
-    window.setTimeout(() => setToast(null), 3200)
-  }
+    toastTimer.current = window.setTimeout(() => {
+      setToast(null)
+      toastTimer.current = null
+    }, 3200)
+  }, [])
 
-  const selectRole = (role) => {
-    const nextUser = demoUsers[role]
-    localStorage.setItem(USER_KEY, role)
-    setUser(nextUser)
-  }
-
-  const logout = () => {
-    localStorage.removeItem(USER_KEY)
+  const clearWorkspace = useCallback(() => {
     setUser(null)
+    setBookings([])
+    setCalendarBookings([])
+    setPcs([])
+    calendarRange.current = null
+  }, [])
+
+  const refreshWorkspace = useCallback(async () => {
+    const [nextBookings, nextPcs] = await Promise.all([getBookings(), getPcs()])
+    setBookings(nextBookings)
+    setPcs(nextPcs)
+  }, [])
+
+  const refreshCalendar = useCallback(async (startDate, endDate) => {
+    calendarRange.current = { startDate, endDate }
+    const nextBookings = await getCalendarBookings(startDate, endDate)
+    setCalendarBookings(nextBookings)
+  }, [])
+
+  const refreshAfterMutation = useCallback(async () => {
+    await refreshWorkspace()
+    if (calendarRange.current) {
+      await refreshCalendar(calendarRange.current.startDate, calendarRange.current.endDate)
+    }
+  }, [refreshCalendar, refreshWorkspace])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined
+
+    let active = true
+    getSession()
+      .then((initialSession) => {
+        if (active) setSession(initialSession)
+      })
+      .catch((error) => {
+        if (active) setAppError(error.message)
+      })
+      .finally(() => {
+        if (active) setAuthReady(true)
+      })
+
+    const unsubscribe = onAuthStateChange((nextSession) => {
+      setSession(nextSession)
+      setAuthReady(true)
+      setAppError(null)
+      if (!nextSession) {
+        clearWorkspace()
+      }
+    })
+
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [clearWorkspace])
+
+  useEffect(() => () => {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    if (!session) return undefined
+
+    Promise.all([getCurrentProfile(session.user.id), getBookings(), getPcs()])
+      .then(([profile, nextBookings, nextPcs]) => {
+        if (!active) return
+        setUser(profile)
+        setBookings(nextBookings)
+        setPcs(nextPcs)
+        setAppError(null)
+      })
+      .catch((error) => {
+        if (!active) return
+        clearWorkspace()
+        setAppError(error.message)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [clearWorkspace, session])
+
+  const signInWithGoogle = async () => {
+    setAppError(null)
+    await signInService()
   }
 
-  const refresh = () => setBookings(getBookings())
+  const logout = async () => {
+    setAppError(null)
+    try {
+      await signOutService()
+      setSession(null)
+      clearWorkspace()
+    } catch (error) {
+      setAppError(error.message)
+      notify(error.message, 'error')
+      throw error
+    }
+  }
 
-  const actions = useMemo(
-    () => ({
-      createBooking(input, pc) {
-        const booking = createBookingService(input, user, pc)
-        refresh()
-        notify('Request submitted for advisor approval.')
-        return booking
-      },
-      approveAsAdvisor(id) {
-        approveAdvisorService(id)
-        refresh()
-        notify('Request approved and sent to the dean.')
-      },
-      rejectAsAdvisor(id, reason) {
-        rejectAdvisorService(id, reason)
-        refresh()
-        notify('Request rejected.', 'error')
-      },
-      approveAsDean(id) {
-        approveDeanService(id)
-        refresh()
-        notify('Booking approved successfully.')
-      },
-      rejectAsDean(id, reason) {
-        rejectDeanService(id, reason)
-        refresh()
-        notify('Request rejected.', 'error')
-      },
-      resetDemo() {
-        setBookings(resetDemoBookings())
-        notify('Demo data restored.')
-      },
-    }),
-    [user],
-  )
+  const runMutation = async (operation, successMessage, tone = 'success') => {
+    try {
+      const result = await operation()
+      await refreshAfterMutation()
+      notify(successMessage, tone)
+      return result
+    } catch (error) {
+      notify(error.message, 'error')
+      throw error
+    }
+  }
+
+  const actions = {
+    createBooking: (input, pc) => runMutation(
+      () => createBookingService(input, pc),
+      'Request submitted for advisor approval.',
+    ),
+    approveAsAdvisor: (id) => runMutation(
+      () => approveBooking(id),
+      'Request approved and sent to the dean.',
+    ),
+    rejectAsAdvisor: (id, reason) => runMutation(
+      () => rejectBooking(id, reason),
+      'Request rejected.',
+      'error',
+    ),
+    approveAsDean: (id) => runMutation(
+      () => approveBooking(id),
+      'Booking approved successfully.',
+    ),
+    rejectAsDean: (id, reason) => runMutation(
+      () => rejectBooking(id, reason),
+      'Request rejected.',
+      'error',
+    ),
+  }
+
+  const workspaceLoading = Boolean(session && !user && !appError)
 
   return (
-    <AppContext.Provider value={{ user, bookings, toast, selectRole, logout, ...actions }}>
+    <AppContext.Provider value={{
+      session,
+      user,
+      bookings,
+      calendarBookings,
+      pcs,
+      toast,
+      authReady,
+      workspaceLoading,
+      appError,
+      isSupabaseConfigured,
+      signInWithGoogle,
+      logout,
+      refreshWorkspace,
+      refreshCalendar,
+      ...actions,
+    }}>
       {children}
     </AppContext.Provider>
   )

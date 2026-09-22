@@ -10,12 +10,11 @@ import {
   LogOut,
   Menu,
   MonitorCog,
-  RotateCcw,
   X,
 } from 'lucide-react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
-import { demoUsers, roleLabels } from '../../data/mockUsers'
+import { roleLabels } from '../../features/auth/roles'
 
 const roleNavigation = {
   student: [
@@ -60,8 +59,8 @@ function Sidebar({ onNavigate }) {
       <div className="brand-stripe absolute inset-x-0 top-0 h-1" aria-hidden="true" />
       <Brand />
       <div className="mx-3 mt-7 rounded-xl border border-white/10 bg-white/[0.055] px-3 py-3">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">Demo mode</p>
-        <p className="mt-1 text-xs leading-5 text-emerald-100/55">Frontend workflow preview</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">Secure portal</p>
+        <p className="mt-1 text-xs leading-5 text-emerald-100/55">Supabase-backed workspace</p>
       </div>
       <nav className="mt-6 flex-1 space-y-1" aria-label="Main navigation">
         {roleNavigation[user.role].map(({ label, to, icon: Icon }) => (
@@ -88,17 +87,11 @@ function Sidebar({ onNavigate }) {
 }
 
 export function AppShell() {
-  const { user, selectRole, logout, resetDemo, toast } = useApp()
+  const { user, logout, toast } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-
-  const switchRole = (role) => {
-    selectRole(role)
-    setProfileOpen(false)
-    navigate('/dashboard')
-  }
 
   const pageName = roleNavigation[user.role].find((item) =>
     location.pathname === item.to || (item.to === '/bookings' && location.pathname.startsWith('/bookings/')),
@@ -132,23 +125,26 @@ export function AppShell() {
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-mfu-100 text-sm font-bold text-mfu-700">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
               <span className="hidden sm:block">
                 <span className="block max-w-44 truncate text-sm font-semibold text-slate-800">{user.shortName || user.name}</span>
-                <span className="block text-xs capitalize text-slate-400">Demo {user.role}</span>
+                <span className="block text-xs text-slate-400">{roleLabels[user.role]}</span>
               </span>
               <ChevronDown size={15} className="text-slate-400" />
             </button>
 
             {profileOpen && (
               <div className="fixed inset-x-3 top-16 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:w-64">
-                <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Switch demo role</p>
-                {Object.keys(demoUsers).map((role) => (
-                  <button key={role} onClick={() => switchRole(role)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${user.role === role ? 'bg-mfu-50 text-mfu-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-                    {roleLabels[role]}
-                    {user.role === role && <span className="size-2 rounded-full bg-mfu-600" />}
-                  </button>
-                ))}
+                <p className="px-3 pb-1 pt-2 text-sm font-semibold text-slate-800">{user.name}</p>
+                <p className="px-3 pb-2 text-xs text-slate-400">{roleLabels[user.role]} · {user.email}</p>
                 <div className="my-2 border-t border-slate-100" />
-                <button onClick={() => { resetDemo(); setProfileOpen(false) }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"><RotateCcw size={16} /> Reset demo data</button>
-                <button onClick={() => { logout(); navigate('/login') }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> Log out</button>
+                <Link to="/profile" onClick={() => setProfileOpen(false)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"><CircleUserRound size={16} /> Profile</Link>
+                <button onClick={async () => {
+                  try {
+                    await logout()
+                    setProfileOpen(false)
+                    navigate('/login')
+                  } catch {
+                    // The shared context keeps the session in place and surfaces the error.
+                  }
+                }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> Log out</button>
               </div>
             )}
           </div>

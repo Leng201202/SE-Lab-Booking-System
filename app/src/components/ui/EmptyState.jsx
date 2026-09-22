@@ -13,5 +13,5 @@ export function EmptyState({ title = 'Nothing here yet', description = 'There ar
 }
 
 export function LoadingState() {
-  return <div className="p-8 text-center text-sm text-slate-500">Loading demo data…</div>
+  return <div className="p-8 text-center text-sm text-slate-500">Loading data…</div>
 }

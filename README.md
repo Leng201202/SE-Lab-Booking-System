@@ -1,63 +1,73 @@
 # SE Lab PC Booking System
 
-A role-based web application for booking computers in the Software Engineering laboratory. It digitizes the university's existing paper-based equipment-borrowing process into a three-step approval workflow.
+A Supabase-backed web application for booking computers in the Software Engineering laboratory at Mae Fah Luang University.
 
 ```text
-Student submits request
-        ↓
-Pending Advisor Approval
-        ↓
-Pending Dean Approval
-        ↓
-Booking Approved
+Student request → Advisor review → Dean review → Approved booking
 ```
 
-If either the Advisor or Dean rejects a request, it becomes `rejected` and the student can view the rejection reason. See [plan.md](plan.md) for the full product plan (roles, workflow, data model, and goals).
+The application uses Google OAuth for identity, trusted database roles for authorization, PostgreSQL Row Level Security for data access, and transactional database functions for booking and approval changes.
 
-## Current status: Phase 1 frontend demo
+## Project status
 
-The code in [app/](app/) is a **frontend-only demo** of the workflow above — fake role-based login, mock data persisted in `localStorage`, and no backend. There is no Supabase client, database, migrations, RLS, or real authentication yet. The target architecture (React + Supabase, with roles, RLS, and conflict-safe bookings) is documented in [agent.md](agent.md) and will land in a later phase.
+The production foundation is implemented locally:
 
-## Getting started
+- React/Vite frontend under `app/`
+- Supabase Auth with Google OAuth
+- PostgreSQL migrations, seed data, RLS policies, and RPC functions under `supabase/`
+- Conflict-safe bookings enforced by a PostgreSQL exclusion constraint
+- Student, assigned-Advisor, and Dean authorization boundaries
+- Sanitized shared calendar data and immutable approval history
+- Database and frontend automated checks
 
-The app lives in the [app/](app/) subdirectory.
+Hosted rollout still requires a Supabase project, a Google OAuth client, production redirect URLs, Vercel environment variables, and the initial Advisor/Dean allowlist.
+
+## Local setup
+
+Requirements: Node.js, npm, Docker Desktop (or another Docker-compatible runtime), and Google OAuth credentials for a real browser sign-in.
 
 ```bash
 cd app
 npm install
-npm run dev
+cp .env.example .env.local
 ```
 
-Open the local URL and choose Student, Advisor, or Dean. Use **Reset demo data** in the profile menu to restore the seeded requests.
-
-### Checks
+Set the Google provider variables in your shell, then start Supabase from the repository root:
 
 ```bash
-cd app
-npm run lint
-npm test
-npm run build
+export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID="your-google-client-id"
+export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET="your-google-client-secret"
+npm run supabase:start --prefix app
 ```
 
-## Project structure
+Use the local project URL and publishable key printed by `supabase status` in `app/.env.local`, then run:
+
+```bash
+npm run dev --prefix app
+```
+
+See [supabase/README.md](supabase/README.md) for Google redirect configuration, hosted deployment, trusted roles, and Advisor assignment.
+
+## Checks
+
+```bash
+npm run lint --prefix app
+npm test --prefix app
+npm run build --prefix app
+npm run supabase:reset --prefix app
+npm run supabase:test --prefix app
+npm run supabase:lint --prefix app
+```
+
+## Structure
 
 ```text
 .
-├── app/          # React + Vite frontend (see app/README.md)
-├── plan.md       # Full product plan: roles, workflow, data model
-├── agent.md      # Target architecture and rules for future (Supabase-backed) phases
-├── .docs/        # Course/gate submission deliverables (requirements, design, compliance)
-└── vercel.json   # Deployment config (Vite build from app/)
+├── app/          # React/Vite frontend and Supabase browser client
+├── supabase/     # Local config, migrations, seed, and pgTAP tests
+├── plan.md       # Current implementation status and rollout plan
+├── agent.md      # Contributor architecture and safety rules
+└── vercel.json   # Vercel SPA build and routing configuration
 ```
 
-## Deployment
-
-The app deploys to Vercel using [vercel.json](vercel.json), which builds `app/` and serves `app/dist` as a single-page app.
-
-## Roles
-
-- **Student** — views PC availability, creates booking requests, tracks status, cancels eligible bookings.
-- **Advisor** — reviews assigned students' requests, approves/rejects at the advisor stage.
-- **Dean** — gives final approval/rejection on advisor-approved requests.
-
-See [plan.md](plan.md) for full role permissions and [agent.md](agent.md) for the intended booking status model and conflict-detection rules.
+The `supabase/` directory belongs at the repository root because it defines shared backend infrastructure. Browser-specific Supabase code belongs under `app/src/`.

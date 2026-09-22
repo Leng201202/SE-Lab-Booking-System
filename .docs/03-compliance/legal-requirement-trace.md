@@ -1,42 +1,46 @@
-# Legal requirement trace (from W2)
+# Legal and governance requirement trace
 
-> **W2 basis restored (9 Sep 2026).** The project's Week-2 legal analysis
-> (Thai legislation, official MDES/ETDA sources) is recovered from the
-> repository history and reproduced in [rule.md](rule.md). Applicability to
-> this system and supervisor review are still **pending** — see "Gaps". This
-> table maps each W2 legal topic to how the system addresses it.
+This trace maps the W2 legal topics to current engineering controls and open governance work. It does not make a final legal determination.
 
-**Phasing note:** this "project" now ships a working SE Lab booking app, so
-the mapping below reflects **current** enforcement plus **agreed/planned**
-changes (student ID, authenticated-only visibility). Legal reviewer/approval
-is still required before BUILD.
+| Topic | Project concern | Current implementation/evidence | Status |
+|---|---|---|---|
+| PDPA — purpose and data minimization | Collect only fields needed for authentication, role assignment, contact/identification, booking, approval, and audit | profiles/bookings schema; sanitized calendar RPC | Technical minimization implemented; field-by-field university approval pending |
+| PDPA — lawful basis and transparency | Identify the controller, purpose, basis, recipients, retention, rights, and contact before collection | No approved production privacy notice in repository | Gap |
+| PDPA — access control/security | Prevent anonymous, cross-Student, unassigned-Advisor, and wrong-stage access | Explicit grants, RLS, trusted role allowlist, RPC validation, 37 pgTAP tests | Enforced locally |
+| PDPA — disclosure control | Availability should not disclose unrelated personal booking details | get_booking_calendar omits Student identity, university ID, purpose, course, and rejection reason | Enforced locally |
+| PDPA — data quality/correction | Allow appropriate correction without self-promotion or relationship tampering | Limited profile column grant; role/Advisor protected | Partially enforced; operational correction process pending |
+| PDPA — data-subject rights | Handle access, correction, export, restriction, objection, and deletion where applicable | Users see their own records; no request-management process | Gap |
+| PDPA — retention/deletion | Keep records only for an approved period and dispose safely | User deletion cascades profile; approval history follows booking; no schedule or automated job | Gap |
+| PDPA — incident response | Detect, assess, document, and respond to personal-data incidents | Database authorization and secret separation reduce risk; response process absent | Gap |
+| Computer-Related Crime Act §26 | Determine whether operator is an in-scope service provider and any traffic/user-data retention duty | Booking/audit records exist but are not claimed as compliant traffic logs | Applicability pending legal review |
+| Electronic Transactions Act | Avoid misrepresenting ordinary booking approval as a legally qualified signature | UI describes booking approval/status only; no signature claim | Current scope avoids signature claim; institutional record policy pending |
 
-## Trace table
+## Engineering evidence
 
-| W2 legal topic (from rule.md) | Obligation relevant to this system | How the system addresses it | Evidence (file / policy / code) | Status |
-|---|---|---|---|---|
-| PDPA B.E. 2562 (2019) — data minimization | Collect only necessary personal data | Agreed: store only **student ID (8-digit) + role**, not full name | `profiles` (student_id, role) — **planned**; sign-up `src/components/AuthPanel.tsx` | Policy — schema still stores `full_name`; change pending |
-| PDPA — lawful basis, transparency | Identify an approved basis and inform users at collection | Custom sign-up with explicit role selection; notice text pending university review | `src/components/AuthPanel.tsx` | Partial — notice text pending |
-| PDPA — least privilege / access control | Only authorized access to personal data | Signed-in users only see booking holder (student ID + role); writes scoped to owner; `anon` must not read | RLS in `supabase/migrations/*_1a6b8b72*.sql`, `*_292b4570*.sql` | **Gap** — RLS still grants `anon` SELECT; needs revoke |
-| PDPA — data-subject rights (access/delete) | Support access, delete own data | `ON DELETE CASCADE` + owner-only delete of own bookings | FK `ON DELETE CASCADE`; RLS `Users can delete own bookings` | Enforced — retention policy pending |
-| PDPA — retention | Don't retain indefinitely; approved schedule | No retention schedule defined yet | TODO | **Gap** — define approved retention |
-| Computer-Related Crime Act B.E. 2550/2560 §26 — traffic/user-data retention | If in-scope service provider: retain traffic data ≥90 days, support lawful preservation | **Not yet assessed** whether this web app / operator is an in-scope provider under the applicable Ministerial notification | TODO | **Gap** — applicability pending legal/security review |
-| Electronic Transactions Act B.E. 2544 — records/signatures | A booking confirmation is not a legally-binding signature | Booking confirmation shown as a toast/UI notice, not a signature | `src/components/LabCalendar.tsx` (toast) | Not triggered in current scope |
+- supabase/migrations/20260922000100_initial_production_backend.sql
+- supabase/tests/database/001_booking_security.test.sql
+- app/src/lib/supabase.js
+- app/src/features/auth/authService.js
+- app/src/features/bookings/bookingService.js
+- app/src/app/AppContext.jsx
+- app/.env.example and supabase/.env.example
 
-## Gaps found
+## Required owners and decisions before production
 
-> TODO (team/owner): close each before BUILD.
+1. Name the university data controller/operational owner and contact.
+2. Approve the lawful basis and production privacy notice.
+3. Approve each personal-data field and its purpose.
+4. Define retention periods for auth profiles, bookings, rejection reasons, and approval events.
+5. Define data-subject request and account-deletion procedures.
+6. Define incident response, breach assessment, and escalation.
+7. Assess cross-border/third-party processing for Google, Supabase, and Vercel.
+8. Determine Computer-Related Crime Act applicability and logging obligations.
+9. Record legal/supervisor reviewer, decision, and date.
 
-1. **RLS reversal** — migrations still `GRANT SELECT ... TO anon` and create
-   `"viewable by everyone"` policies on `bookings`/`profiles`; must be
-   restricted to `authenticated` to match the agreed least-privilege posture.
-2. **Data minimization** — `profiles.full_name` is still stored/rendered;
-   switch to `student_id` + `role` and drop `full_name`.
-3. **Retention schedule** — define how long bookings/profiles are kept.
-4. **Computer-Related Crime Act §26 applicability** — document whether this
-   system/operator is an in-scope service provider and which notification
-   applies.
-5. **W2 source + reviewer** — confirm the law citations with the supervisor
-   and record the reviewer + approval date (rule.md "Source and Review Record").
-6. **Booking-hours rule** — implement the agreed 24h booking with onsite-only
-   during lab hours (current DB/UI locks 09:00–20:00 for all modes).
+## Official references
+
+- [Royal Gazette — Personal Data Protection Act B.E. 2562](https://ratchakitcha.soc.go.th/documents/17082307.pdf)
+- [MDES — Computer-Related Crime Act](https://www.mdes.go.th/law/detail/3618-)
+- [ETDA — Electronic Transactions laws and amendments](https://www.etda.or.th/th/Useful-Resource/laws-sharing.aspx)
+
+Final approval remains pending qualified university/legal review.
