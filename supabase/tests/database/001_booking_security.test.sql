@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(56);
+select plan(57);
 
 select throws_ok(
   $$
@@ -143,6 +143,43 @@ select throws_ok(
   'Only a Dean can add PCs.',
   'Students cannot manage PC inventory'
 );
+reset role;
+select throws_ok(
+  $$
+    insert into public.bookings (
+      requester_id,
+      requester_role,
+      advisor_id,
+      pc_id,
+      start_date,
+      end_date,
+      start_time,
+      end_time,
+      starts_at,
+      ends_at,
+      access_mode,
+      purpose,
+      course
+    ) values (
+      '10000000-0000-0000-0000-000000000001',
+      'student',
+      '20000000-0000-0000-0000-000000000001',
+      (select id from public.pcs where code = 'PC-10'),
+      date '2099-01-09',
+      date '2099-01-09',
+      time '09:00',
+      time '10:00',
+      statement_timestamp() - interval '2 hours',
+      statement_timestamp() - interval '1 hour',
+      'lab',
+      'Past start trigger test',
+      'SE Test'
+    )
+  $$,
+  'The booking start time must be in the future.',
+  'database rejects an active booking whose start instant has passed'
+);
+set local role authenticated;
 select lives_ok(
   $$
     select public.create_booking(

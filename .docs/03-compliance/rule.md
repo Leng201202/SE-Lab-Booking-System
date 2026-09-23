@@ -23,8 +23,9 @@ This document is an engineering compliance register, not legal advice. Final app
 | Rule | Status | Evidence |
 |---|---|---|
 | One-day in-lab bookings are within 08:00–18:00 and use an increasing 15-minute interval | Enforced | create_booking RPC and table constraints |
-| Multi-day bookings use remote access and reserve the full inclusive Bangkok date range | Enforced | create_booking RPC; half-open timestamp range |
-| Past dates and maintenance/inactive PCs cannot be booked | Enforced | create_booking RPC |
+| Same-day bookings begin at the next valid Bangkok 15-minute slot; elapsed calendar slots are read-only | Enforced in frontend; database migration deployment required | Booking form/calendar validation; `20260923000100_enforce_future_booking_start.sql` |
+| Multi-day bookings use remote access, reserve the full inclusive Bangkok date range, and start on a future date | Enforced in frontend; database migration deployment required | Booking form; future-start trigger; half-open timestamp range |
+| Active bookings whose start instant has passed and maintenance/inactive PCs cannot be booked | Migration deployment required for future-start rule; PC rule enforced | Future-start trigger and pgTAP assertion; create_booking RPC |
 | Purpose is required and bounded; course/project is optional and bounded | Enforced | RPC normalization and constraints |
 | Students need an assigned eligible Advisor before submitting | Enforced | create_booking RPC |
 | Advisor requests skip Advisor review and require Dean review | Enforced | create_booking RPC and requester-role constraints |

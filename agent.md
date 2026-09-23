@@ -147,7 +147,7 @@ The database exclusion constraint is the final authority for overlapping active 
 
 One-day in-lab bookings must be within `08:00–18:00`, use a valid increasing time range, and remain on one date. Multi-day bookings use remote access and reserve the full inclusive Bangkok date range as a half-open timestamp interval ending at midnight after the final selected date.
 
-Past dates, unavailable PCs, missing Student Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database. Advisor and Dean requesters do not require an assigned Advisor.
+Past booking start instants, unavailable PCs, missing Student Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database. On the current Bangkok date, one-day bookings begin at the next valid 15-minute slot; full-day multi-day reservations must start on a future date. Advisor and Dean requesters do not require an assigned Advisor.
 
 `cancelled` and `completed` exist in the status model, but user cancellation and automatic completion are not implemented yet.
 

@@ -99,6 +99,7 @@ Only Deans can add or edit PC inventory. Setting a PC to `maintenance` or `inact
 - Deans see final-review records and all profiles required for user management.
 - Shared calendar RPC output contains occupancy data but no Student identity, purpose, or rejection details.
 - Booking, approval, rejection, user-management, relationship-management, and PC-management functions derive the actor from `auth.uid()`.
+- Active bookings must start in the future; a database trigger rejects stale creation and approval attempts independently of browser validation.
 - An exclusion constraint prevents concurrent active bookings from overlapping.
 - Every approval/rejection creates an immutable `approval_events` record.
 

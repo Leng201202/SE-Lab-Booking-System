@@ -7,11 +7,11 @@
 | Signed-out gate | Visitors see the sign-in page and cannot read application tables or calendar RPC output | Done |
 | Role-specific navigation | Student, Advisor, and Dean receive appropriate pages and actions | Done |
 | PC inventory | Ten seeded PCs with room, specification, available/maintenance/inactive state | Done |
-| Week availability | Seven-day overview across all PCs | Done |
-| Day timeline | 08:00–18:00 timeline with 15-minute Student selection | Done |
+| Week availability | Seven-day overview across all PCs; past dates and days without a remaining slot are read-only | Done |
+| Day timeline | 08:00–18:00 timeline with 15-minute selection; elapsed slots are disabled using Bangkok time | Done |
 | Privacy-preserving calendar | Shows occupancy/status/access mode; unrelated private booking details are omitted | Done |
-| One-day lab request | Valid time within 08:00–18:00 | Done |
-| Multi-day remote request | Continuous full-day reservation over an inclusive date range | Done |
+| One-day lab request | Future start within 08:00–18:00, beginning at the next valid 15-minute slot when booking today | Done |
+| Multi-day remote request | Continuous full-day reservation over an inclusive future date range | Done |
 | Conflict prevention | PostgreSQL exclusion constraint rejects overlapping active intervals | Done |
 | Own request history/detail | Every role sees its own private records and rejection reasons | Done |
 | Advisor review | Assigned Advisor approves to Dean or rejects with a reason | Done |

@@ -28,6 +28,7 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 - Advisor/Dean user management: app/src/features/users/
 - Dean PC management: app/src/features/pcs/PcManagementPage.jsx
 - Availability calendar: app/src/features/calendar/
+- Shared Bangkok date/time and next-slot calculation: app/src/utils/booking.js
 - Browser client: app/src/lib/supabase.js
 - Database migration: supabase/migrations/
 - Database tests: supabase/tests/database/
@@ -54,7 +55,7 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- RLS and workflow behavior through 56 pgTAP assertions
+- RLS and workflow behavior through 57 pgTAP assertions after applying the latest migration
 - frontend lint, unit tests, and production build
 - schema lint and dependency audit
 

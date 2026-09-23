@@ -11,9 +11,9 @@
 ## Journey 2 — Student requests a PC
 
 1. Student reviews PC inventory or the availability calendar.
-2. Student chooses an available one-day lab interval or a multi-day date range.
+2. Student chooses an available one-day lab interval beginning at the next valid Bangkok slot, or a multi-day range beginning on a future date.
 3. The form collects PC, dates/times, purpose, and optional course/project.
-4. The database validates identity, Advisor assignment, PC state, interval, purpose, and overlap.
+4. The database validates identity, Advisor assignment, PC state, future start instant, interval, purpose, and overlap.
 5. A valid request is created as pending Advisor.
 6. Student sees the request detail and approval progress.
 
@@ -39,8 +39,9 @@
 
 1. Authenticated user opens the week or day calendar.
 2. Occupied periods show PC, access mode, and status.
-3. Unrelated Student identity, university ID, purpose, course, and rejection data remain hidden.
-4. If a Student submits against a newly occupied interval, the database rejects the race safely.
+3. Past dates and elapsed slots on the current Bangkok date are read-only; the page refreshes the earliest selectable slot while it remains open.
+4. Unrelated Student identity, university ID, purpose, course, and rejection data remain hidden.
+5. If a user submits an expired or newly occupied interval, the database rejects the race safely.
 
 ## Journey 6 — Advisor books a PC
 

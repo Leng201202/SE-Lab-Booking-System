@@ -8,7 +8,7 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 |---|---|---|---|---|
 | B1 | As a university user, I sign in with Google so my identity is not controlled by browser state. | Must | Configured deployment required | Security/product requirement |
 | B2 | As an authenticated user, I can view week and day availability for all managed PCs. | Must | Done | Research #1, #2, #5 |
-| B3 | As an authenticated user, I can request an available PC for a valid date and time. | Must | Done | Research #3, #4; institutional workflow |
+| B3 | As an authenticated user, I can request an available PC only for a future start instant. | Must | Done | Research #3, #4; institutional workflow |
 | B4 | As an authenticated user, I can request a one-day in-lab session or a continuous multi-day remote reservation. | Must | Done | Research #1, #2 |
 | B5 | As an authenticated user, I can see occupied periods without seeing unrelated Student identity or purpose. | Must | Done | Privacy requirement derived from research #1, #2 |
 | B6 | As a Student, I can see my request status and any rejection reason. | Must | Done | Workflow requirement |
@@ -44,7 +44,9 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 
 - Active statuses are **pending_advisor**, **pending_dean**, and **approved**.
 - One-day lab bookings use 08:00–18:00 in 15-minute increments.
-- A multi-day request is remote and reserves the complete inclusive Bangkok date range.
+- On the current Bangkok date, the earliest selectable start is the next 15-minute slot; elapsed slots are read-only in the calendar and invalid in the form.
+- A multi-day request is remote and reserves the complete inclusive Bangkok date range, so it must begin on a future date.
+- PostgreSQL rejects a pending or approved booking when its start instant is no longer in the future, including stale submissions and late approvals.
 - Students need an assigned Advisor before creating a request.
 - Advisor requests start at pending Dean; Dean requests become approved immediately after availability validation.
 - Google identity does not grant an elevated application role; Advisor and Dean roles come from a protected allowlist.

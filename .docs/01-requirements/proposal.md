@@ -44,7 +44,8 @@ The shared calendar exposes occupancy, PC, time, access mode, and status to auth
 - Ten PCs are seeded for the current lab inventory.
 - Available, maintenance, and inactive operational states are supported.
 - One-day requests are in-lab and restricted to 08:00–18:00.
-- Multi-day requests are remote and reserve each included day continuously.
+- A same-day request starts at the next 15-minute Bangkok slot; elapsed calendar slots cannot be selected.
+- Multi-day requests are remote, reserve each included day continuously, and begin on a future date because their first day starts at 00:00.
 - Pending Advisor, pending Dean, and approved requests block availability.
 - Rejected, cancelled, and completed records do not block availability.
 - PostgreSQL prevents overlapping active intervals for the same PC under concurrency.
@@ -70,7 +71,7 @@ The production foundation is implemented locally:
 - booking, approval, rejection, and calendar RPCs
 - protected user/Advisor relationship and PC-management RPCs
 - immutable approval events
-- 56 pgTAP database assertions and frontend verification
+- 57 pgTAP database assertions, including server-side future-start coverage, and frontend verification
 
 The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
 

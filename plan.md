@@ -58,9 +58,9 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 56 pgTAP assertions cover allow/deny, all three booking paths, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 57 pgTAP assertions cover allow/deny, all three booking paths, future-start enforcement, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
-- frontend ESLint, four Node tests, and production Vite build pass after the role-capability expansion
+- frontend ESLint, six Node tests, and production Vite build pass after the role-capability and future-start changes
 
 ## Architecture
 
@@ -143,7 +143,7 @@ Dean: new request → approved
 
 `pending_advisor`, `pending_dean`, and `approved` block availability. `rejected`, `cancelled`, and `completed` do not.
 
-One-day in-lab requests use `08:00–18:00` bounds. Multi-day requests use remote access and reserve each included day continuously. The database rejects past starts, unavailable PCs, invalid intervals, short purposes, missing Advisor assignments, wrong-stage actions, and overlaps.
+One-day in-lab requests use `08:00–18:00` bounds. On the current Bangkok date, the form and calendar advance to the next valid 15-minute slot and make elapsed slots read-only. Multi-day requests use remote access, reserve each included day continuously, and must begin on a future date. The future-start trigger rejects stale creation and approval attempts; the database also rejects unavailable PCs, invalid intervals, short purposes, missing Advisor assignments, wrong-stage actions, and overlaps.
 
 Cancellation and automatic completion are not yet exposed as user operations.
 
