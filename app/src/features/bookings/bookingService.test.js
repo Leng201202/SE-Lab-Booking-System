@@ -6,6 +6,7 @@ import {
   formatBookingDateRange,
   formatBookingTime,
   getBangkokDateKey,
+  getEarliestBookableTime,
   isBookingConflict,
 } from '../../utils/booking.js'
 
@@ -94,4 +95,15 @@ test('maps sanitized calendar rows without private requester data', () => {
 
 test('uses the Bangkok calendar date at UTC day boundaries', () => {
   assert.equal(getBangkokDateKey('2026-09-21T18:30:00.000Z'), '2026-09-22')
+})
+
+test('rounds today forward to the next Bangkok booking slot', () => {
+  assert.equal(getEarliestBookableTime('2026-09-23', '2026-09-23T03:07:30.000Z'), '10:15')
+  assert.equal(getEarliestBookableTime('2026-09-23', '2026-09-23T03:15:00.000Z'), '10:30')
+})
+
+test('does not offer past dates or a day with no remaining slot', () => {
+  assert.equal(getEarliestBookableTime('2026-09-22', '2026-09-23T03:00:00.000Z'), null)
+  assert.equal(getEarliestBookableTime('2026-09-24', '2026-09-23T03:00:00.000Z'), '08:00')
+  assert.equal(getEarliestBookableTime('2026-09-23', '2026-09-23T10:45:01.000Z'), null)
 })

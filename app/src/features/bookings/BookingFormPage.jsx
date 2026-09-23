@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { ArrowLeft, CalendarDays, Clock3, Info, Monitor, Wifi } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
@@ -8,7 +9,12 @@ import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
 import { Field, Input, Select, Textarea } from '../../components/ui/FormFields'
-import { getBangkokDateKey } from '../../utils/booking'
+import {
+  LAB_CLOSE_TIME,
+  LAB_OPEN_TIME,
+  getBangkokDateKey,
+  getEarliestBookableTime,
+} from '../../utils/booking'
 
 const bookingSchema = z
   .object({
@@ -29,17 +35,30 @@ const bookingSchema = z
       return
     }
     const isMultiDay = data.startDate && data.endDate && data.startDate !== data.endDate
-    if (isMultiDay) return
+    if (isMultiDay) {
+      if (data.startDate === getBangkokDateKey()) {
+        context.addIssue({ code: 'custom', message: 'A multi-day reservation must start tomorrow or later.', path: ['startDate'] })
+      }
+      return
+    }
     if (!data.startTime) context.addIssue({ code: 'custom', message: 'Start time is required.', path: ['startTime'] })
     if (!data.endTime) context.addIssue({ code: 'custom', message: 'End time is required.', path: ['endTime'] })
     if (data.startTime && data.endTime && data.startTime >= data.endTime) {
       context.addIssue({ code: 'custom', message: 'End time must be later than start time.', path: ['endTime'] })
     }
-    if (data.startTime && data.startTime < '08:00') {
+    if (data.startTime && data.startTime < LAB_OPEN_TIME) {
       context.addIssue({ code: 'custom', message: 'The lab opens at 08:00.', path: ['startTime'] })
     }
-    if (data.endTime && data.endTime > '18:00') {
+    if (data.endTime && data.endTime > LAB_CLOSE_TIME) {
       context.addIssue({ code: 'custom', message: 'The lab closes at 18:00.', path: ['endTime'] })
+    }
+    if (data.startDate === getBangkokDateKey() && data.startTime) {
+      const earliestTime = getEarliestBookableTime(data.startDate)
+      if (!earliestTime) {
+        context.addIssue({ code: 'custom', message: 'No booking times remain today. Choose a future date.', path: ['startTime'] })
+      } else if (data.startTime < earliestTime) {
+        context.addIssue({ code: 'custom', message: `Choose ${earliestTime} or a later start time.`, path: ['startTime'] })
+      }
     }
   })
 
@@ -47,13 +66,19 @@ export function BookingFormPage() {
   const { createBooking, pcs, user } = useApp()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const [currentTime, setCurrentTime] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const requestedPc = pcs.find((pc) => pc.id === searchParams.get('pc') && pc.status === 'Available') || null
   const requestedDate = searchParams.get('date')
   const requestedStart = searchParams.get('start')
   const requestedEnd = searchParams.get('end')
-  const today = getBangkokDateKey()
+  const today = getBangkokDateKey(currentTime)
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate || '') && requestedDate >= today ? requestedDate : ''
-  const validTimeSelection = /^\d{2}:\d{2}$/.test(requestedStart || '') && /^\d{2}:\d{2}$/.test(requestedEnd || '') && requestedStart >= '08:00' && requestedStart < requestedEnd && requestedEnd <= '18:00'
+  const earliestRequestedTime = validDate ? getEarliestBookableTime(validDate, currentTime) : null
+  const validTimeSelection = Boolean(earliestRequestedTime) && /^\d{2}:\d{2}$/.test(requestedStart || '') && /^\d{2}:\d{2}$/.test(requestedEnd || '') && requestedStart >= earliestRequestedTime && requestedStart < requestedEnd && requestedEnd <= LAB_CLOSE_TIME
   const fromCalendar = searchParams.get('source') === 'calendar' && Boolean(requestedPc && validDate && validTimeSelection)
   const initialValues = {
     pcId: fromCalendar ? requestedPc.id : '',
@@ -76,6 +101,9 @@ export function BookingFormPage() {
   const [pcId, startDate, endDate] = useWatch({ control, name: ['pcId', 'startDate', 'endDate'] })
   const selectedPc = pcs.find((pc) => pc.id === pcId) || null
   const isMultiDay = Boolean(startDate && endDate && startDate !== endDate)
+  const multiDayStartsToday = isMultiDay && startDate === today
+  const earliestStartTime = startDate ? getEarliestBookableTime(startDate, currentTime) : LAB_OPEN_TIME
+  const noTimesRemaining = !isMultiDay && startDate === today && !earliestStartTime
 
   const onSubmit = async (values) => {
     const pc = pcs.find((item) => item.id === values.pcId)
@@ -129,27 +157,28 @@ export function BookingFormPage() {
                 </Field>
               </div>
               <Field label="Start date" required error={errors.startDate?.message}>
-                <Input type="date" min={format(new Date(), 'yyyy-MM-dd')} {...startDateRegistration} />
+                <Input type="date" min={today} {...startDateRegistration} />
               </Field>
               <Field label="End date" required error={errors.endDate?.message} hint="Use the start date for a one-day booking.">
-                <Input type="date" min={format(new Date(), 'yyyy-MM-dd')} {...register('endDate')} />
+                <Input type="date" min={today} {...register('endDate')} />
               </Field>
               {isMultiDay ? (
-                <div className="flex gap-3 rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900 sm:col-span-2">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-violet-100 text-violet-700"><Wifi size={17} /></span>
+                <div className={`flex gap-3 rounded-xl border p-4 text-sm sm:col-span-2 ${multiDayStartsToday ? 'border-red-200 bg-red-50 text-red-900' : 'border-violet-200 bg-violet-50 text-violet-900'}`}>
+                  <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${multiDayStartsToday ? 'bg-red-100 text-red-700' : 'bg-violet-100 text-violet-700'}`}><Wifi size={17} /></span>
                   <div>
-                    <p className="font-bold">24-hour remote reservation</p>
-                    <p className="mt-1 leading-6 text-violet-700">This PC will be reserved continuously from the start date through the end date. Lab opening hours do not apply to remote access.</p>
+                    <p className="font-bold">{multiDayStartsToday ? 'Choose a future start date' : '24-hour remote reservation'}</p>
+                    <p className={`mt-1 leading-6 ${multiDayStartsToday ? 'text-red-700' : 'text-violet-700'}`}>{multiDayStartsToday ? 'A full-day remote reservation starts at 00:00, so it cannot begin today after that time has passed.' : 'This PC will be reserved continuously from the start date through the end date. Lab opening hours do not apply to remote access.'}</p>
                   </div>
                 </div>
               ) : (
                 <>
-                  <Field label="Start time" required error={errors.startTime?.message} hint="Lab opens at 08:00.">
-                    <Input type="time" min="08:00" max="18:00" step="900" {...register('startTime')} />
+                  <Field label="Start time" required error={errors.startTime?.message} hint={startDate === today && earliestStartTime ? `Earliest available start today: ${earliestStartTime}.` : 'Lab opens at 08:00.'}>
+                    <Input type="time" min={earliestStartTime || LAB_CLOSE_TIME} max={LAB_CLOSE_TIME} step="900" disabled={noTimesRemaining} {...register('startTime')} />
                   </Field>
                   <Field label="End time" required error={errors.endTime?.message} hint="Lab closes at 18:00.">
-                    <Input type="time" min="08:00" max="18:00" step="900" {...register('endTime')} />
+                    <Input type="time" min={LAB_OPEN_TIME} max={LAB_CLOSE_TIME} step="900" disabled={noTimesRemaining} {...register('endTime')} />
                   </Field>
+                  {noTimesRemaining && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 sm:col-span-2">No booking times remain today. Choose a future date.</div>}
                 </>
               )}
             </div>
@@ -164,7 +193,7 @@ export function BookingFormPage() {
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
               <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? 'Back to calendar' : 'Cancel'}</Button></Link>
-              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting}>Submit booking request</Button>
+              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday}>Submit booking request</Button>
             </div>
           </form>
         </Card>

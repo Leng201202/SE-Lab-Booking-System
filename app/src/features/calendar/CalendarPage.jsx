@@ -30,6 +30,7 @@ import {
   formatBookingTime,
   getBangkokDateKey,
   getBookingTimeBounds,
+  getEarliestBookableTime,
 } from '../../utils/booking'
 
 const LAB_OPEN_MINUTES = 8 * 60
@@ -88,10 +89,10 @@ function overlapsBooking(activeBookings, startMinutes, endMinutes) {
   })
 }
 
-function hasAvailableLabSlot(activeBookings) {
+function hasAvailableLabSlot(activeBookings, minimumStartMinutes = LAB_OPEN_MINUTES) {
   return Array.from({ length: TIMELINE_SLOT_COUNT }, (_, slotIndex) => {
     const start = LAB_OPEN_MINUTES + slotIndex * TIMELINE_SLOT_MINUTES
-    return !overlapsBooking(activeBookings, start, start + TIMELINE_SLOT_MINUTES)
+    return start >= minimumStartMinutes && !overlapsBooking(activeBookings, start, start + TIMELINE_SLOT_MINUTES)
   }).some(Boolean)
 }
 
@@ -156,6 +157,10 @@ function weekLabel(days) {
   return `${format(first, 'd MMM')}–${format(last, 'd MMM yyyy')}`
 }
 
+function dateFromBangkokKey(dateKey) {
+  return new Date(`${dateKey}T00:00:00`)
+}
+
 function PcLabel({ pc }) {
   return (
     <div className="flex items-center gap-2.5">
@@ -187,7 +192,7 @@ function BookingContent({ booking }) {
   )
 }
 
-function AvailabilityCell({ pc, date, bookings, canBook, onChooseTime }) {
+function AvailabilityCell({ pc, date, bookings, canBook, minimumStartMinutes, onChooseTime }) {
   if (pc.status !== 'Available') {
     const isMaintenance = pc.status === 'Maintenance'
     return (
@@ -201,11 +206,13 @@ function AvailabilityCell({ pc, date, bookings, canBook, onChooseTime }) {
 
   const activeBookings = getActiveBookings(bookings, pc.id, date)
   if (!activeBookings.length) {
+    const dateKey = format(date, 'yyyy-MM-dd')
+    const unavailableLabel = dateKey === getBangkokDateKey() ? 'No future time' : 'Past date'
     const content = (
       <>
-        <span className="size-2 rounded-full bg-emerald-500" />
-        <span className="mt-2 text-xs font-bold text-emerald-700">Available</span>
-        <span className="mt-0.5 text-[10px] text-emerald-600">{canBook ? 'Choose a time' : 'All day'}</span>
+        <span className={`size-2 rounded-full ${canBook ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <span className={`mt-2 text-xs font-bold ${canBook ? 'text-emerald-700' : 'text-slate-600'}`}>{canBook ? 'Available' : 'Read only'}</span>
+        <span className={`mt-0.5 text-[10px] ${canBook ? 'text-emerald-600' : 'text-slate-500'}`}>{canBook ? 'Choose a time' : unavailableLabel}</span>
       </>
     )
     return canBook ? (
@@ -213,11 +220,11 @@ function AvailabilityCell({ pc, date, bookings, canBook, onChooseTime }) {
         {content}
       </button>
     ) : (
-      <div className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50/50 px-2 text-center">{content}</div>
+      <div className="flex min-h-20 flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 text-center">{content}</div>
     )
   }
 
-  const hasOpenTime = hasAvailableLabSlot(activeBookings)
+  const hasOpenTime = hasAvailableLabSlot(activeBookings, minimumStartMinutes)
   const canChooseTime = canBook && hasOpenTime
 
   return (
@@ -246,7 +253,7 @@ function AvailabilityCell({ pc, date, bookings, canBook, onChooseTime }) {
   )
 }
 
-function WeekView({ weekDays, bookings, pcs, openTimeline, canBook }) {
+function WeekView({ weekDays, bookings, pcs, openTimeline, currentTime }) {
   return (
     <div className="overflow-x-auto overscroll-x-contain">
       <table className="w-full min-w-[960px] border-separate border-spacing-0 text-left sm:min-w-[1120px]">
@@ -268,17 +275,21 @@ function WeekView({ weekDays, bookings, pcs, openTimeline, canBook }) {
           {pcs.map((pc) => (
             <tr key={pc.id}>
               <th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-3 py-4 align-top sm:px-5"><PcLabel pc={pc} /></th>
-              {weekDays.map((day) => (
-                <td key={day.toISOString()} className={`border-b border-slate-100 p-2 align-top ${isToday(day) ? 'bg-mfu-50/40' : 'bg-white'}`}>
-                  <AvailabilityCell
-                    pc={pc}
-                    date={day}
-                    bookings={bookings}
-                    canBook={canBook && format(day, 'yyyy-MM-dd') >= getBangkokDateKey()}
-                    onChooseTime={() => openTimeline(day, pc.id)}
-                  />
-                </td>
-              ))}
+              {weekDays.map((day) => {
+                const earliestTime = getEarliestBookableTime(format(day, 'yyyy-MM-dd'), currentTime)
+                return (
+                  <td key={day.toISOString()} className={`border-b border-slate-100 p-2 align-top ${isToday(day) ? 'bg-mfu-50/40' : 'bg-white'}`}>
+                    <AvailabilityCell
+                      pc={pc}
+                      date={day}
+                      bookings={bookings}
+                      canBook={Boolean(earliestTime)}
+                      minimumStartMinutes={earliestTime ? timeToMinutes(earliestTime) : LAB_CLOSE_MINUTES}
+                      onChooseTime={() => openTimeline(day, pc.id)}
+                    />
+                  </td>
+                )
+              })}
             </tr>
           ))}
         </tbody>
@@ -302,7 +313,7 @@ function TimelineBlock({ booking, canOpen }) {
   )
 }
 
-function TimelineSelection({ selection, date, activeBookings, onChange }) {
+function TimelineSelection({ selection, date, activeBookings, minimumStartSlot, onChange }) {
   const drag = useRef(null)
   const startSlot = timeToSlot(selection.startTime)
   const endSlot = timeToSlot(selection.endTime)
@@ -335,10 +346,10 @@ function TimelineSelection({ selection, date, activeBookings, onChange }) {
 
     if (interaction.mode === 'move') {
       const duration = interaction.endSlot - interaction.startSlot
-      nextStart = clamp(interaction.startSlot + slotDelta, 0, TIMELINE_SLOT_COUNT - duration)
+      nextStart = clamp(interaction.startSlot + slotDelta, minimumStartSlot, TIMELINE_SLOT_COUNT - duration)
       nextEnd = nextStart + duration
     } else if (interaction.mode === 'start') {
-      nextStart = clamp(interaction.startSlot + slotDelta, 0, interaction.endSlot - 1)
+      nextStart = clamp(interaction.startSlot + slotDelta, minimumStartSlot, interaction.endSlot - 1)
     } else {
       nextEnd = clamp(interaction.endSlot + slotDelta, interaction.startSlot + 1, TIMELINE_SLOT_COUNT)
     }
@@ -360,7 +371,7 @@ function TimelineSelection({ selection, date, activeBookings, onChange }) {
     event.preventDefault()
     const direction = event.key === 'ArrowLeft' ? -1 : 1
     const duration = endSlot - startSlot
-    const nextStart = clamp(startSlot + direction, 0, TIMELINE_SLOT_COUNT - duration)
+    const nextStart = clamp(startSlot + direction, minimumStartSlot, TIMELINE_SLOT_COUNT - duration)
     const nextEnd = nextStart + duration
     const startMinutes = LAB_OPEN_MINUTES + nextStart * TIMELINE_SLOT_MINUTES
     const endMinutes = LAB_OPEN_MINUTES + nextEnd * TIMELINE_SLOT_MINUTES
@@ -400,8 +411,17 @@ function TimelineSelection({ selection, date, activeBookings, onChange }) {
   )
 }
 
-function TimelineView({ date, bookings, pcs, canBook, selection, onSelect }) {
+function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, onSelect }) {
   const createDrag = useRef(null)
+  const canBook = Boolean(earliestBookableTime)
+  const dateKey = format(date, 'yyyy-MM-dd')
+  const readOnlyLabel = dateKey < getBangkokDateKey() ? 'Past date · read only' : 'No future time remains today'
+  const minimumStartMinutes = earliestBookableTime ? timeToMinutes(earliestBookableTime) : LAB_CLOSE_MINUTES
+  const minimumStartSlot = clamp(
+    Math.ceil((minimumStartMinutes - LAB_OPEN_MINUTES) / TIMELINE_SLOT_MINUTES),
+    0,
+    TIMELINE_SLOT_COUNT,
+  )
 
   const startSlotSelection = (event, pcId, slotIndex, activeBookings) => {
     if (event.button !== undefined && event.button !== 0) return
@@ -434,7 +454,7 @@ function TimelineView({ date, bookings, pcs, canBook, selection, onSelect }) {
     if (pointerSlot === interaction.currentSlot) return
     interaction.currentSlot = pointerSlot
     interaction.moved = true
-    const nextStart = Math.min(interaction.originSlot, pointerSlot)
+    const nextStart = Math.max(minimumStartSlot, Math.min(interaction.originSlot, pointerSlot))
     const nextEnd = Math.max(interaction.originSlot, pointerSlot) + 1
     const startMinutes = LAB_OPEN_MINUTES + nextStart * TIMELINE_SLOT_MINUTES
     const endMinutes = LAB_OPEN_MINUTES + nextEnd * TIMELINE_SLOT_MINUTES
@@ -496,7 +516,8 @@ function TimelineView({ date, bookings, pcs, canBook, selection, onSelect }) {
                     {canBook && Array.from({ length: TIMELINE_SLOT_COUNT }, (_, slotIndex) => {
                       const slotStart = LAB_OPEN_MINUTES + slotIndex * TIMELINE_SLOT_MINUTES
                       const slotEnd = slotStart + TIMELINE_SLOT_MINUTES
-                      const available = !overlapsBooking(activeBookings, slotStart, slotEnd)
+                      const isPast = slotStart < minimumStartMinutes
+                      const available = !isPast && !overlapsBooking(activeBookings, slotStart, slotEnd)
                       return (
                         <button
                           key={slotIndex}
@@ -506,15 +527,15 @@ function TimelineView({ date, bookings, pcs, canBook, selection, onSelect }) {
                           onPointerMove={extendSlotSelection}
                           onPointerUp={finishSlotSelection}
                           onPointerCancel={finishSlotSelection}
-                          className="z-0 h-full touch-pan-y transition hover:bg-mfu-100/60 focus-visible:z-[4] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-mfu-600 disabled:cursor-not-allowed"
+                          className="z-0 h-full touch-pan-y transition hover:bg-mfu-100/60 focus-visible:z-[4] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-mfu-600 disabled:cursor-not-allowed disabled:bg-slate-100/70"
                           style={{ gridColumn: `${slotIndex + 1}`, gridRow: '1' }}
-                          aria-label={available ? `Select ${pc.id} at ${minutesToTime(slotStart)}` : `${pc.id} unavailable at ${minutesToTime(slotStart)}`}
+                          aria-label={isPast ? `${pc.id} is in the past at ${minutesToTime(slotStart)}` : available ? `Select ${pc.id} at ${minutesToTime(slotStart)}` : `${pc.id} unavailable at ${minutesToTime(slotStart)}`}
                         />
                       )
                     })}
-                    {!activeBookings.length && !canBook && <div className="flex items-center px-3" style={{ gridColumn: '1 / -1', gridRow: '1' }}><span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"><span className="size-1.5 rounded-full bg-emerald-500" />Available all day</span></div>}
+                    {!activeBookings.length && !canBook && <div className="flex items-center px-3" style={{ gridColumn: '1 / -1', gridRow: '1' }}><span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-200"><span className="size-1.5 rounded-full bg-slate-400" />{readOnlyLabel}</span></div>}
                     {isSelectedPc && (
-                      <TimelineSelection selection={selection} date={date} activeBookings={activeBookings} onChange={onSelect} />
+                      <TimelineSelection selection={selection} date={date} activeBookings={activeBookings} minimumStartSlot={minimumStartSlot} onChange={onSelect} />
                     )}
                     {activeBookings.map((booking) => <TimelineBlock key={booking.id} booking={booking} canOpen={booking.canViewDetails} />)}
                   </>
@@ -559,8 +580,9 @@ function CalendarLegend() {
 export function CalendarPage() {
   const { calendarBookings: bookings, pcs, refreshCalendar } = useApp()
   const [view, setView] = useState('week')
-  const [anchorDate, setAnchorDate] = useState(() => new Date())
-  const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [anchorDate, setAnchorDate] = useState(() => dateFromBangkokKey(getBangkokDateKey()))
+  const [selectedDate, setSelectedDate] = useState(() => dateFromBangkokKey(getBangkokDateKey()))
+  const [currentTime, setCurrentTime] = useState(() => new Date())
   const [selection, setSelection] = useState(null)
   const [preferredPcId, setPreferredPcId] = useState(null)
   const [calendarError, setCalendarError] = useState('')
@@ -568,7 +590,18 @@ export function CalendarPage() {
     const start = startOfWeek(anchorDate, { weekStartsOn: 1 })
     return eachDayOfInterval({ start, end: endOfWeek(start, { weekStartsOn: 1 }) })
   }, [anchorDate])
-  const canBook = format(selectedDate, 'yyyy-MM-dd') >= getBangkokDateKey()
+  const selectedDateKey = format(selectedDate, 'yyyy-MM-dd')
+  const earliestBookableTime = getEarliestBookableTime(selectedDateKey, currentTime)
+  const canBook = Boolean(earliestBookableTime)
+  const isPastDate = selectedDateKey < getBangkokDateKey(currentTime)
+  const activeSelection = selection && earliestBookableTime && selection.startTime >= earliestBookableTime
+    ? selection
+    : null
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const rangeStart = view === 'week' ? weekDays[0] : selectedDate
@@ -597,19 +630,19 @@ export function CalendarPage() {
     setPreferredPcId(null)
   }
   const goToday = () => {
-    const today = new Date()
+    const today = dateFromBangkokKey(getBangkokDateKey())
     setAnchorDate(today)
     setSelectedDate(today)
     setSelection(null)
     setPreferredPcId(null)
   }
 
-  const bookingSearch = selection
+  const bookingSearch = activeSelection
     ? new URLSearchParams({
-        pc: selection.pcId,
-        date: selection.date,
-        start: selection.startTime,
-        end: selection.endTime,
+        pc: activeSelection.pcId,
+        date: activeSelection.date,
+        start: activeSelection.startTime,
+        end: activeSelection.endTime,
         source: 'calendar',
       }).toString()
     : ''
@@ -643,19 +676,19 @@ export function CalendarPage() {
         <CalendarLegend />
 
         {view === 'timeline' && (
-          <div className={`flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${selection ? 'border-mfu-200 bg-mfu-50' : 'border-slate-200 bg-white'}`} aria-live="polite">
+          <div className={`flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${activeSelection ? 'border-mfu-200 bg-mfu-50' : 'border-slate-200 bg-white'}`} aria-live="polite">
             <div className="flex items-start gap-3">
-              <span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${selection ? 'bg-mfu-700 text-white' : 'bg-slate-100 text-slate-500'}`}><MousePointer2 size={16} /></span>
+              <span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${activeSelection ? 'bg-mfu-700 text-white' : 'bg-slate-100 text-slate-500'}`}><MousePointer2 size={16} /></span>
               <div>
                 <p className="text-sm font-bold text-slate-900">
-                  {selection ? `${selection.pcId} · ${selection.startTime}–${selection.endTime}` : preferredPcId ? `Choose an available time for ${preferredPcId}` : 'Select an available time slot'}
+                  {activeSelection ? `${activeSelection.pcId} · ${activeSelection.startTime}–${activeSelection.endTime}` : preferredPcId ? `Choose an available time for ${preferredPcId}` : 'Select an available time slot'}
                 </p>
                 <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                  {selection ? `${format(selectedDate, 'EEEE, d MMMM yyyy')} · ${formatSelectionDuration(selection)} · Drag the block to move it or drag either edge to resize.` : canBook ? 'Drag across any open workstation row to select a time range. A single click selects one hour when available.' : 'Past dates are read-only. Choose today or a future date to make a booking.'}
+                  {activeSelection ? `${format(selectedDate, 'EEEE, d MMMM yyyy')} · ${formatSelectionDuration(activeSelection)} · Drag the block to move it or drag either edge to resize.` : canBook ? `Drag across an open workstation row from ${earliestBookableTime}. A single click selects one hour when available.` : isPastDate ? 'Past dates are read-only. Choose today or a future date to make a booking.' : 'No booking time remains today. Choose a future date.'}
                 </p>
               </div>
             </div>
-            {selection && (
+            {activeSelection && (
               <div className="grid w-full shrink-0 grid-cols-[2.5rem_1fr] items-center gap-2 sm:flex sm:w-auto">
                 <button onClick={() => setSelection(null)} className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800" aria-label="Clear selected time"><X size={17} /></button>
                 <Link className="block" to={`/book?${bookingSearch}`}><Button className="w-full sm:w-auto" size="sm">Book selected time <ArrowRight size={16} /></Button></Link>
@@ -665,9 +698,9 @@ export function CalendarPage() {
         )}
 
         {view === 'week' ? (
-          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} canBook />
+          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} currentTime={currentTime} />
         ) : (
-          <TimelineView date={selectedDate} bookings={bookings} pcs={pcs} canBook={canBook} selection={selection} onSelect={setSelection} />
+          <TimelineView date={selectedDate} bookings={bookings} pcs={pcs} earliestBookableTime={earliestBookableTime} selection={activeSelection} onSelect={setSelection} />
         )}
 
         <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-[11px] leading-5 text-slate-500 sm:px-5">

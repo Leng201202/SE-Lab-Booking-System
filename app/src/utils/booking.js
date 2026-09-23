@@ -2,6 +2,9 @@ import { format, parseISO } from 'date-fns'
 
 export const APP_TIME_ZONE = 'Asia/Bangkok'
 export const BLOCKING_BOOKING_STATUSES = Object.freeze(['pending_advisor', 'pending_dean', 'approved'])
+export const LAB_OPEN_TIME = '08:00'
+export const LAB_CLOSE_TIME = '18:00'
+export const BOOKING_SLOT_MINUTES = 15
 
 export const statusMeta = {
   pending_advisor: { label: 'Pending Advisor', tone: 'amber' },
@@ -84,6 +87,41 @@ export function getBangkokDateKey(value = new Date()) {
   }).formatToParts(new Date(value))
   const part = (type) => parts.find((item) => item.type === type)?.value
   return `${part('year')}-${part('month')}-${part('day')}`
+}
+
+function getBangkokClockParts(value = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(value))
+  const part = (type) => Number(parts.find((item) => item.type === type)?.value || 0)
+  return { hour: part('hour'), minute: part('minute'), second: part('second') }
+}
+
+function minutesToTime(minutes) {
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  return `${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+}
+
+export function getEarliestBookableTime(date, value = new Date()) {
+  if (!date) return null
+
+  const today = getBangkokDateKey(value)
+  if (date < today) return null
+  if (date > today) return LAB_OPEN_TIME
+
+  const { hour, minute, second } = getBangkokClockParts(value)
+  const currentSeconds = hour * 3600 + minute * 60 + second
+  const slotSeconds = BOOKING_SLOT_MINUTES * 60
+  const roundedMinutes = (Math.floor(currentSeconds / slotSeconds) + 1) * BOOKING_SLOT_MINUTES
+  const earliestMinutes = Math.max(Number(LAB_OPEN_TIME.slice(0, 2)) * 60, roundedMinutes)
+  const closeMinutes = Number(LAB_CLOSE_TIME.slice(0, 2)) * 60
+
+  return earliestMinutes < closeMinutes ? minutesToTime(earliestMinutes) : null
 }
 
 export function isBookingConflict(bookings, { pcId, date, startDate, endDate, startTime, endTime }) {
