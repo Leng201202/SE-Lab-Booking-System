@@ -1,7 +1,58 @@
 import { Building2, Mail, ShieldCheck, UserRound } from 'lucide-react'
+import { useState } from 'react'
 import { useApp } from '../../app/AppContext'
+import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
+import { Field, Input } from '../../components/ui/FormFields'
 import { roleLabels } from './roles'
+
+function StudentIdCard() {
+  const { user, updateStudentId } = useApp()
+  const [value, setValue] = useState(user.studentId || '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const onSave = async (event) => {
+    event.preventDefault()
+    setError('')
+    const trimmed = value.trim()
+    if (!trimmed) {
+      setError('Student ID is required.')
+      return
+    }
+    setSaving(true)
+    try {
+      await updateStudentId(trimmed)
+    } catch (saveError) {
+      setError(saveError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Card className="max-w-3xl p-4 sm:p-6">
+      <h2 className="font-bold text-slate-900">Student ID</h2>
+      <p className="mt-1 text-sm text-slate-500">
+        {user.email.endsWith('@lamduan.mfu.ac.th')
+          ? 'This was filled in automatically from your Lamduan email.'
+          : 'Your email is not a Lamduan address, so this was not filled in automatically. You must set it before you can submit a booking request.'}
+      </p>
+      <form onSubmit={onSave} className="mt-4 flex flex-col gap-3 sm:max-w-sm">
+        <Field label="Student ID" required error={error}>
+          <Input
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="e.g. 6631503086"
+          />
+        </Field>
+        <Button type="submit" size="sm" className="w-full sm:w-auto" disabled={saving}>
+          {saving ? 'Saving…' : 'Save Student ID'}
+        </Button>
+      </form>
+    </Card>
+  )
+}
 
 export function ProfilePage() {
   const { user } = useApp()
@@ -22,6 +73,7 @@ export function ProfilePage() {
           <div className="flex min-w-0 gap-3"><Building2 className="mt-0.5 shrink-0 text-slate-400" size={18} /><div className="min-w-0"><p className="text-xs text-slate-400">School / Advisor</p><p className="mt-1 break-words text-sm font-semibold text-slate-800">{user.role === 'student' ? (user.advisor ? `Advisor: ${user.advisor}` : 'Advisor not assigned') : user.department}</p></div></div>
         </div>
       </Card>
+      {user.role === 'student' && <StudentIdCard />}
     </div>
   )
 }

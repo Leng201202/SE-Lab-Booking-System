@@ -27,6 +27,14 @@ export async function signOut() {
   if (error) throw error
 }
 
+export async function updateMyUniversityId(userId, universityId) {
+  const { error } = await requireSupabase()
+    .from('profiles')
+    .update({ university_id: universityId })
+    .eq('id', userId)
+  if (error) throw new Error(error.message)
+}
+
 export async function getCurrentProfile(userId) {
   const supabase = requireSupabase()
   const { data, error } = await supabase
