@@ -113,7 +113,7 @@ test('does not offer past dates or a day with no remaining slot', () => {
   assert.equal(getEarliestBookableTime('2026-09-23', '2026-09-23T10:45:01.000Z'), null)
 })
 
-test('allows only the Student or Advisor owner to cancel an active future booking', () => {
+test('allows every role to cancel only their own active future booking', () => {
   const booking = {
     requesterId: 'requester-1',
     status: 'pending_dean',
@@ -126,7 +126,7 @@ test('allows only the Student or Advisor owner to cancel an active future bookin
 
   assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'student' }, '2026-09-24T02:00:00.000Z'), true)
   assert.equal(isBookingCancellable(booking, { id: 'someone-else', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
-  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'dean' }, '2026-09-24T02:00:00.000Z'), false)
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'dean' }, '2026-09-24T02:00:00.000Z'), true)
 })
 
 test('does not allow cancellation after the booking starts or after it closes', () => {

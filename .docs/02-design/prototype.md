@@ -41,7 +41,7 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 4. Day timeline with an occupied and selected interval
 5. Booking request form
 6. Student request detail and approval progress
-7. Student/Advisor cancellation dialog and retained cancellation reason
+7. Requester cancellation dialog and retained cancellation reason
 8. Advisor pending queue
 9. Dean final review
 10. Profile showing trusted role and Advisor assignment
@@ -56,7 +56,7 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- the database suite defines 71 pgTAP assertions, including cancellation authorization and state changes; the latest migrations still require database execution
+- the database suite defines 73 pgTAP assertions, including cancellation authorization and state changes; the latest migrations still require database execution
 - frontend lint, eight unit tests, and production build
 - schema lint and dependency audit
 

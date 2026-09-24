@@ -9,7 +9,7 @@ The system supports:
 - Student → Advisor → Dean, Advisor → Dean, and immediate validated Dean booking paths
 - Advisor advisee management and Dean user/PC administration
 - future-only one-day in-lab and multi-day remote reservations using Bangkok time
-- reason-required cancellation by the Student or Advisor who owns an active future booking
+- reason-required cancellation by the authenticated role that owns an active future booking
 - authenticated, privacy-preserving PC availability
 - PostgreSQL RLS, transactional workflow functions, conflict prevention, and approval audit events
 
@@ -26,7 +26,7 @@ The system supports:
 - [x] Five interview records are present. The team must confirm they are genuine and retain consent/notes outside this public repository.
 - [x] Four design diagrams are present and aligned with the implementation.
 - [x] Implemented requirements trace to code, database rules, research pain, or an explicit institutional workflow source.
-- [x] The database suite defines 71 pgTAP assertions; the prior foundation passed a clean rebuild and schema lint. The latest future-start and cancellation migrations still require deployment verification.
+- [x] The database suite defines 73 pgTAP assertions; the prior foundation passed a clean rebuild and schema lint. The latest future-start and cancellation migrations still require deployment verification.
 - [x] Frontend lint, eight unit tests, and the production build pass, including Bangkok next-slot and cancellation-eligibility coverage.
 - [x] A repository and unauthenticated production security review is recorded; no confirmed critical issue was found, and B24–B33 track required remediation.
 - [x] Hosted Google OAuth has been verified from the local frontend against the production Supabase project.

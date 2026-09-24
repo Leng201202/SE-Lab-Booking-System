@@ -58,7 +58,7 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 71 pgTAP assertions cover allow/deny, all three booking paths, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 73 pgTAP assertions cover allow/deny, all three booking paths, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
 - frontend ESLint, eight Node tests, and production Vite build pass after the requester-cancellation changes
 
@@ -138,14 +138,14 @@ Role-specific creation and transitions:
 ```text
 Student: new request → pending_advisor → pending_dean | rejected → approved | rejected; own active future request → cancelled
 Advisor: new request → pending_dean → approved | rejected; own active future request → cancelled
-Dean: new request → approved
+Dean: new request → approved; own active future request → cancelled
 ```
 
 `pending_advisor`, `pending_dean`, and `approved` block availability. `rejected`, `cancelled`, and `completed` do not.
 
 One-day in-lab requests use `08:00–18:00` bounds. On the current Bangkok date, the form and calendar advance to the next valid 15-minute slot and make elapsed slots read-only. Multi-day requests use remote access, reserve each included day continuously, and must begin on a future date. The future-start trigger rejects stale creation and approval attempts; the database also rejects unavailable PCs, invalid intervals, short purposes, missing Advisor assignments, wrong-stage actions, and overlaps.
 
-Students and Advisors may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before its start instant. Cancellation requires a trimmed reason of 5–2000 characters and records the requester and cancellation time atomically; the cancelled interval immediately stops blocking availability. Deans do not use this requester-cancellation workflow. Automatic completion is not yet implemented.
+Students, Advisors, and Deans may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before its start instant. Cancellation requires a trimmed reason of 5–2000 characters and records the requester and cancellation time atomically; the cancelled interval immediately stops blocking availability. Automatic completion is not yet implemented.
 
 ## Routes
 
@@ -233,7 +233,7 @@ The local production foundation is accepted when:
 - Advisor bookings begin at Dean review and Dean bookings become approved only after availability checks
 - only Deans can change roles or create/update PC inventory
 - overlapping active bookings cannot both succeed
-- Students and Advisors can cancel only their own active future bookings, must provide a valid reason, and cannot cancel another user's, started, rejected, completed, or already-cancelled booking
+- Every role can cancel only its own active future bookings, must provide a valid reason, and cannot cancel another user's, started, rejected, completed, or already-cancelled booking
 - decisions create durable, attributable audit events
 - shared calendar output contains no private Student data
 - frontend lint/tests/build and database tests/lint pass

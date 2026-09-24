@@ -91,7 +91,7 @@ Dean → immediately approved after availability validation
 
 Only Deans can add or edit PC inventory. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history.
 
-Students and Advisors may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy `20260923000200_add_booking_cancellation.sql` before testing this workflow on the hosted project.
+Students, Advisors, and Deans may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy migrations through `20260924000100_allow_dean_booking_cancellation.sql` before testing this workflow on the hosted project.
 
 ## Security model
 

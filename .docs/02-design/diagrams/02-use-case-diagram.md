@@ -38,6 +38,7 @@ flowchart LR
     Dean --> Availability
     Dean --> Submit
     Dean --> OwnRecords
+    Dean --> Cancel
     Dean --> DeanReview
     Dean --> Users
     Dean --> PCs
@@ -51,4 +52,4 @@ flowchart LR
     DeanReview -. includes .-> Validate
 ~~~
 
-Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Advisors cannot review unassigned Students, and only Deans manage roles or PC inventory. Student requests use both review stages, Advisor requests skip Advisor review, and Dean requests are immediately approved only after database validation. Student and Advisor requesters may cancel only their own active future booking with a reason.
+Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Advisors cannot review unassigned Students, and only Deans manage roles or PC inventory. Student requests use both review stages, Advisor requests skip Advisor review, and Dean requests are immediately approved only after database validation. Every requester role may cancel only its own active future booking with a reason.

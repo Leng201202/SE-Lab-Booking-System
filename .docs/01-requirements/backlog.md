@@ -18,7 +18,7 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 | B10 | As a signed-out visitor, I cannot read profiles, PCs, bookings, or calendar occupancy. | Must | Done | Privacy/security requirement |
 | B11 | As an authorized user, I can open a booking detail appropriate to my role. | Must | Done | Workflow requirement |
 | B12 | As a reviewer, every approval or rejection creates an attributable audit event. | Must | Done | Accountability requirement |
-| B13 | As a Student or Advisor, I can cancel my own active future booking with a required reason. | Should | Done | Product requirement; Research #3, #4 |
+| B13 | As a Student, Advisor, or Dean, I can cancel my own active future booking with a required reason. | Should | Done | Product requirement; Research #3, #4 |
 | B14 | As a Student, I can safely change a booking's PC or interval without losing the original slot mid-operation. | Should | Planned | Research #3, #4 |
 | B15 | As a user, I receive clear success or failure feedback after a workflow action. | Should | Done (in-app) | Trust/usability requirement |
 | B16 | As a Dean, I can add PCs and manage their room, specification, status, and maintenance notes. | Should | Done | Operational requirement |
@@ -49,7 +49,7 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 - PostgreSQL rejects a pending or approved booking when its start instant is no longer in the future, including stale submissions and late approvals.
 - Students need an assigned Advisor before creating a request.
 - Advisor requests start at pending Dean; Dean requests become approved immediately after availability validation.
-- Students and Advisors can cancel only their own pending/approved booking before it starts, with a trimmed 5–2000 character reason; cancellation records actor/time and releases the interval.
+- Every role can cancel only its own pending/approved booking before it starts, with a trimmed 5–2000 character reason; cancellation records actor/time and releases the interval.
 - Google identity does not grant an elevated application role; Advisor and Dean roles come from a protected allowlist.
 - Current Google-provider validation does not yet enforce the approved university domain; B24 is required before broad production use.
 - Current privileged RPCs do not yet enforce MFA assurance level `aal2`; B25 is open.

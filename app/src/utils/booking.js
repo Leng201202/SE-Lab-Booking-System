@@ -149,7 +149,7 @@ export function isOwnBooking(booking, user) {
 }
 
 export function isBookingCancellable(booking, user, value = new Date()) {
-  if (!booking || !user || !['student', 'advisor'].includes(user.role)) return false
+  if (!booking || !user || !['student', 'advisor', 'dean'].includes(user.role)) return false
   if (booking.requesterId !== user.id || !CANCELLABLE_BOOKING_STATUSES.includes(booking.status)) return false
 
   const startTime = isRemoteBooking(booking) ? '00:00' : booking.startTime

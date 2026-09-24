@@ -49,7 +49,7 @@ Requester cancellation:
 
 ~~~mermaid
 sequenceDiagram
-    actor U as Student or Advisor requester
+    actor U as Student, Advisor, or Dean requester
     participant W as React app
     participant C as cancel_booking RPC
     participant P as PostgreSQL

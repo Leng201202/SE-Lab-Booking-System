@@ -62,10 +62,10 @@
 3. Dean views all profiles, changes trusted roles, and assigns Students to eligible Advisors.
 4. Dean adds or edits PCs, including specifications, notes, and maintenance/inactive state.
 
-## Journey 9 — Student or Advisor cancels a booking
+## Journey 9 — A requester cancels a booking
 
 1. The requester opens their own pending or approved booking before its start instant.
-2. The detail page presents Cancel booking only to a Student or Advisor who owns the eligible record.
+2. The detail page presents Cancel booking only to the Student, Advisor, or Dean who owns the eligible record.
 3. The requester supplies a 5–2000 character cancellation reason and confirms.
 4. The database locks the booking and revalidates actor, role, ownership, status, start time, and reason.
 5. A successful transaction records the reason, requester, and cancellation time, changes the status to cancelled, and releases the interval for availability.

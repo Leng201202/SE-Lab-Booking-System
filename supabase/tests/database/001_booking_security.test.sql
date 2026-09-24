@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(71);
+select plan(73);
 
 select throws_ok(
   $$
@@ -249,7 +249,7 @@ select is(
 );
 select throws_ok(
   $$ select public.cancel_booking((select id from public.get_booking_calendar(date '2099-01-10', date '2099-01-10') limit 1), 'Not my booking to cancel') $$,
-  'You can cancel only your own Student or Advisor booking.',
+  'You can cancel only your own booking.',
   'another Student cannot cancel the requester''s booking'
 );
 select throws_ok(
@@ -495,10 +495,19 @@ select is(
   'approved',
   'Dean booking is approved immediately'
 );
-select throws_ok(
-  $$ select public.cancel_booking((select id from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'), 'Dean cancellation is not enabled.') $$,
-  'You can cancel only your own Student or Advisor booking.',
-  'Dean direct bookings are outside the Student and Advisor cancellation feature'
+select lives_ok(
+  $$ select public.cancel_booking((select id from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'), 'Dean no longer needs the workstation.') $$,
+  'Dean can cancel their own approved future booking'
+);
+select is(
+  (select status::text from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'),
+  'cancelled',
+  'Dean cancellation closes the booking'
+);
+select is(
+  (select cancellation_reason from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'),
+  'Dean no longer needs the workstation.',
+  'Dean cancellation reason is retained'
 );
 select lives_ok(
   $$ select public.create_pc('PC-11', 'SE Lab C', '32 GB RAM', 'available', null) $$,

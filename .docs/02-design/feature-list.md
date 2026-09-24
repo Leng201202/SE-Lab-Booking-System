@@ -20,7 +20,7 @@
 | Dean review | Dean sees Student requests approved by Advisors plus direct Advisor requests | Done |
 | Approval audit | Append-only event for every approval/rejection | Done |
 | Maintenance/inactive blocking | Non-available PCs cannot be selected or booked | Done |
-| Student/Advisor cancellation | Owner cancels an active future booking with a required reason; actor/time are recorded and the slot is released | Done |
+| Requester cancellation | Student, Advisor, or Dean owner cancels an active future booking with a required reason; actor/time are recorded and the slot is released | Done |
 | Rebook/edit | Atomically change PC or interval | Planned |
 | Notifications | Email or durable in-app decision notifications | Proposed |
 | Advisor relationship management | Advisor claims unassigned Students or releases own advisees | Done |
