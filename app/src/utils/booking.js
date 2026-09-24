@@ -54,8 +54,8 @@ export function isRemoteBooking(booking) {
   return booking.accessMode === 'remote' || isMultiDayBooking(booking)
 }
 
-export function formatBookingTime(booking) {
-  return isRemoteBooking(booking) ? '24-hour remote access' : `${booking.startTime}–${booking.endTime}`
+export function formatBookingTime(booking, t) {
+  return isRemoteBooking(booking) ? (t ? t('booking.remoteAccess') : '24-hour remote access') : `${booking.startTime}–${booking.endTime}`
 }
 
 export function getBookingTimeBounds(booking) {

@@ -10,11 +10,13 @@ import {
   rejectBooking,
 } from '../features/bookings/bookingService'
 import { getPcs } from '../features/pcs/pcService'
+import { useLanguage } from '../i18n/LanguageContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
+  const { t } = useLanguage()
   const [session, setSession] = useState(null)
   const [user, setUser] = useState(null)
   const [bookings, setBookings] = useState([])
@@ -153,43 +155,43 @@ export function AppProvider({ children }) {
     createBooking: (input, pc) => runMutation(
       () => createBookingService(input, pc),
       user?.role === 'student'
-        ? 'Request submitted for Technician approval.'
+        ? t('toast.submittedForTechnician')
         : user?.role === 'technician'
-          ? 'Request submitted for Advisor approval.'
+          ? t('toast.submittedForAdvisor')
         : user?.role === 'advisor'
-          ? 'Request submitted for Dean approval.'
-          : 'Booking approved and reserved.',
+          ? t('toast.submittedForDean')
+          : t('toast.bookingApprovedReserved'),
     ),
     approveAsTechnician: (id) => runMutation(
       () => approveBooking(id),
-      'Request approved and sent to the advisor.',
+      t('toast.approvedSentToAdvisor'),
     ),
     rejectAsTechnician: (id, reason) => runMutation(
       () => rejectBooking(id, reason),
-      'Request rejected.',
+      t('toast.requestRejected'),
       'error',
     ),
     approveAsAdvisor: (id) => runMutation(
       () => approveBooking(id),
-      'Request approved and sent to the dean.',
+      t('toast.approvedSentToDean'),
     ),
     rejectAsAdvisor: (id, reason) => runMutation(
       () => rejectBooking(id, reason),
-      'Request rejected.',
+      t('toast.requestRejected'),
       'error',
     ),
     approveAsDean: (id) => runMutation(
       () => approveBooking(id),
-      'Booking approved successfully.',
+      t('toast.bookingApprovedSuccessfully'),
     ),
     rejectAsDean: (id, reason) => runMutation(
       () => rejectBooking(id, reason),
-      'Request rejected.',
+      t('toast.requestRejected'),
       'error',
     ),
     cancelOwnBooking: (id, reason) => runMutation(
       () => cancelBooking(id, reason),
-      'Booking cancelled and the PC time was released.',
+      t('toast.bookingCancelled'),
     ),
   }
 

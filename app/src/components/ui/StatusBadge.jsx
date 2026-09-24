@@ -1,4 +1,5 @@
 import { CheckCircle2, CircleSlash2, Clock3, XCircle } from 'lucide-react'
+import { useLanguage } from '../../i18n/LanguageContext'
 import { statusMeta } from '../../utils/booking'
 
 const tones = {
@@ -18,12 +19,13 @@ const icons = {
 }
 
 export function StatusBadge({ status }) {
+  const { t } = useLanguage()
   const meta = statusMeta[status] || { label: status, tone: 'slate' }
   const Icon = icons[status] || Clock3
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${tones[meta.tone]}`}>
       <Icon size={13} />
-      {meta.label}
+      {statusMeta[status] ? t(`status.${status}`) : meta.label}
     </span>
   )
 }

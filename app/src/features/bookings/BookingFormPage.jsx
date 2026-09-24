@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { ArrowLeft, CalendarDays, Clock3, Info, Monitor, Wifi } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
 import { Field, Input, Select, Textarea } from '../../components/ui/FormFields'
+import { useLanguage } from '../../i18n/LanguageContext'
 import {
   LAB_CLOSE_TIME,
   LAB_OPEN_TIME,
@@ -16,54 +17,57 @@ import {
   getEarliestBookableTime,
 } from '../../utils/booking'
 
-const bookingSchema = z
-  .object({
-    pcId: z.string().min(1, 'Please select a PC.'),
-    startDate: z.string().min(1, 'Start date is required.').refine(
-      (date) => !date || date >= getBangkokDateKey(),
-      'Past booking dates are not allowed.',
-    ),
-    endDate: z.string().min(1, 'End date is required.'),
-    startTime: z.string().optional(),
-    endTime: z.string().optional(),
-    purpose: z.string().trim().min(5, 'Please provide a purpose of at least 5 characters.'),
-    course: z.string().optional(),
-  })
-  .superRefine((data, context) => {
-    if (data.startDate && data.endDate && data.startDate > data.endDate) {
-      context.addIssue({ code: 'custom', message: 'End date must be on or after the start date.', path: ['endDate'] })
-      return
-    }
-    const isMultiDay = data.startDate && data.endDate && data.startDate !== data.endDate
-    if (isMultiDay) {
-      if (data.startDate === getBangkokDateKey()) {
-        context.addIssue({ code: 'custom', message: 'A multi-day reservation must start tomorrow or later.', path: ['startDate'] })
+function createBookingSchema(t) {
+  return z
+    .object({
+      pcId: z.string().min(1, t('form.pcRequired')),
+      startDate: z.string().min(1, t('form.startDateRequired')).refine(
+        (date) => !date || date >= getBangkokDateKey(),
+        t('form.pastDateError'),
+      ),
+      endDate: z.string().min(1, t('form.endDateRequired')),
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
+      purpose: z.string().trim().min(5, t('form.purposeMinError')),
+      course: z.string().optional(),
+    })
+    .superRefine((data, context) => {
+      if (data.startDate && data.endDate && data.startDate > data.endDate) {
+        context.addIssue({ code: 'custom', message: t('form.endDateOrderError'), path: ['endDate'] })
+        return
       }
-      return
-    }
-    if (!data.startTime) context.addIssue({ code: 'custom', message: 'Start time is required.', path: ['startTime'] })
-    if (!data.endTime) context.addIssue({ code: 'custom', message: 'End time is required.', path: ['endTime'] })
-    if (data.startTime && data.endTime && data.startTime >= data.endTime) {
-      context.addIssue({ code: 'custom', message: 'End time must be later than start time.', path: ['endTime'] })
-    }
-    if (data.startTime && data.startTime < LAB_OPEN_TIME) {
-      context.addIssue({ code: 'custom', message: 'The lab opens at 08:00.', path: ['startTime'] })
-    }
-    if (data.endTime && data.endTime > LAB_CLOSE_TIME) {
-      context.addIssue({ code: 'custom', message: 'The lab closes at 18:00.', path: ['endTime'] })
-    }
-    if (data.startDate === getBangkokDateKey() && data.startTime) {
-      const earliestTime = getEarliestBookableTime(data.startDate)
-      if (!earliestTime) {
-        context.addIssue({ code: 'custom', message: 'No booking times remain today. Choose a future date.', path: ['startTime'] })
-      } else if (data.startTime < earliestTime) {
-        context.addIssue({ code: 'custom', message: `Choose ${earliestTime} or a later start time.`, path: ['startTime'] })
+      const isMultiDay = data.startDate && data.endDate && data.startDate !== data.endDate
+      if (isMultiDay) {
+        if (data.startDate === getBangkokDateKey()) {
+          context.addIssue({ code: 'custom', message: t('form.multiDayStartError'), path: ['startDate'] })
+        }
+        return
       }
-    }
-  })
+      if (!data.startTime) context.addIssue({ code: 'custom', message: t('form.startTimeRequired'), path: ['startTime'] })
+      if (!data.endTime) context.addIssue({ code: 'custom', message: t('form.endTimeRequired'), path: ['endTime'] })
+      if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+        context.addIssue({ code: 'custom', message: t('form.endTimeOrderError'), path: ['endTime'] })
+      }
+      if (data.startTime && data.startTime < LAB_OPEN_TIME) {
+        context.addIssue({ code: 'custom', message: t('form.labOpensError'), path: ['startTime'] })
+      }
+      if (data.endTime && data.endTime > LAB_CLOSE_TIME) {
+        context.addIssue({ code: 'custom', message: t('form.labClosesError'), path: ['endTime'] })
+      }
+      if (data.startDate === getBangkokDateKey() && data.startTime) {
+        const earliestTime = getEarliestBookableTime(data.startDate)
+        if (!earliestTime) {
+          context.addIssue({ code: 'custom', message: t('form.noTimesRemainError'), path: ['startTime'] })
+        } else if (data.startTime < earliestTime) {
+          context.addIssue({ code: 'custom', message: t('form.chooseLaterTimeError', { time: earliestTime }), path: ['startTime'] })
+        }
+      }
+    })
+}
 
 export function BookingFormPage() {
   const { createBooking, pcs, user } = useApp()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [currentTime, setCurrentTime] = useState(() => new Date())
@@ -89,6 +93,7 @@ export function BookingFormPage() {
     purpose: '',
     course: '',
   }
+  const bookingSchema = useMemo(() => createBookingSchema(t), [t])
   const {
     register,
     handleSubmit,
@@ -124,18 +129,28 @@ export function BookingFormPage() {
     },
   })
 
+  const formDescription = user.role === 'student'
+    ? t('form.descriptionStudent')
+    : user.role === 'technician'
+      ? t('form.descriptionTechnician')
+    : user.role === 'advisor'
+      ? t('form.descriptionAdvisor')
+      : t('form.descriptionOther')
+
+  const approvalTip = user.role === 'student'
+    ? t('form.tipApprovalStudent')
+    : user.role === 'technician'
+      ? t('form.tipApprovalTechnician')
+    : user.role === 'advisor'
+      ? t('form.tipApprovalAdvisor')
+      : t('form.tipApprovalOther')
+
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="New request"
-        title="Book a lab PC"
-        description={user.role === 'student'
-          ? 'Your request will be reviewed by a Technician, your Advisor, and then the Dean.'
-          : user.role === 'technician'
-            ? 'Your request skips Technician review and goes to an Advisor, then the Dean.'
-          : user.role === 'advisor'
-            ? 'Your request skips Advisor review and goes directly to the Dean.'
-            : 'Your booking is approved immediately when the workstation and time are available.'}
+        eyebrow={t('form.newRequestEyebrow')}
+        title={t('form.title')}
+        description={formDescription}
       />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card className="p-4 sm:p-7">
@@ -144,74 +159,74 @@ export function BookingFormPage() {
               <div className="flex gap-3 rounded-xl border border-mfu-200 bg-mfu-50 p-4 text-sm text-mfu-900">
                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-mfu-700 text-white"><CalendarDays size={17} /></span>
                 <div>
-                  <p className="font-bold">Time selected from calendar</p>
-                  <p className="mt-1 leading-6 text-mfu-700">{requestedPc.id} · {format(new Date(`${validDate}T00:00:00`), 'EEEE, d MMMM yyyy')} · {requestedStart}–{requestedEnd}. You can adjust these details before submitting.</p>
+                  <p className="font-bold">{t('form.timeSelectedFromCalendar')}</p>
+                  <p className="mt-1 leading-6 text-mfu-700">{requestedPc.id} · {format(new Date(`${validDate}T00:00:00`), 'EEEE, d MMMM yyyy')} · {requestedStart}–{requestedEnd}. {t('form.adjustBeforeSubmitting')}</p>
                 </div>
               </div>
             )}
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Field label="PC" required error={errors.pcId?.message}>
+                <Field label={t('common.pc')} required error={errors.pcId?.message}>
                   <Select {...register('pcId')}>
-                    <option value="">Select a workstation</option>
-                    {pcs.map((pc) => <option key={pc.id} value={pc.id} disabled={pc.status !== 'Available'}>{pc.id} · {pc.room} {pc.status !== 'Available' ? `(${pc.status})` : ''}</option>)}
+                    <option value="">{t('form.selectWorkstation')}</option>
+                    {pcs.map((pc) => <option key={pc.id} value={pc.id} disabled={pc.status !== 'Available'}>{pc.id} · {pc.room} {pc.status !== 'Available' ? `(${t(`pcStatus.${pc.status}`)})` : ''}</option>)}
                   </Select>
                 </Field>
               </div>
-              <Field label="Start date" required error={errors.startDate?.message}>
+              <Field label={t('form.startDate')} required error={errors.startDate?.message}>
                 <Input type="date" min={today} {...startDateRegistration} />
               </Field>
-              <Field label="End date" required error={errors.endDate?.message} hint="Use the start date for a one-day booking.">
+              <Field label={t('form.endDate')} required error={errors.endDate?.message} hint={t('form.endDateHint')}>
                 <Input type="date" min={today} {...register('endDate')} />
               </Field>
               {isMultiDay ? (
                 <div className={`flex gap-3 rounded-xl border p-4 text-sm sm:col-span-2 ${multiDayStartsToday ? 'border-red-200 bg-red-50 text-red-900' : 'border-violet-200 bg-violet-50 text-violet-900'}`}>
                   <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${multiDayStartsToday ? 'bg-red-100 text-red-700' : 'bg-violet-100 text-violet-700'}`}><Wifi size={17} /></span>
                   <div>
-                    <p className="font-bold">{multiDayStartsToday ? 'Choose a future start date' : '24-hour remote reservation'}</p>
-                    <p className={`mt-1 leading-6 ${multiDayStartsToday ? 'text-red-700' : 'text-violet-700'}`}>{multiDayStartsToday ? 'A full-day remote reservation starts at 00:00, so it cannot begin today after that time has passed.' : 'This PC will be reserved continuously from the start date through the end date. Lab opening hours do not apply to remote access.'}</p>
+                    <p className="font-bold">{multiDayStartsToday ? t('form.chooseFutureStartDate') : t('form.remoteReservationTitle')}</p>
+                    <p className={`mt-1 leading-6 ${multiDayStartsToday ? 'text-red-700' : 'text-violet-700'}`}>{multiDayStartsToday ? t('form.remoteReservationTodayError') : t('form.remoteReservationDescription')}</p>
                   </div>
                 </div>
               ) : (
                 <>
-                  <Field label="Start time" required error={errors.startTime?.message} hint={startDate === today && earliestStartTime ? `Earliest available start today: ${earliestStartTime}.` : 'Lab opens at 08:00.'}>
+                  <Field label={t('form.startTime')} required error={errors.startTime?.message} hint={startDate === today && earliestStartTime ? t('form.earliestStartHint', { time: earliestStartTime }) : t('form.labOpensHint')}>
                     <Input type="time" min={earliestStartTime || LAB_CLOSE_TIME} max={LAB_CLOSE_TIME} step="900" disabled={noTimesRemaining} {...register('startTime')} />
                   </Field>
-                  <Field label="End time" required error={errors.endTime?.message} hint="Lab closes at 18:00.">
+                  <Field label={t('form.endTime')} required error={errors.endTime?.message} hint={t('form.labClosesHint')}>
                     <Input type="time" min={LAB_OPEN_TIME} max={LAB_CLOSE_TIME} step="900" disabled={noTimesRemaining} {...register('endTime')} />
                   </Field>
-                  {noTimesRemaining && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 sm:col-span-2">No booking times remain today. Choose a future date.</div>}
+                  {noTimesRemaining && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 sm:col-span-2">{t('form.noTimesRemainError')}</div>}
                 </>
               )}
             </div>
-            <Field label="Purpose" required error={errors.purpose?.message} hint="Explain what you need the PC for.">
-              <Textarea placeholder="e.g. Run the integration tests for our capstone project" {...register('purpose')} />
+            <Field label={t('common.purpose')} required error={errors.purpose?.message} hint={t('form.purposeHint')}>
+              <Textarea placeholder={t('form.purposePlaceholder')} {...register('purpose')} />
             </Field>
-            <Field label="Course / Project" error={errors.course?.message}>
-              <Input placeholder="e.g. SE 498 · Capstone Project" {...register('course')} />
+            <Field label={t('bookingDetail.courseProject')} error={errors.course?.message}>
+              <Input placeholder={t('form.coursePlaceholder')} {...register('course')} />
             </Field>
             {errors.root?.server && (
-              <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert"><Info className="mt-0.5 shrink-0" size={18} /><div><p className="font-semibold">Request not submitted</p><p className="mt-1">{errors.root.server.message}</p></div></div>
+              <div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert"><Info className="mt-0.5 shrink-0" size={18} /><div><p className="font-semibold">{t('form.requestNotSubmitted')}</p><p className="mt-1">{errors.root.server.message}</p></div></div>
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
-              <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? 'Back to calendar' : 'Cancel'}</Button></Link>
-              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday}>Submit booking request</Button>
+              <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? t('form.backToCalendar') : t('common.cancel')}</Button></Link>
+              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday}>{t('form.submitRequest')}</Button>
             </div>
           </form>
         </Card>
         <div className="space-y-4">
           <Card className="p-4 sm:p-5">
-            <h2 className="flex items-center gap-2 font-bold text-slate-900"><Monitor size={18} className="text-mfu-700" />Selected workstation</h2>
-            {selectedPc ? <div className="mt-4"><p className="text-2xl font-bold text-slate-950">{selectedPc.id}</p><p className="mt-1 text-sm text-slate-500">{selectedPc.room}</p><p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">{selectedPc.specification}</p></div> : <p className="mt-4 text-sm leading-6 text-slate-500">Choose a PC to view its room and specification.</p>}
-            <Link to="/pcs" className="mt-4 inline-flex text-sm font-semibold text-mfu-700 hover:text-mfu-900">View all lab PCs →</Link>
+            <h2 className="flex items-center gap-2 font-bold text-slate-900"><Monitor size={18} className="text-mfu-700" />{t('form.selectedWorkstation')}</h2>
+            {selectedPc ? <div className="mt-4"><p className="text-2xl font-bold text-slate-950">{selectedPc.id}</p><p className="mt-1 text-sm text-slate-500">{selectedPc.room}</p><p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">{selectedPc.specification}</p></div> : <p className="mt-4 text-sm leading-6 text-slate-500">{t('form.chooseAPcHint')}</p>}
+            <Link to="/pcs" className="mt-4 inline-flex text-sm font-semibold text-mfu-700 hover:text-mfu-900">{t('form.viewAllPcs')}</Link>
           </Card>
           <Card className="p-4 sm:p-5">
-            <h2 className="font-bold text-slate-900">Before you submit</h2>
+            <h2 className="font-bold text-slate-900">{t('form.beforeYouSubmit')}</h2>
             <ul className="mt-4 space-y-3 text-sm text-slate-600">
-              <li className="flex gap-2"><CalendarDays size={16} className="mt-0.5 shrink-0 text-mfu-700" /> One day uses normal lab opening hours.</li>
-              <li className="flex gap-2"><Wifi size={16} className="mt-0.5 shrink-0 text-mfu-700" /> Two or more days enable 24-hour remote access.</li>
-              <li className="flex gap-2"><Clock3 size={16} className="mt-0.5 shrink-0 text-mfu-700" /> Conflicts are checked for the entire reservation.</li>
-              <li className="flex gap-2"><Info size={16} className="mt-0.5 shrink-0 text-mfu-700" /> {user.role === 'student' ? 'Technician, Advisor, and Dean approval are required.' : user.role === 'technician' ? 'Advisor and Dean approval are required.' : user.role === 'advisor' ? 'Dean approval is required.' : 'Available times are approved immediately.'}</li>
+              <li className="flex gap-2"><CalendarDays size={16} className="mt-0.5 shrink-0 text-mfu-700" /> {t('form.tipOneDay')}</li>
+              <li className="flex gap-2"><Wifi size={16} className="mt-0.5 shrink-0 text-mfu-700" /> {t('form.tipMultiDay')}</li>
+              <li className="flex gap-2"><Clock3 size={16} className="mt-0.5 shrink-0 text-mfu-700" /> {t('form.tipConflicts')}</li>
+              <li className="flex gap-2"><Info size={16} className="mt-0.5 shrink-0 text-mfu-700" /> {approvalTip}</li>
             </ul>
           </Card>
         </div>

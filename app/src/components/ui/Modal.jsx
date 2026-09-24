@@ -1,7 +1,9 @@
 import { X } from 'lucide-react'
+import { useLanguage } from '../../i18n/LanguageContext'
 import { Button } from './Button'
 
 export function Modal({ open, onClose, title, description, children }) {
+  const { t } = useLanguage()
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 grid items-end bg-slate-950/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4" role="presentation" onMouseDown={onClose}>
@@ -11,7 +13,7 @@ export function Modal({ open, onClose, title, description, children }) {
             <h2 id="modal-title" className="text-lg font-bold text-slate-950">{title}</h2>
             {description && <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>}
           </div>
-          <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={onClose} aria-label="Close dialog">
+          <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={onClose} aria-label={t('common.closeDialog')}>
             <X size={19} />
           </button>
         </div>
@@ -21,12 +23,13 @@ export function Modal({ open, onClose, title, description, children }) {
   )
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel = 'Confirm', disabled = false }) {
+export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel, disabled = false }) {
+  const { t } = useLanguage()
   return (
     <Modal open={open} onClose={onClose} title={title} description={description}>
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button className="w-full sm:w-auto" variant="secondary" disabled={disabled} onClick={onClose}>Cancel</Button>
-        <Button className="w-full sm:w-auto" disabled={disabled} onClick={onConfirm}>{confirmLabel}</Button>
+        <Button className="w-full sm:w-auto" variant="secondary" disabled={disabled} onClick={onClose}>{t('common.cancel')}</Button>
+        <Button className="w-full sm:w-auto" disabled={disabled} onClick={onConfirm}>{confirmLabel ?? t('common.confirm')}</Button>
       </div>
     </Modal>
   )

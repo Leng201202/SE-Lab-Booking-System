@@ -24,6 +24,7 @@ import { Link } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
+import { useLanguage } from '../../i18n/LanguageContext'
 import {
   BLOCKING_BOOKING_STATUSES,
   bookingOccursOnDate,
@@ -41,27 +42,29 @@ const TIMELINE_SLOT_COUNT = LAB_DURATION / TIMELINE_SLOT_MINUTES
 const TIMELINE_ROW_HEIGHT = 72
 const HOUR_MARKS = Array.from({ length: 11 }, (_, index) => 8 + index)
 
-const BOOKING_STYLES = {
-  pending_technician: {
-    label: 'Pending technician',
-    className: 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100',
-    dot: 'bg-sky-500',
-  },
-  pending_advisor: {
-    label: 'Pending advisor',
-    className: 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
-    dot: 'bg-amber-500',
-  },
-  pending_dean: {
-    label: 'Pending dean',
-    className: 'border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100',
-    dot: 'bg-violet-500',
-  },
-  approved: {
-    label: 'Booked',
-    className: 'border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100',
-    dot: 'bg-blue-600',
-  },
+function useBookingStyles(t) {
+  return {
+    pending_technician: {
+      label: t('calendar.pendingTechnician'),
+      className: 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100',
+      dot: 'bg-sky-500',
+    },
+    pending_advisor: {
+      label: t('calendar.pendingAdvisor'),
+      className: 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
+      dot: 'bg-amber-500',
+    },
+    pending_dean: {
+      label: t('calendar.pendingDean'),
+      className: 'border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100',
+      dot: 'bg-violet-500',
+    },
+    approved: {
+      label: t('calendar.booked'),
+      className: 'border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100',
+      dot: 'bg-blue-600',
+    },
+  }
 }
 
 function getActiveBookings(bookings, pcId, date) {
@@ -118,13 +121,15 @@ function timeToSlot(time) {
   return (timeToMinutes(time) - LAB_OPEN_MINUTES) / TIMELINE_SLOT_MINUTES
 }
 
-function formatSelectionDuration(selection) {
+function formatSelectionDuration(selection, t) {
   const minutes = timeToMinutes(selection.endTime) - timeToMinutes(selection.startTime)
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60
-  if (!hours) return `${remainder} min`
-  if (!remainder) return `${hours} hr${hours === 1 ? '' : 's'}`
-  return `${hours} hr ${remainder} min`
+  const minuteUnit = t('calendar.minuteUnit')
+  const hourUnit = hours === 1 ? t('calendar.hourSingular') : t('calendar.hourPlural')
+  if (!hours) return `${remainder} ${minuteUnit}`
+  if (!remainder) return `${hours} ${hourUnit}`
+  return `${hours} ${hourUnit} ${remainder} ${minuteUnit}`
 }
 
 function getSuggestedSelection(pcId, date, slotIndex, activeBookings) {
@@ -182,8 +187,8 @@ function PcLabel({ pc }) {
   )
 }
 
-function BookingContent({ booking }) {
-  const style = BOOKING_STYLES[booking.status]
+function BookingContent({ booking, bookingStyles, t }) {
+  const style = bookingStyles[booking.status]
   return (
     <>
       <span className="flex items-center gap-1.5 truncate font-bold">
@@ -191,20 +196,20 @@ function BookingContent({ booking }) {
         {style.label}
       </span>
       <span className="mt-1 flex items-center gap-1 whitespace-nowrap text-[10px] font-semibold opacity-80">
-        <Clock3 size={10} />{formatBookingTime(booking)}
+        <Clock3 size={10} />{formatBookingTime(booking, t)}
       </span>
     </>
   )
 }
 
-function AvailabilityCell({ pc, date, bookings, canBook, minimumStartMinutes, onChooseTime }) {
+function AvailabilityCell({ pc, date, bookings, canBook, minimumStartMinutes, onChooseTime, bookingStyles, t }) {
   if (pc.status !== 'Available') {
     const isMaintenance = pc.status === 'Maintenance'
     return (
       <div className={`flex min-h-20 flex-col items-center justify-center rounded-lg border px-2 text-center ${isMaintenance ? 'border-red-100 bg-red-50/70' : 'border-slate-200 bg-slate-100/80'}`}>
         <ShieldAlert size={17} className={isMaintenance ? 'text-red-500' : 'text-slate-500'} />
-        <span className={`mt-1.5 text-xs font-bold ${isMaintenance ? 'text-red-700' : 'text-slate-700'}`}>{pc.status}</span>
-        <span className={`mt-0.5 text-[10px] ${isMaintenance ? 'text-red-500' : 'text-slate-500'}`}>Unavailable</span>
+        <span className={`mt-1.5 text-xs font-bold ${isMaintenance ? 'text-red-700' : 'text-slate-700'}`}>{t(`pcStatus.${pc.status}`)}</span>
+        <span className={`mt-0.5 text-[10px] ${isMaintenance ? 'text-red-500' : 'text-slate-500'}`}>{t('calendar.unavailable')}</span>
       </div>
     )
   }
@@ -212,12 +217,12 @@ function AvailabilityCell({ pc, date, bookings, canBook, minimumStartMinutes, on
   const activeBookings = getActiveBookings(bookings, pc.id, date)
   if (!activeBookings.length) {
     const dateKey = format(date, 'yyyy-MM-dd')
-    const unavailableLabel = dateKey === getBangkokDateKey() ? 'No future time' : 'Past date'
+    const unavailableLabel = dateKey === getBangkokDateKey() ? t('calendar.noFutureTime') : t('calendar.pastDate')
     const content = (
       <>
         <span className={`size-2 rounded-full ${canBook ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-        <span className={`mt-2 text-xs font-bold ${canBook ? 'text-emerald-700' : 'text-slate-600'}`}>{canBook ? 'Available' : 'Read only'}</span>
-        <span className={`mt-0.5 text-[10px] ${canBook ? 'text-emerald-600' : 'text-slate-500'}`}>{canBook ? 'Choose a time' : unavailableLabel}</span>
+        <span className={`mt-2 text-xs font-bold ${canBook ? 'text-emerald-700' : 'text-slate-600'}`}>{canBook ? t('calendar.available') : t('calendar.readOnly')}</span>
+        <span className={`mt-0.5 text-[10px] ${canBook ? 'text-emerald-600' : 'text-slate-500'}`}>{canBook ? t('calendar.chooseATime') : unavailableLabel}</span>
       </>
     )
     return canBook ? (
@@ -235,42 +240,41 @@ function AvailabilityCell({ pc, date, bookings, canBook, minimumStartMinutes, on
   return (
     <div className="min-h-20 space-y-1.5">
       {activeBookings.map((booking) => {
-        const style = BOOKING_STYLES[booking.status]
         const canOpen = booking.canViewDetails
         return canOpen ? (
-          <Link key={booking.id} to={`/bookings/${booking.id}`} className={`block rounded-lg border p-2 text-[11px] transition ${style.className}`} title={`Open ${booking.id}`}>
-            <BookingContent booking={booking} />
+          <Link key={booking.id} to={`/bookings/${booking.id}`} className={`block rounded-lg border p-2 text-[11px] transition ${bookingStyles[booking.status].className}`} title={`Open ${booking.id}`}>
+            <BookingContent booking={booking} bookingStyles={bookingStyles} t={t} />
           </Link>
         ) : (
-          <div key={booking.id} className={`rounded-lg border p-2 text-[11px] ${style.className}`}>
-            <BookingContent booking={booking} />
+          <div key={booking.id} className={`rounded-lg border p-2 text-[11px] ${bookingStyles[booking.status].className}`}>
+            <BookingContent booking={booking} bookingStyles={bookingStyles} t={t} />
           </div>
         )
       })}
       {canChooseTime ? (
         <button onClick={onChooseTime} className="flex w-full items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] font-bold text-mfu-700 transition hover:bg-mfu-50 focus-visible:outline-2 focus-visible:outline-mfu-600">
-          Choose another time <ArrowRight size={11} />
+          {t('calendar.chooseAnotherTime')} <ArrowRight size={11} />
         </button>
       ) : (
-        <p className={`px-1 pt-1 text-center text-[10px] font-medium ${hasOpenTime ? 'text-emerald-600' : 'text-slate-500'}`}>{hasOpenTime ? 'Available at other times' : 'No open lab time'}</p>
+        <p className={`px-1 pt-1 text-center text-[10px] font-medium ${hasOpenTime ? 'text-emerald-600' : 'text-slate-500'}`}>{hasOpenTime ? t('calendar.availableOtherTimes') : t('calendar.noOpenLabTime')}</p>
       )}
     </div>
   )
 }
 
-function WeekView({ weekDays, bookings, pcs, openTimeline, currentTime }) {
+function WeekView({ weekDays, bookings, pcs, openTimeline, currentTime, bookingStyles, t }) {
   return (
     <div className="overflow-x-auto overscroll-x-contain">
       <table className="w-full min-w-[960px] border-separate border-spacing-0 text-left sm:min-w-[1120px]">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 w-28 min-w-28 border-b border-r border-slate-200 bg-white px-3 py-4 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:w-48 sm:min-w-48 sm:px-5 sm:text-xs"><span className="sm:hidden">PC</span><span className="hidden sm:inline">Workstation</span></th>
+            <th className="sticky left-0 z-10 w-28 min-w-28 border-b border-r border-slate-200 bg-white px-3 py-4 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:w-48 sm:min-w-48 sm:px-5 sm:text-xs"><span className="sm:hidden">{t('calendar.pcShort')}</span><span className="hidden sm:inline">{t('calendar.workstation')}</span></th>
             {weekDays.map((day) => (
               <th key={day.toISOString()} className={`min-w-28 border-b border-slate-200 p-0 text-center sm:min-w-32 ${isToday(day) ? 'bg-mfu-50' : 'bg-white'}`}>
                 <button className="w-full px-3 py-3 hover:bg-mfu-50" onClick={() => openTimeline(day)} title={`Open timeline for ${format(day, 'd MMMM yyyy')}`}>
                   <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday(day) ? 'text-mfu-600' : 'text-slate-400'}`}>{format(day, 'EEE')}</p>
                   <p className={`mt-1 text-lg font-bold ${isToday(day) ? 'text-mfu-800' : 'text-slate-800'}`}>{format(day, 'd')}</p>
-                  {isToday(day) && <span className="mt-1 inline-flex rounded-full bg-mfu-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">Today</span>}
+                  {isToday(day) && <span className="mt-1 inline-flex rounded-full bg-mfu-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">{t('common.today')}</span>}
                 </button>
               </th>
             ))}
@@ -291,6 +295,8 @@ function WeekView({ weekDays, bookings, pcs, openTimeline, currentTime }) {
                       canBook={Boolean(earliestTime)}
                       minimumStartMinutes={earliestTime ? timeToMinutes(earliestTime) : LAB_CLOSE_MINUTES}
                       onChooseTime={() => openTimeline(day, pc.id)}
+                      bookingStyles={bookingStyles}
+                      t={t}
                     />
                   </td>
                 )
@@ -303,13 +309,13 @@ function WeekView({ weekDays, bookings, pcs, openTimeline, currentTime }) {
   )
 }
 
-function TimelineBlock({ booking, canOpen }) {
+function TimelineBlock({ booking, canOpen, bookingStyles, t }) {
   const bookingTime = getBookingTimeBounds(booking)
   const position = getTimelineGridPosition(bookingTime.startTime, bookingTime.endTime)
   if (!position) return null
-  const style = BOOKING_STYLES[booking.status]
+  const style = bookingStyles[booking.status]
   const className = `z-[2] mx-1 h-12 self-center overflow-hidden rounded-lg border px-2.5 py-1.5 text-[11px] transition ${style.className}`
-  const content = <BookingContent booking={booking} />
+  const content = <BookingContent booking={booking} bookingStyles={bookingStyles} t={t} />
 
   return canOpen ? (
     <Link to={`/bookings/${booking.id}`} className={className} style={position} title={`Open ${booking.id}`}>{content}</Link>
@@ -416,11 +422,11 @@ function TimelineSelection({ selection, date, activeBookings, minimumStartSlot, 
   )
 }
 
-function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, onSelect }) {
+function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, onSelect, bookingStyles, t }) {
   const createDrag = useRef(null)
   const canBook = Boolean(earliestBookableTime)
   const dateKey = format(date, 'yyyy-MM-dd')
-  const readOnlyLabel = dateKey < getBangkokDateKey() ? 'Past date · read only' : 'No future time remains today'
+  const readOnlyLabel = dateKey < getBangkokDateKey() ? t('calendar.pastDateReadOnly') : t('calendar.noFutureTimeToday')
   const minimumStartMinutes = earliestBookableTime ? timeToMinutes(earliestBookableTime) : LAB_CLOSE_MINUTES
   const minimumStartSlot = clamp(
     Math.ceil((minimumStartMinutes - LAB_OPEN_MINUTES) / TIMELINE_SLOT_MINUTES),
@@ -480,7 +486,7 @@ function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, on
   return (
     <div className="flex w-full bg-white">
       <div className="w-28 shrink-0 border-r border-slate-200 bg-white sm:w-48">
-        <div className="flex h-12 items-center border-b border-slate-200 bg-slate-50 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:px-4 sm:text-xs"><span className="sm:hidden">PCs</span><span className="hidden sm:inline">Workstations</span> <span className="ml-1 text-slate-400">({pcs.length})</span></div>
+        <div className="flex h-12 items-center border-b border-slate-200 bg-slate-50 px-2 text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:px-4 sm:text-xs"><span className="sm:hidden">{t('calendar.pcShort')}</span><span className="hidden sm:inline">{t('calendar.workstations')}</span> <span className="ml-1 text-slate-400">({pcs.length})</span></div>
         {pcs.map((pc) => (
           <div key={pc.id} className="flex items-center border-b border-slate-100 px-2 sm:px-4" style={{ height: `${TIMELINE_ROW_HEIGHT}px` }}>
             <PcLabel pc={pc} />
@@ -515,7 +521,7 @@ function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, on
                 }}
               >
                 {pc.status !== 'Available' ? (
-                  <div className={`mx-2 my-2.5 flex items-center gap-2 rounded-lg border px-3 text-xs font-semibold ${pc.status === 'Maintenance' ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-100 text-slate-700'}`} style={{ gridColumn: '1 / -1', gridRow: '1' }}><ShieldAlert size={15} />{pc.status} · unavailable all day</div>
+                  <div className={`mx-2 my-2.5 flex items-center gap-2 rounded-lg border px-3 text-xs font-semibold ${pc.status === 'Maintenance' ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-100 text-slate-700'}`} style={{ gridColumn: '1 / -1', gridRow: '1' }}><ShieldAlert size={15} />{t(`pcStatus.${pc.status}`)} · {t('calendar.unavailable').toLowerCase()}</div>
                 ) : (
                   <>
                     {canBook && Array.from({ length: TIMELINE_SLOT_COUNT }, (_, slotIndex) => {
@@ -542,7 +548,7 @@ function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, on
                     {isSelectedPc && (
                       <TimelineSelection selection={selection} date={date} activeBookings={activeBookings} minimumStartSlot={minimumStartSlot} onChange={onSelect} />
                     )}
-                    {activeBookings.map((booking) => <TimelineBlock key={booking.id} booking={booking} canOpen={booking.canViewDetails} />)}
+                    {activeBookings.map((booking) => <TimelineBlock key={booking.id} booking={booking} canOpen={booking.canViewDetails} bookingStyles={bookingStyles} t={t} />)}
                   </>
                 )}
               </div>
@@ -554,23 +560,23 @@ function TimelineView({ date, bookings, pcs, earliestBookableTime, selection, on
   )
 }
 
-function ViewToggle({ view, setView }) {
+function ViewToggle({ view, setView, t }) {
   return (
     <div className="inline-flex w-full rounded-lg bg-slate-200/70 p-1 sm:w-auto" role="group" aria-label="Calendar view">
-      <button onClick={() => setView('week')} aria-pressed={view === 'week'} className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition sm:flex-none ${view === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Week</button>
-      <button onClick={() => setView('timeline')} aria-pressed={view === 'timeline'} className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition sm:flex-none ${view === 'timeline' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Timeline</button>
+      <button onClick={() => setView('week')} aria-pressed={view === 'week'} className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition sm:flex-none ${view === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{t('calendar.week')}</button>
+      <button onClick={() => setView('timeline')} aria-pressed={view === 'timeline'} className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition sm:flex-none ${view === 'timeline' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{t('calendar.timeline')}</button>
     </div>
   )
 }
 
-function CalendarLegend() {
+function CalendarLegend({ t }) {
   const items = [
-    { label: 'Available', dot: 'bg-emerald-500', classes: 'border-emerald-100 bg-emerald-50/60 text-emerald-800' },
-    { label: 'Pending technician', dot: 'bg-sky-500', classes: 'border-sky-100 bg-sky-50/60 text-sky-800' },
-    { label: 'Pending advisor', dot: 'bg-amber-500', classes: 'border-amber-100 bg-amber-50/60 text-amber-800' },
-    { label: 'Pending dean', dot: 'bg-violet-500', classes: 'border-violet-100 bg-violet-50/60 text-violet-800' },
-    { label: 'Booked', dot: 'bg-blue-600', classes: 'border-blue-100 bg-blue-50/60 text-blue-800' },
-    { label: 'Maintenance', dot: 'bg-red-500', classes: 'border-red-100 bg-red-50/60 text-red-800' },
+    { label: t('calendar.available'), dot: 'bg-emerald-500', classes: 'border-emerald-100 bg-emerald-50/60 text-emerald-800' },
+    { label: t('calendar.pendingTechnician'), dot: 'bg-sky-500', classes: 'border-sky-100 bg-sky-50/60 text-sky-800' },
+    { label: t('calendar.pendingAdvisor'), dot: 'bg-amber-500', classes: 'border-amber-100 bg-amber-50/60 text-amber-800' },
+    { label: t('calendar.pendingDean'), dot: 'bg-violet-500', classes: 'border-violet-100 bg-violet-50/60 text-violet-800' },
+    { label: t('calendar.booked'), dot: 'bg-blue-600', classes: 'border-blue-100 bg-blue-50/60 text-blue-800' },
+    { label: t('calendar.maintenance'), dot: 'bg-red-500', classes: 'border-red-100 bg-red-50/60 text-red-800' },
   ]
   return (
     <div className="flex flex-nowrap gap-2 overflow-x-auto border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 sm:flex-wrap sm:px-5">
@@ -585,6 +591,8 @@ function CalendarLegend() {
 
 export function CalendarPage() {
   const { calendarBookings: bookings, pcs, refreshCalendar } = useApp()
+  const { t } = useLanguage()
+  const bookingStyles = useBookingStyles(t)
   const [view, setView] = useState('week')
   const [anchorDate, setAnchorDate] = useState(() => dateFromBangkokKey(getBangkokDateKey()))
   const [selectedDate, setSelectedDate] = useState(() => dateFromBangkokKey(getBangkokDateKey()))
@@ -656,10 +664,10 @@ export function CalendarPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow="Lab availability"
-        title="PC booking calendar"
-        description="Check availability, choose an open time slot, and start a booking directly from the calendar."
-        action={<ViewToggle view={view} setView={changeView} />}
+        eyebrow={t('calendar.eyebrow')}
+        title={t('calendar.title')}
+        description={t('calendar.description')}
+        action={<ViewToggle view={view} setView={changeView} t={t} />}
       />
 
       <Card className="overflow-hidden shadow-sm">
@@ -668,18 +676,18 @@ export function CalendarPage() {
           <div className="flex items-center gap-3">
             <span className="grid size-9 place-items-center rounded-lg bg-mfu-50 text-mfu-700"><CalendarDays size={17} /></span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{view === 'week' ? 'Selected week' : 'Day timeline · 08:00–18:00'}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{view === 'week' ? t('calendar.selectedWeek') : t('calendar.dayTimeline')}</p>
               <h2 className="mt-0.5 text-sm font-bold text-slate-900">{view === 'week' ? weekLabel(weekDays) : format(selectedDate, 'EEEE, d MMMM yyyy')}</h2>
             </div>
           </div>
           <div className="flex items-center justify-between gap-2 sm:justify-start">
-            <Button variant="secondary" size="sm" onClick={() => movePeriod(-1)} aria-label={view === 'week' ? 'Previous week' : 'Previous day'}><ChevronLeft size={17} /><span className="hidden sm:inline">Previous</span></Button>
-            <Button variant="secondary" size="sm" onClick={goToday}>Today</Button>
-            <Button variant="secondary" size="sm" onClick={() => movePeriod(1)} aria-label={view === 'week' ? 'Next week' : 'Next day'}><span className="hidden sm:inline">Next</span><ChevronRight size={17} /></Button>
+            <Button variant="secondary" size="sm" onClick={() => movePeriod(-1)} aria-label={view === 'week' ? 'Previous week' : 'Previous day'}><ChevronLeft size={17} /><span className="hidden sm:inline">{t('calendar.previous')}</span></Button>
+            <Button variant="secondary" size="sm" onClick={goToday}>{t('common.today')}</Button>
+            <Button variant="secondary" size="sm" onClick={() => movePeriod(1)} aria-label={view === 'week' ? 'Next week' : 'Next day'}><span className="hidden sm:inline">{t('calendar.next')}</span><ChevronRight size={17} /></Button>
           </div>
         </div>
 
-        <CalendarLegend />
+        <CalendarLegend t={t} />
 
         {view === 'timeline' && (
           <div className={`flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${activeSelection ? 'border-mfu-200 bg-mfu-50' : 'border-slate-200 bg-white'}`} aria-live="polite">
@@ -687,31 +695,37 @@ export function CalendarPage() {
               <span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${activeSelection ? 'bg-mfu-700 text-white' : 'bg-slate-100 text-slate-500'}`}><MousePointer2 size={16} /></span>
               <div>
                 <p className="text-sm font-bold text-slate-900">
-                  {activeSelection ? `${activeSelection.pcId} · ${activeSelection.startTime}–${activeSelection.endTime}` : preferredPcId ? `Choose an available time for ${preferredPcId}` : 'Select an available time slot'}
+                  {activeSelection ? `${activeSelection.pcId} · ${activeSelection.startTime}–${activeSelection.endTime}` : preferredPcId ? t('calendar.chooseTimeForPc', { pc: preferredPcId }) : t('calendar.selectTimeSlot')}
                 </p>
                 <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                  {activeSelection ? `${format(selectedDate, 'EEEE, d MMMM yyyy')} · ${formatSelectionDuration(activeSelection)} · Drag the block to move it or drag either edge to resize.` : canBook ? `Drag across an open workstation row from ${earliestBookableTime}. A single click selects one hour when available.` : isPastDate ? 'Past dates are read-only. Choose today or a future date to make a booking.' : 'No booking time remains today. Choose a future date.'}
+                  {activeSelection
+                    ? t('calendar.selectionInstructions', { date: format(selectedDate, 'EEEE, d MMMM yyyy'), duration: formatSelectionDuration(activeSelection, t) })
+                    : canBook
+                      ? t('calendar.dragInstructions', { time: earliestBookableTime })
+                    : isPastDate
+                      ? t('calendar.pastReadOnly')
+                      : t('calendar.noTimeRemainsToday')}
                 </p>
               </div>
             </div>
             {activeSelection && (
               <div className="grid w-full shrink-0 grid-cols-[2.5rem_1fr] items-center gap-2 sm:flex sm:w-auto">
-                <button onClick={() => setSelection(null)} className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800" aria-label="Clear selected time"><X size={17} /></button>
-                <Link className="block" to={`/book?${bookingSearch}`}><Button className="w-full sm:w-auto" size="sm">Book selected time <ArrowRight size={16} /></Button></Link>
+                <button onClick={() => setSelection(null)} className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800" aria-label={t('calendar.clearSelection')}><X size={17} /></button>
+                <Link className="block" to={`/book?${bookingSearch}`}><Button className="w-full sm:w-auto" size="sm">{t('calendar.bookSelectedTime')} <ArrowRight size={16} /></Button></Link>
               </div>
             )}
           </div>
         )}
 
         {view === 'week' ? (
-          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} currentTime={currentTime} />
+          <WeekView weekDays={weekDays} bookings={bookings} pcs={pcs} openTimeline={openTimeline} currentTime={currentTime} bookingStyles={bookingStyles} t={t} />
         ) : (
-          <TimelineView date={selectedDate} bookings={bookings} pcs={pcs} earliestBookableTime={earliestBookableTime} selection={activeSelection} onSelect={setSelection} />
+          <TimelineView date={selectedDate} bookings={bookings} pcs={pcs} earliestBookableTime={earliestBookableTime} selection={activeSelection} onSelect={setSelection} bookingStyles={bookingStyles} t={t} />
         )}
 
         <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-[11px] leading-5 text-slate-500 sm:px-5">
-          {view === 'week' ? 'Select an available cell to choose a booking time, or select a date heading to open its timeline. ' : `${canBook ? 'Drag to select; move the selected block or resize it with the edge handles. ' : 'Scroll horizontally to see all lab hours. '}`}
-          Rejected, cancelled, and completed requests do not block availability.
+          {view === 'week' ? t('calendar.weekHint') : (canBook ? t('calendar.dragHint') : t('calendar.scrollHint'))}
+          {t('calendar.noBlockingNote')}
         </div>
       </Card>
     </div>

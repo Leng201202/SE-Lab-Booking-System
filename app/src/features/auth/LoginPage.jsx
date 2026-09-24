@@ -2,9 +2,12 @@ import { ArrowRight, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
+import { LanguageToggle } from '../../components/ui/LanguageToggle'
+import { useLanguage } from '../../i18n/LanguageContext'
 
 export function LoginPage() {
   const { signInWithGoogle, isSupabaseConfigured, appError } = useApp()
+  const { t } = useLanguage()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,25 +28,30 @@ export function LoginPage() {
       <div className="pointer-events-none absolute -left-24 top-24 size-96 rounded-full bg-mfu-500/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 bottom-0 size-96 rounded-full bg-blue-600/12 blur-3xl" />
       <div className="relative mx-auto flex min-h-[calc(100dvh-3rem)] max-w-5xl flex-col justify-center sm:min-h-[calc(100dvh-5rem)]">
+        <div className="absolute right-0 top-0"><LanguageToggle tone="dark" /></div>
         <div className="mb-6 text-center sm:mb-10">
           <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-white p-2 shadow-xl shadow-black/30 sm:mb-5 sm:size-16"><img src="/SE_Logo.png" alt="Software Engineering logo" className="h-full w-auto object-contain" /></div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Mae Fah Luang University · ADT</p>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-4xl">SE Lab PC Booking System</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-100/60">Sign in with your university Google account to request, review, and manage lab PC bookings.</p>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-100/60">{t('login.subtitle')}</p>
         </div>
         <div className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl backdrop-blur sm:p-7">
           <span className="grid size-11 place-items-center rounded-xl bg-mfu-500/15 text-emerald-200"><ShieldCheck size={22} /></span>
-          <h2 className="mt-5 text-xl font-bold">Secure university access</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">Your application role is assigned securely after sign-in. New accounts begin as Students unless an administrator has approved another role.</p>
+          <h2 className="mt-5 text-xl font-bold">{t('login.secureHeading')}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{t('login.secureDescription')}</p>
           <button disabled={!isSupabaseConfigured || submitting} onClick={login} className="group mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-white font-bold text-slate-900 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50">
             <span className="grid size-6 place-items-center rounded-full bg-white text-sm font-black text-blue-600 ring-1 ring-slate-200">G</span>
-            {submitting ? 'Redirecting to Google…' : 'Continue with Google'}
+            {submitting ? t('login.redirecting') : t('login.continueWithGoogle')}
             {!submitting && <ArrowRight size={17} className="transition group-hover:translate-x-1" />}
           </button>
-          {!isSupabaseConfigured && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">Supabase is not configured. Add the values from <code>app/.env.example</code> to <code>app/.env.local</code>.</p>}
+          {!isSupabaseConfigured && (
+            <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">
+              {t('login.notConfiguredPrefix')} <code>app/.env.example</code> {t('login.notConfiguredSuffix')} <code>app/.env.local</code>.
+            </p>
+          )}
           {(error || appError) && <p className="mt-4 rounded-xl border border-red-300/20 bg-red-300/10 p-3 text-xs leading-5 text-red-100" role="alert">{error || appError}</p>}
         </div>
-        <p className="mt-6 text-center text-xs leading-5 text-emerald-100/35 sm:mt-8">Authentication and access are protected by Supabase Auth and database authorization policies.</p>
+        <p className="mt-6 text-center text-xs leading-5 text-emerald-100/35 sm:mt-8">{t('login.footerNote')}</p>
       </div>
     </main>
   )
@@ -51,15 +59,16 @@ export function LoginPage() {
 
 export function AuthCallbackPage() {
   const { user, authReady, workspaceLoading, appError } = useApp()
+  const { t } = useLanguage()
   if (user) return <Navigate to="/dashboard" replace />
 
   return (
     <main className="grid min-h-screen place-items-center bg-mfu-950 p-4 text-white">
       <div className="max-w-md text-center">
         <img src="/SE_Logo.png" alt="Software Engineering logo" className="mx-auto h-16 w-auto rounded-xl bg-white p-2" />
-        <h1 className="mt-5 text-xl font-bold">Completing secure sign-in</h1>
-        <p className="mt-2 text-sm leading-6 text-emerald-100/65">{appError || (!authReady || workspaceLoading ? 'Loading your account and permissions…' : 'No active session was returned.')}</p>
-        {authReady && !workspaceLoading && !user && <Link to="/login" className="mt-5 inline-flex text-sm font-semibold text-emerald-300">Return to sign in</Link>}
+        <h1 className="mt-5 text-xl font-bold">{t('login.completingSignIn')}</h1>
+        <p className="mt-2 text-sm leading-6 text-emerald-100/65">{appError || (!authReady || workspaceLoading ? t('login.loadingAccount') : t('login.noSession'))}</p>
+        {authReady && !workspaceLoading && !user && <Link to="/login" className="mt-5 inline-flex text-sm font-semibold text-emerald-300">{t('login.returnToSignIn')}</Link>}
       </div>
     </main>
   )

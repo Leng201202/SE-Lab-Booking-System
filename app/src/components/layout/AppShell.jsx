@@ -16,50 +16,54 @@ import {
 } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
-import { roleLabels } from '../../features/auth/roles'
+import { useLanguage } from '../../i18n/LanguageContext'
+import { translatedRoleLabel } from '../../features/auth/roles'
+import { LanguageToggle } from '../ui/LanguageToggle'
 
-const roleNavigation = {
-  student: [
-    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Book a PC', to: '/book', icon: MonitorCog },
-    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
-    { label: 'Calendar', to: '/calendar', icon: CalendarDays },
-    { label: 'Profile', to: '/profile', icon: CircleUserRound },
-  ],
-  advisor: [
-    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Book a PC', to: '/book', icon: MonitorCog },
-    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
-    { label: 'Pending Requests', to: '/requests/pending', icon: ClipboardCheck },
-    { label: 'Request History', to: '/requests/history', icon: History },
-    { label: 'Manage Advisees', to: '/manage/advisees', icon: Users },
-    { label: 'PC Inventory', to: '/pcs', icon: MonitorCog },
-    { label: 'Calendar', to: '/calendar', icon: CalendarDays },
-    { label: 'Profile', to: '/profile', icon: CircleUserRound },
-  ],
-  technician: [
-    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Book a PC', to: '/book', icon: MonitorCog },
-    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
-    { label: 'Pending Requests', to: '/requests/pending', icon: ClipboardCheck },
-    { label: 'Request History', to: '/requests/history', icon: History },
-    { label: 'PC Management', to: '/admin/pcs', icon: Settings2 },
-    { label: 'PC Inventory', to: '/pcs', icon: MonitorCog },
-    { label: 'Calendar', to: '/calendar', icon: CalendarDays },
-    { label: 'Profile', to: '/profile', icon: CircleUserRound },
-  ],
-  dean: [
-    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Book a PC', to: '/book', icon: MonitorCog },
-    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
-    { label: 'Pending Approval', to: '/requests/pending', icon: ClipboardCheck },
-    { label: 'Approval History', to: '/requests/history', icon: History },
-    { label: 'User Management', to: '/admin/users', icon: Users },
-    { label: 'PC Management', to: '/admin/pcs', icon: Settings2 },
-    { label: 'PC Inventory', to: '/pcs', icon: MonitorCog },
-    { label: 'Calendar', to: '/calendar', icon: CalendarDays },
-    { label: 'Profile', to: '/profile', icon: CircleUserRound },
-  ],
+function useRoleNavigation(t) {
+  return {
+    student: [
+      { label: t('nav.dashboard'), to: '/dashboard', icon: LayoutDashboard },
+      { label: t('nav.bookPc'), to: '/book', icon: MonitorCog },
+      { label: t('nav.myBookings'), to: '/bookings', icon: BookOpenCheck },
+      { label: t('nav.calendar'), to: '/calendar', icon: CalendarDays },
+      { label: t('nav.profile'), to: '/profile', icon: CircleUserRound },
+    ],
+    advisor: [
+      { label: t('nav.dashboard'), to: '/dashboard', icon: LayoutDashboard },
+      { label: t('nav.bookPc'), to: '/book', icon: MonitorCog },
+      { label: t('nav.myBookings'), to: '/bookings', icon: BookOpenCheck },
+      { label: t('nav.pendingRequests'), to: '/requests/pending', icon: ClipboardCheck },
+      { label: t('nav.requestHistory'), to: '/requests/history', icon: History },
+      { label: t('nav.manageAdvisees'), to: '/manage/advisees', icon: Users },
+      { label: t('nav.pcInventory'), to: '/pcs', icon: MonitorCog },
+      { label: t('nav.calendar'), to: '/calendar', icon: CalendarDays },
+      { label: t('nav.profile'), to: '/profile', icon: CircleUserRound },
+    ],
+    technician: [
+      { label: t('nav.dashboard'), to: '/dashboard', icon: LayoutDashboard },
+      { label: t('nav.bookPc'), to: '/book', icon: MonitorCog },
+      { label: t('nav.myBookings'), to: '/bookings', icon: BookOpenCheck },
+      { label: t('nav.pendingRequests'), to: '/requests/pending', icon: ClipboardCheck },
+      { label: t('nav.requestHistory'), to: '/requests/history', icon: History },
+      { label: t('nav.pcManagement'), to: '/admin/pcs', icon: Settings2 },
+      { label: t('nav.pcInventory'), to: '/pcs', icon: MonitorCog },
+      { label: t('nav.calendar'), to: '/calendar', icon: CalendarDays },
+      { label: t('nav.profile'), to: '/profile', icon: CircleUserRound },
+    ],
+    dean: [
+      { label: t('nav.dashboard'), to: '/dashboard', icon: LayoutDashboard },
+      { label: t('nav.bookPc'), to: '/book', icon: MonitorCog },
+      { label: t('nav.myBookings'), to: '/bookings', icon: BookOpenCheck },
+      { label: t('nav.pendingApproval'), to: '/requests/pending', icon: ClipboardCheck },
+      { label: t('nav.approvalHistory'), to: '/requests/history', icon: History },
+      { label: t('nav.userManagement'), to: '/admin/users', icon: Users },
+      { label: t('nav.pcManagement'), to: '/admin/pcs', icon: Settings2 },
+      { label: t('nav.pcInventory'), to: '/pcs', icon: MonitorCog },
+      { label: t('nav.calendar'), to: '/calendar', icon: CalendarDays },
+      { label: t('nav.profile'), to: '/profile', icon: CircleUserRound },
+    ],
+  }
 }
 
 function Brand() {
@@ -76,6 +80,8 @@ function Brand() {
 
 function Sidebar({ onNavigate }) {
   const { user } = useApp()
+  const { t } = useLanguage()
+  const roleNavigation = useRoleNavigation(t)
   return (
     <div className="relative flex h-full flex-col overflow-y-auto overflow-x-hidden bg-mfu-950 px-4 py-6 text-slate-300">
       <div className="brand-stripe absolute inset-x-0 top-0 h-1" aria-hidden="true" />
@@ -110,6 +116,8 @@ function Sidebar({ onNavigate }) {
 
 export function AppShell() {
   const { user, logout, toast } = useApp()
+  const { t } = useLanguage()
+  const roleNavigation = useRoleNavigation(t)
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -117,7 +125,7 @@ export function AppShell() {
 
   const pageName = roleNavigation[user.role].find((item) =>
     location.pathname === item.to || (item.to === '/bookings' && location.pathname.startsWith('/bookings/')),
-  )?.label || 'Request detail'
+  )?.label || t('shell.requestDetail')
 
   return (
     <div className="min-h-screen bg-[#f5f8f5] text-slate-900">
@@ -137,38 +145,41 @@ export function AppShell() {
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button className="grid size-11 shrink-0 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
             <div className="min-w-0">
-              <p className="truncate text-[11px] text-slate-400 sm:text-xs">{roleLabels[user.role]} workspace</p>
+              <p className="truncate text-[11px] text-slate-400 sm:text-xs">{t('shell.roleWorkspace', { role: translatedRoleLabel(t, user.role) })}</p>
               <p className="truncate text-sm font-bold text-slate-800">{pageName}</p>
             </div>
           </div>
 
-          <div className="relative">
-            <button className="flex min-h-11 items-center gap-2 rounded-xl p-1 pr-1.5 text-left hover:bg-slate-100 sm:gap-3 sm:p-1.5 sm:pr-2" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen}>
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-mfu-100 text-sm font-bold text-mfu-700">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
-              <span className="hidden sm:block">
-                <span className="block max-w-44 truncate text-sm font-semibold text-slate-800">{user.shortName || user.name}</span>
-                <span className="block text-xs text-slate-400">{roleLabels[user.role]}</span>
-              </span>
-              <ChevronDown size={15} className="text-slate-400" />
-            </button>
+          <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+            <LanguageToggle />
+            <div className="relative">
+              <button className="flex min-h-11 items-center gap-2 rounded-xl p-1 pr-1.5 text-left hover:bg-slate-100 sm:gap-3 sm:p-1.5 sm:pr-2" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen}>
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-mfu-100 text-sm font-bold text-mfu-700">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
+                <span className="hidden sm:block">
+                  <span className="block max-w-44 truncate text-sm font-semibold text-slate-800">{user.shortName || user.name}</span>
+                  <span className="block text-xs text-slate-400">{translatedRoleLabel(t, user.role)}</span>
+                </span>
+                <ChevronDown size={15} className="text-slate-400" />
+              </button>
 
-            {profileOpen && (
-              <div className="fixed inset-x-3 top-16 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:w-64">
-                <p className="px-3 pb-1 pt-2 text-sm font-semibold text-slate-800">{user.name}</p>
-                <p className="px-3 pb-2 text-xs text-slate-400">{roleLabels[user.role]} · {user.email}</p>
-                <div className="my-2 border-t border-slate-100" />
-                <Link to="/profile" onClick={() => setProfileOpen(false)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"><CircleUserRound size={16} /> Profile</Link>
-                <button onClick={async () => {
-                  try {
-                    await logout()
-                    setProfileOpen(false)
-                    navigate('/login')
-                  } catch {
-                    // The shared context keeps the session in place and surfaces the error.
-                  }
-                }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> Log out</button>
-              </div>
-            )}
+              {profileOpen && (
+                <div className="fixed inset-x-3 top-16 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:w-64">
+                  <p className="px-3 pb-1 pt-2 text-sm font-semibold text-slate-800">{user.name}</p>
+                  <p className="px-3 pb-2 text-xs text-slate-400">{translatedRoleLabel(t, user.role)} · {user.email}</p>
+                  <div className="my-2 border-t border-slate-100" />
+                  <Link to="/profile" onClick={() => setProfileOpen(false)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"><CircleUserRound size={16} /> {t('common.profile')}</Link>
+                  <button onClick={async () => {
+                    try {
+                      await logout()
+                      setProfileOpen(false)
+                      navigate('/login')
+                    } catch {
+                      // The shared context keeps the session in place and surfaces the error.
+                    }
+                  }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> {t('common.logOut')}</button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
