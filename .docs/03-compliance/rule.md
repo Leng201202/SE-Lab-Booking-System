@@ -11,7 +11,7 @@ This document is an engineering compliance register, not legal advice. Final app
 | Application profiles are created only for Supabase-authenticated Google identities | Enforced | Supabase Auth profile trigger |
 | Account creation is restricted to the approved university Google domain | Planned | Security review H1; backlog B24 |
 | New users default to Student | Enforced | Profile creation trigger |
-| Advisor and Dean roles come only from the private email allowlist or privileged administration | Enforced / Operational | private.role_allowlist; no browser write access |
+| Technician, Advisor, and Dean roles come only from the private email allowlist or privileged administration | Enforced / Operational | private.role_allowlist; no browser write access |
 | Only Students may have an Advisor assignment, and the target must have the Advisor role | Enforced | Profile relationship trigger |
 | Anonymous users cannot read application tables or calendar occupancy | Enforced | Explicit grants and RLS; pgTAP tests |
 | Frontend route guards are not treated as the security boundary | Enforced by design | PostgreSQL grants, RLS, functions, and constraints |
@@ -28,12 +28,15 @@ This document is an engineering compliance register, not legal advice. Final app
 | Active bookings whose start instant has passed and maintenance/inactive PCs cannot be booked | Migration deployment required for future-start rule; PC rule enforced | Future-start trigger and pgTAP assertion; create_booking RPC |
 | Purpose is required and bounded; course/project is optional and bounded | Enforced | RPC normalization and constraints |
 | Students need an assigned eligible Advisor before submitting | Enforced | create_booking RPC |
+| Student requests require Technician review before assigned-Advisor review | Migration deployment required | pending_technician status; approve_booking/reject_booking; RLS |
+| Technician requests skip technical review and require Advisor then Dean review | Migration deployment required | create_booking RPC and requester-role constraints |
 | Advisor requests skip Advisor review and require Dean review | Enforced | create_booking RPC and requester-role constraints |
 | Dean requests are approved immediately only after normal availability validation | Enforced | create_booking RPC and exclusion constraint |
-| Pending Advisor, pending Dean, and approved records block availability | Enforced | Partial exclusion constraint |
+| Pending Technician, pending Advisor, pending Dean, and approved records block availability | Migration deployment required | Partial exclusion constraint |
 | Duration, advance-window, active-request, and rate limits prevent inventory monopolization | Planned | Security review H3; backlog B26 |
 | The same PC cannot have overlapping active intervals, even under concurrent submission | Enforced | PostgreSQL GiST exclusion constraint |
 | Advisors act only on assigned Student requests at pending Advisor | Enforced | approve_booking/reject_booking |
+| Technicians act only on Student requests at pending Technician | Migration deployment required | approve_booking/reject_booking and RLS |
 | Deans act only after Advisor approval at pending Dean | Enforced | RLS and workflow functions |
 | Rejection requires a reason | Enforced | Function and table constraints |
 | Requester cancellation for every role is limited to the owner's active future booking and requires a reason | Migration deployment required | `cancel_booking` RPC, cancellation-shape constraint, and pgTAP assertions |
@@ -53,7 +56,7 @@ This document is an engineering compliance register, not legal advice. Final app
 | Users cannot change their role or Advisor assignment | Enforced | Column grants and RLS |
 | University ID is populated or verified only through a trusted university process | Planned | Current self-update grant must be removed; backlog B27 |
 | Advisors can manage only unassigned Students or their own advisees | Enforced | assign_student_advisor RPC and profile RLS |
-| Only Deans can manage roles and PC inventory | Enforced | security-definer management RPCs and execution checks |
+| Only Deans manage roles; only Technicians and Deans manage PC inventory/specifications/status | Migration deployment required | security-definer management RPCs and execution checks |
 | The frontend contains no Google secret, database password, Supabase secret key, or service_role key | Enforced by repository policy; verify per deployment | Environment templates, ignore rules, credential scan |
 | Display name, email, optional university ID, role, and Advisor relationship have documented operational purposes | Policy pending | University data inventory/owner approval required |
 | Privacy notice and lawful basis are approved before production collection | Policy pending | No approved notice recorded |

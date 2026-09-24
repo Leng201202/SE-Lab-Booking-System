@@ -13,9 +13,19 @@ import {
 
 test('detects overlap only for active booking statuses', () => {
   const bookings = [
+    { pcId: 'PC-02', startDate: '2026-09-20', endDate: '2026-09-20', startTime: '08:00', endTime: '09:00', status: 'pending_technician' },
     { pcId: 'PC-03', startDate: '2026-09-20', endDate: '2026-09-20', startTime: '10:00', endTime: '12:00', status: 'approved' },
     { pcId: 'PC-03', startDate: '2026-09-21', endDate: '2026-09-21', startTime: '10:00', endTime: '12:00', status: 'rejected' },
   ]
+  assert.equal(
+    isBookingConflict(bookings, {
+      pcId: 'PC-02',
+      date: '2026-09-20',
+      startTime: '08:30',
+      endTime: '09:30',
+    }),
+    true,
+  )
   assert.equal(
     isBookingConflict(bookings, {
       pcId: 'PC-03',
@@ -52,7 +62,9 @@ test('maps a database booking to the existing page contract', () => {
     purpose: 'Automated workflow test',
     course: 'SE Demo',
     created_at: '2026-09-22T01:00:00Z',
-    status: 'pending_advisor',
+    status: 'pending_technician',
+    technician_decision: 'pending',
+    technician_decision_at: null,
     advisor_decision: 'pending',
     dean_decision: 'waiting',
     cancellation_reason: null,
@@ -64,7 +76,8 @@ test('maps a database booking to the existing page contract', () => {
   })
 
   assert.equal(booking.requestNumber, 'REQ-2026-000001')
-  assert.equal(booking.status, 'pending_advisor')
+  assert.equal(booking.status, 'pending_technician')
+  assert.equal(booking.technicianDecision, 'pending')
   assert.equal(booking.requesterRole, 'student')
   assert.equal(booking.accessMode, 'remote')
   assert.equal(booking.startTime, '00:00')
@@ -125,6 +138,7 @@ test('allows every role to cancel only their own active future booking', () => {
   }
 
   assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'student' }, '2026-09-24T02:00:00.000Z'), true)
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'technician' }, '2026-09-24T02:00:00.000Z'), true)
   assert.equal(isBookingCancellable(booking, { id: 'someone-else', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
   assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'dean' }, '2026-09-24T02:00:00.000Z'), true)
 })

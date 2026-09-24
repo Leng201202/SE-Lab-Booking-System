@@ -153,10 +153,21 @@ export function AppProvider({ children }) {
     createBooking: (input, pc) => runMutation(
       () => createBookingService(input, pc),
       user?.role === 'student'
-        ? 'Request submitted for Advisor approval.'
+        ? 'Request submitted for Technician approval.'
+        : user?.role === 'technician'
+          ? 'Request submitted for Advisor approval.'
         : user?.role === 'advisor'
           ? 'Request submitted for Dean approval.'
           : 'Booking approved and reserved.',
+    ),
+    approveAsTechnician: (id) => runMutation(
+      () => approveBooking(id),
+      'Request approved and sent to the advisor.',
+    ),
+    rejectAsTechnician: (id, reason) => runMutation(
+      () => rejectBooking(id, reason),
+      'Request rejected.',
+      'error',
     ),
     approveAsAdvisor: (id) => runMutation(
       () => approveBooking(id),

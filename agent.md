@@ -7,8 +7,8 @@ This is the contributor guide for the SE Lab PC Booking System. The current impl
 The application workflows are:
 
 ```text
-Student request → pending_advisor → pending_dean → approved
-                      ↘ rejected       ↙
+Student request → pending_technician → pending_advisor → pending_dean → approved
+Technician request → pending_advisor → pending_dean → approved | rejected
 Advisor request → pending_dean → approved | rejected
 Dean request → approved immediately after availability validation
 ```
@@ -34,7 +34,7 @@ app/src/lib/supabase.js                     # Browser client
 app/src/features/auth/authService.js        # Session and OAuth operations
 app/src/features/bookings/bookingService.js # Booking reads and workflow RPCs
 app/src/features/pcs/pcService.js           # PC inventory reads
-app/src/features/pcs/PcManagementPage.jsx   # Dean inventory administration
+app/src/features/pcs/PcManagementPage.jsx   # Technician/Dean inventory administration
 app/src/features/users/                     # Dean user and Advisor advisee management
 app/src/app/AppContext.jsx                  # Session/profile/workspace coordination
 supabase/migrations/                        # Versioned schema and policies
@@ -50,7 +50,7 @@ Google OAuth proves identity; it does not grant an application role.
 
 - Only Google identities may create application profiles.
 - New users default to `student`.
-- `advisor` and `dean` come only from `private.role_allowlist` or another privileged administrative process.
+- `technician`, `advisor`, and `dean` come only from `private.role_allowlist` or another privileged administrative process.
 - Never accept a role, Advisor assignment, ownership field, or workflow status from browser-controlled identity metadata.
 - Users may read their own profile but cannot change their role or Advisor assignment.
 - The Google OAuth secret stays in Supabase provider configuration. Never expose it through Vite.
@@ -61,7 +61,7 @@ Required production configuration that is intentionally not committed:
 - Supabase project URL and publishable key
 - Google OAuth client ID and secret
 - production site/callback URLs
-- post-first-login Advisor and Dean role promotions through the email allowlist
+- post-first-login Technician, Advisor, and Dean role promotions through the email allowlist
 - Student-to-Advisor assignments
 
 ## Security hardening guardrails
@@ -102,12 +102,13 @@ React route guards improve navigation only. PostgreSQL grants, RLS policies, con
 - Anonymous users cannot read application data.
 - Students can read only their own private bookings and can create only for themselves.
 - Every role can create and read its own bookings.
-- Students, Advisors, and Deans can cancel only their own active booking before it starts and must provide a reason.
-- Advisors can read and review only assigned Students at `pending_advisor`; their own requests skip Advisor review and require Dean approval.
+- Every role can cancel only its own active booking before it starts and must provide a reason.
+- Technicians can read and review Student requests at `pending_technician`; Technician requests skip technical review and require Advisor then Dean review.
+- Advisors can read and review assigned Students and Technician requests at `pending_advisor`; their own requests skip earlier review and require Dean approval.
 - Deans can read records needed for final review and act only at `pending_dean`; their own requests are immediately approved only when all booking and availability rules pass.
 - Advisors may attach only unassigned Students to themselves and may release only their own advisees.
 - Deans may view and manage all profiles, roles, and Advisor assignments.
-- Only Deans may create PCs or update PC code, room, specification, status, and maintenance notes.
+- Only Technicians and Deans may create PCs or update PC code, room, specification, status, and maintenance notes.
 - Shared calendar output omits Student identity, university ID, purpose, course, and rejection information.
 - Direct table writes cannot bypass ownership or workflow rules.
 - Approval events are append-only application audit records.
@@ -132,6 +133,7 @@ They derive the actor from `auth.uid()`, validate the trusted role and current s
 Blocking statuses:
 
 ```text
+pending_technician
 pending_advisor
 pending_dean
 approved
@@ -149,9 +151,9 @@ The database exclusion constraint is the final authority for overlapping active 
 
 One-day in-lab bookings must be within `08:00–18:00`, use a valid increasing time range, and remain on one date. Multi-day bookings use remote access and reserve the full inclusive Bangkok date range as a half-open timestamp interval ending at midnight after the final selected date.
 
-Past booking start instants, unavailable PCs, missing Student Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database. On the current Bangkok date, one-day bookings begin at the next valid 15-minute slot; full-day multi-day reservations must start on a future date. Advisor and Dean requesters do not require an assigned Advisor.
+Past booking start instants, unavailable PCs, missing Student Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database. On the current Bangkok date, one-day bookings begin at the next valid 15-minute slot; full-day multi-day reservations must start on a future date. Technician, Advisor, and Dean requesters do not require an assigned Advisor.
 
-Every role may move its own `pending_advisor`, `pending_dean`, or `approved` future booking to `cancelled` through `cancel_booking`. The function locks the row, requires a trimmed 5–2000 character reason, and records `cancelled_at` and `cancelled_by` atomically. Cancellation fields are protected from direct browser writes. Automatic completion is not implemented yet.
+Every role may move its own active future booking to `cancelled` through `cancel_booking`. The function locks the row, requires a trimmed 5–2000 character reason, and records `cancelled_at` and `cancelled_by` atomically. Cancellation fields are protected from direct browser writes. Automatic completion is not implemented yet.
 
 ## Routes and roles
 
@@ -179,7 +181,7 @@ Authenticated booking routes for every role:
 /pcs
 ```
 
-Advisor and Dean routes:
+Technician, Advisor, and Dean routes:
 
 ```text
 /requests/pending
@@ -192,14 +194,21 @@ Advisor management route:
 /manage/advisees
 ```
 
-Dean administration routes:
+Dean-only administration route:
 
 ```text
 /admin/users
+```
+
+Technician and Dean PC-management route:
+
+```text
 /admin/pcs
 ```
 
-Students must not receive review actions. Advisors act only at the Advisor stage for assigned Students; Deans act only at the Dean stage. Management pages never substitute for database authorization.
+Only Deans access `/admin/users`.
+
+Students must not receive review actions. Technicians act only at the technical stage for Student requests; Advisors act at the Advisor stage for assigned Students and Technician requests; Deans act only at the Dean stage. Management pages never substitute for database authorization.
 
 ## Frontend and UI rules
 
@@ -242,7 +251,7 @@ Maintain tests for:
 
 - anonymous denial and Student ownership
 - trusted role assignment and self-promotion denial
-- Advisor assignment boundaries and Dean-only actions
+- Technician review/PC-management boundaries, Advisor assignment boundaries, and Dean-only user administration
 - valid and invalid workflow transitions
 - booking overlap and unavailable-PC rejection
 - cancellation ownership, role, status, future-start, and reason boundaries

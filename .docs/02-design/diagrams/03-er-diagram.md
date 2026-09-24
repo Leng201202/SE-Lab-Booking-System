@@ -51,6 +51,8 @@ erDiagram
         text purpose
         text course
         booking_status status
+        advisor_decision technician_decision
+        timestamptz technician_decision_at
         advisor_decision advisor_decision
         dean_decision dean_decision
         text rejection_reason
@@ -69,14 +71,14 @@ erDiagram
     }
 ~~~
 
-The private role_allowlist table maps normalized verified Google emails to Advisor or Dean roles and is intentionally outside the exposed API schema.
+The private role_allowlist table maps normalized verified Google emails to Technician, Advisor, or Dean roles and is intentionally outside the exposed API schema.
 
 Important integrity rules:
 
 - Profile IDs reference auth.users and cascade on user deletion.
 - Only Student profiles may have an Advisor, and the referenced profile must have the Advisor role.
 - Booking requester role is snapshotted so later role changes do not rewrite historical workflow.
-- Student bookings require an Advisor; Advisor and Dean bookings have no booking-level Advisor assignment.
+- Student bookings require an Advisor and begin at Technician review. Technician, Advisor, and Dean bookings have no booking-level Advisor assignment.
 - Active booking ranges use half-open [start, end) semantics.
 - A PostgreSQL exclusion constraint prevents overlapping active ranges for the same PC.
 - A cancelled booking must retain a 5–2000 character reason, cancellation time, and its requester as the cancelling actor; non-cancelled rows cannot carry cancellation metadata.

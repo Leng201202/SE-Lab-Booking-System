@@ -42,6 +42,11 @@ const TIMELINE_ROW_HEIGHT = 72
 const HOUR_MARKS = Array.from({ length: 11 }, (_, index) => 8 + index)
 
 const BOOKING_STYLES = {
+  pending_technician: {
+    label: 'Pending technician',
+    className: 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100',
+    dot: 'bg-sky-500',
+  },
   pending_advisor: {
     label: 'Pending advisor',
     className: 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
@@ -561,6 +566,7 @@ function ViewToggle({ view, setView }) {
 function CalendarLegend() {
   const items = [
     { label: 'Available', dot: 'bg-emerald-500', classes: 'border-emerald-100 bg-emerald-50/60 text-emerald-800' },
+    { label: 'Pending technician', dot: 'bg-sky-500', classes: 'border-sky-100 bg-sky-50/60 text-sky-800' },
     { label: 'Pending advisor', dot: 'bg-amber-500', classes: 'border-amber-100 bg-amber-50/60 text-amber-800' },
     { label: 'Pending dean', dot: 'bg-violet-500', classes: 'border-violet-100 bg-violet-50/60 text-violet-800' },
     { label: 'Booked', dot: 'bg-blue-600', classes: 'border-blue-100 bg-blue-50/60 text-blue-800' },

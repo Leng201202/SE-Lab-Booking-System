@@ -135,7 +135,7 @@ export function UserManagementPage() {
     <div className="space-y-6">
       <PageHeader eyebrow="Dean administration" title="User management" description="Manage application roles and assign Students to eligible Advisors." />
       {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">{error}</div>}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Object.keys(roleLabels).map((role) => <Card key={role} className="p-5"><p className="text-sm text-slate-500">{roleLabels[role]}s</p><p className="mt-2 text-3xl font-bold text-slate-950">{users.filter((profile) => profile.role === role).length}</p></Card>)}
       </div>
       <Card className="overflow-hidden">

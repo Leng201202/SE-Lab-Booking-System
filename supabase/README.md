@@ -61,6 +61,7 @@ All new Google users default to Student, even if their email already appears in 
 ```sql
 insert into private.role_allowlist (email, role)
 values
+  ('technician@university.example', 'technician'),
   ('advisor@university.example', 'advisor'),
   ('dean@university.example', 'dean')
 on conflict (email) do update set role = excluded.role;
@@ -79,24 +80,26 @@ where student.email = 'student@university.example'
 
 Students without an assigned Advisor can sign in and inspect their profile, but the database rejects booking creation until the assignment exists.
 
-After bootstrap, Advisors manage unassigned/their own advisees in the application. Deans manage all roles and Advisor assignments through the User Management screen; direct private-schema access remains unavailable to the browser.
+After bootstrap, Advisors manage unassigned/their own advisees in the application. Deans manage all roles, including Technician promotion, and Advisor assignments through the User Management screen; direct private-schema access remains unavailable to the browser.
 
 Booking routing is role-aware:
 
 ```text
-Student → Advisor → Dean
+Student → Technician → assigned Advisor → Dean
+Technician → Advisor → Dean
 Advisor → Dean
 Dean → immediately approved after availability validation
 ```
 
-Only Deans can add or edit PC inventory. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history.
+Technicians and Deans can add or edit PC inventory, specifications, operational status, and maintenance notes. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history. Only Deans can manage user roles and Advisor assignments.
 
-Students, Advisors, and Deans may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy migrations through `20260924000100_allow_dean_booking_cancellation.sql` before testing this workflow on the hosted project.
+Every role may cancel only its own active booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy migrations through `20260924000300_implement_technician_workflow.sql` before testing this workflow on the hosted project.
 
 ## Security model
 
 - Application tables deny anonymous access.
 - Every role sees its own private booking records.
+- Technicians see Student requests at the technical-review stage and their technical-review history.
 - Advisors additionally see bookings for assigned Students.
 - Deans see final-review records and all profiles required for user management.
 - Shared calendar RPC output contains occupancy data but no Student identity, purpose, or rejection details.

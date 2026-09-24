@@ -3,6 +3,7 @@
 ~~~mermaid
 flowchart LR
     Student([Student])
+    Technician([Technician])
     Advisor([Advisor])
     Dean([Dean])
     Operator([University operator])
@@ -16,6 +17,7 @@ flowchart LR
     end
 
     Student -->|availability and requests| Web
+    Technician -->|technical reviews, requests, PCs| Web
     Advisor -->|requests, reviews, advisees| Web
     Dean -->|requests, final reviews, users, PCs| Web
     Operator -->|bootstrap and deployment configuration| DB

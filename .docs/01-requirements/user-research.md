@@ -30,12 +30,12 @@ Five records identify two recurring themes:
 1. Remote computer use is not physically visible, so a machine may appear free.
 2. Students need reliable availability and reservation conflict prevention.
 
-These findings support the availability, access-mode, booking, and overlap requirements. They do not independently validate the Advisor/Dean workflow, trusted-role administration, legal policy, notifications, recurring bookings, or operational rules; those require institutional stakeholder evidence.
+These findings support the availability, access-mode, booking, and overlap requirements. They do not independently validate the Technician/Advisor/Dean workflow, trusted-role administration, legal policy, notifications, recurring bookings, or operational rules; those require institutional stakeholder evidence.
 
 ## Remaining research work
 
 - Confirm the five entries and preserve consent/notes.
-- Interview Advisors, the Dean or delegated approver, and the lab operator.
+- Interview Technicians, Advisors, the Dean or delegated approver, and the lab operator.
 - Validate whether one-day lab and multi-day remote rules match actual practice.
 - Validate cancellation, booking limits, no-show, maintenance, and notification needs.
 - Record direct quotations only with appropriate participant permission.

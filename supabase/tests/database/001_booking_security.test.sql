@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(73);
+select plan(91);
 
 select throws_ok(
   $$
@@ -51,10 +51,16 @@ insert into auth.users (
 values
   ('10000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'student.one@example.edu', now(), '{"provider":"google"}', '{"full_name":"Student One"}', now(), now(), false, false),
   ('10000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'student.two@example.edu', now(), '{"provider":"google"}', '{"full_name":"Student Two"}', now(), now(), false, false),
+  ('15000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'technician.one@example.edu', now(), '{"provider":"google"}', '{"full_name":"Technician One"}', now(), now(), false, false),
   ('20000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'advisor.one@example.edu', now(), '{"provider":"google"}', '{"full_name":"Advisor One"}', now(), now(), false, false),
   ('20000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'advisor.two@example.edu', now(), '{"provider":"google"}', '{"full_name":"Advisor Two"}', now(), now(), false, false),
   ('30000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'dean.one@example.edu', now(), '{"provider":"google"}', '{"full_name":"Dean One"}', now(), now(), false, false);
 
+select is(
+  (select role::text from public.profiles where id = '15000000-0000-0000-0000-000000000001'),
+  'student',
+  'a future Technician starts as Student'
+);
 select is(
   (select role::text from public.profiles where id = '20000000-0000-0000-0000-000000000001'),
   'student',
@@ -68,6 +74,7 @@ select is(
 
 insert into private.role_allowlist (email, role)
 values
+  ('technician.one@example.edu', 'technician'),
   ('advisor.one@example.edu', 'advisor'),
   ('advisor.two@example.edu', 'advisor'),
   ('dean.one@example.edu', 'dean');
@@ -87,6 +94,11 @@ select is(
   (select role::text from public.profiles where id = '10000000-0000-0000-0000-000000000001'),
   'student',
   'new users default to Student'
+);
+select is(
+  (select role::text from public.profiles where id = '15000000-0000-0000-0000-000000000001'),
+  'technician',
+  'allowlisted Technician receives the trusted role'
 );
 select is(
   (select role::text from public.profiles where id = '20000000-0000-0000-0000-000000000001'),
@@ -151,7 +163,7 @@ select throws_ok(
 );
 select throws_ok(
   $$ select public.create_pc('PC-11', 'SE Lab C', 'Test PC', 'available', null) $$,
-  'Only a Dean can add PCs.',
+  'Only a Technician or Dean can add PCs.',
   'Students cannot manage PC inventory'
 );
 reset role;
@@ -207,8 +219,8 @@ select lives_ok(
 );
 select is(
   (select status::text from public.bookings where requester_id = '10000000-0000-0000-0000-000000000001'),
-  'pending_advisor',
-  'new booking starts at the Advisor stage'
+  'pending_technician',
+  'new Student booking starts at the Technician stage'
 );
 select throws_ok(
   $$
@@ -286,7 +298,7 @@ select set_config(
   true
 );
 select is((select count(*) from public.bookings), 0::bigint, 'Dean cannot read requests that have not passed Advisor review');
-select is((select count(*) from public.profiles), 5::bigint, 'Dean can browse all profiles for user management');
+select is((select count(*) from public.profiles), 6::bigint, 'Dean can browse all profiles for user management');
 select throws_ok(
   $$ select public.approve_booking((select id from public.get_booking_calendar(date '2099-01-10', date '2099-01-10') limit 1)) $$,
   'Only requests pending Dean review can receive final approval.',
@@ -298,13 +310,33 @@ select set_config(
   '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
 );
-select is((select count(*) from public.bookings), 1::bigint, 'assigned Advisor can read the request');
+select is((select count(*) from public.bookings), 0::bigint, 'assigned Advisor cannot read a request before Technician approval');
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select is((select count(*) from public.bookings where status = 'pending_technician'), 1::bigint, 'Technician can read Student requests awaiting technical review');
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where status = 'pending_technician' limit 1)) $$,
+  'Technician can approve a Student request'
+);
+select is((select status::text from public.bookings limit 1), 'pending_advisor', 'Technician approval advances to Advisor review');
+select is((select technician_decision::text from public.bookings limit 1), 'approved', 'Technician decision is retained');
+select is((select count(*) from public.approval_events), 1::bigint, 'Technician decision creates an audit event');
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select is((select count(*) from public.bookings), 1::bigint, 'assigned Advisor can read the Technician-approved request');
 select lives_ok(
   $$ select public.approve_booking((select id from public.bookings limit 1)) $$,
   'assigned Advisor can approve the request'
 );
 select is((select status::text from public.bookings limit 1), 'pending_dean', 'Advisor approval advances to Dean review');
-select is((select count(*) from public.approval_events), 1::bigint, 'Advisor decision creates an audit event');
+select is((select count(*) from public.approval_events), 2::bigint, 'Advisor decision creates an audit event');
 
 select set_config(
   'request.jwt.claims',
@@ -312,13 +344,13 @@ select set_config(
   true
 );
 select is((select count(*) from public.bookings where status = 'pending_dean'), 1::bigint, 'Dean can read requests awaiting final review');
-select is((select count(*) from public.profiles), 5::bigint, 'Dean retains access to all profiles during review');
+select is((select count(*) from public.profiles), 6::bigint, 'Dean retains access to all profiles during review');
 select lives_ok(
   $$ select public.approve_booking((select id from public.bookings where status = 'pending_dean' limit 1)) $$,
   'Dean can grant final approval'
 );
 select is((select status::text from public.bookings limit 1), 'approved', 'Dean approval confirms the booking');
-select is((select count(*) from public.approval_events), 2::bigint, 'both review decisions remain in the audit trail');
+select is((select count(*) from public.approval_events), 3::bigint, 'all three review decisions remain in the audit trail');
 
 select set_config(
   'request.jwt.claims',
@@ -375,6 +407,16 @@ select lives_ok(
 
 select set_config(
   'request.jwt.claims',
+  '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-02'))) $$,
+  'Technician can advance the second Student request to Advisor review'
+);
+
+select set_config(
+  'request.jwt.claims',
   '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
 );
@@ -392,7 +434,55 @@ select is(
   'rejected',
   'Advisor rejection closes the request'
 );
-select is((select count(*) from public.approval_events), 3::bigint, 'rejection adds an immutable audit event');
+select is((select count(*) from public.approval_events), 5::bigint, 'rejection adds an immutable audit event');
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.create_pc('PC-11', 'SE Lab C', 'Ryzen 7, 32 GB RAM', 'available', null) $$,
+  'Technician can add a PC with specifications'
+);
+select is(
+  (select specification from public.pcs where code = 'PC-11'),
+  'Ryzen 7, 32 GB RAM',
+  'Technician-managed PC specifications are persisted'
+);
+select lives_ok(
+  $$ select public.update_pc((select id from public.pcs where code = 'PC-11'), 'PC-11', 'SE Lab C', 'Ryzen 7, 32 GB RAM', 'maintenance', 'Diagnostics in progress') $$,
+  'Technician can place a PC into maintenance'
+);
+select throws_ok(
+  $$ select public.set_user_role('10000000-0000-0000-0000-000000000002', 'advisor') $$,
+  'Only a Dean can manage user roles.',
+  'Technician cannot manage user roles'
+);
+select lives_ok(
+  $$
+    select public.create_booking(
+      (select id from public.pcs where code = 'PC-05'),
+      date '2099-01-10',
+      date '2099-01-10',
+      '15:00',
+      '17:00',
+      'Technician booking requiring Advisor review',
+      'SE Test'
+    )
+  $$,
+  'Technician can create a booking request'
+);
+select is(
+  (select status::text from public.bookings where requester_id = '15000000-0000-0000-0000-000000000001'),
+  'pending_advisor',
+  'Technician booking starts at Advisor review'
+);
+select is(
+  (select technician_decision::text from public.bookings where requester_id = '15000000-0000-0000-0000-000000000001'),
+  'not_required',
+  'Technician booking skips Technician review'
+);
 
 select set_config(
   'request.jwt.claims',
@@ -417,6 +507,10 @@ select throws_ok(
   $$ select public.set_user_role('10000000-0000-0000-0000-000000000002', 'dean') $$,
   'Only a Dean can manage user roles.',
   'Advisor cannot manage roles'
+);
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where requester_id = '15000000-0000-0000-0000-000000000001')) $$,
+  'Advisor can approve a Technician booking'
 );
 select lives_ok(
   $$
@@ -447,6 +541,10 @@ select set_config(
   'request.jwt.claims',
   '{"sub":"30000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
+);
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where requester_id = '15000000-0000-0000-0000-000000000001')) $$,
+  'Dean can approve a Technician booking'
 );
 select lives_ok(
   $$ select public.approve_booking((select id from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002')) $$,
@@ -510,15 +608,15 @@ select is(
   'Dean cancellation reason is retained'
 );
 select lives_ok(
-  $$ select public.create_pc('PC-11', 'SE Lab C', '32 GB RAM', 'available', null) $$,
+  $$ select public.create_pc('PC-12', 'SE Lab C', '32 GB RAM', 'available', null) $$,
   'Dean can add a PC'
 );
 select lives_ok(
-  $$ select public.update_pc((select id from public.pcs where code = 'PC-11'), 'PC-11', 'SE Lab C', '32 GB RAM', 'maintenance', 'Power supply failure') $$,
+  $$ select public.update_pc((select id from public.pcs where code = 'PC-12'), 'PC-12', 'SE Lab C', '32 GB RAM', 'maintenance', 'Power supply failure') $$,
   'Dean can mark a PC for maintenance'
 );
 select is(
-  (select status::text from public.pcs where code = 'PC-11'),
+  (select status::text from public.pcs where code = 'PC-12'),
   'maintenance',
   'maintenance status is persisted'
 );

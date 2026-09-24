@@ -4,7 +4,7 @@
 
 The Software Engineering laboratory has a shared set of managed PCs. Students need to know whether a machine is available before using it, especially when a machine is reserved for remote work and appears physically unused. The existing paper/manual process also makes approval status difficult to follow and cannot reliably prevent simultaneous requests for the same PC.
 
-Research recorded in [user-research.md](user-research.md) identifies invisible remote use, uncertainty about availability, and conflicts over intended PC use. The staged Advisor/Dean approval flow is an institutional workflow requirement and is identified separately from interview evidence.
+Research recorded in [user-research.md](user-research.md) identifies invisible remote use, uncertainty about availability, and conflicts over intended PC use. The staged Technician/Advisor/Dean approval flow is an institutional workflow requirement and is identified separately from interview evidence.
 
 ## Goal
 
@@ -13,7 +13,7 @@ Provide one trusted system that answers:
 - Which PCs are operational?
 - Which periods are occupied?
 - Which PC and interval did a user request?
-- Is the request waiting for the Advisor or Dean?
+- Is the request waiting for the Technician, Advisor, or Dean?
 - Was it approved or rejected, and why?
 - Can another request safely reserve the same PC?
 
@@ -21,9 +21,10 @@ Provide one trusted system that answers:
 
 | Role | Responsibility |
 |---|---|
-| Student | View availability, submit requests, track Advisor/Dean decisions, and cancel own active future requests with a reason |
-| Advisor | Review assigned Students, manage own advisees, submit requests directly to Dean review, track decisions, and cancel own active future requests with a reason |
-| Dean | Give final decisions, reserve and cancel own available-PC bookings, manage users/roles/assignments, and manage PC inventory |
+| Student | View availability, submit requests, track Technician/Advisor/Dean decisions, and cancel own active future requests with a reason |
+| Technician | Perform the first Student review, manage PC inventory/specifications/maintenance, submit requests to Advisor review, and cancel own active future requests |
+| Advisor | Review assigned Students after technical approval plus Technician requests, manage own advisees, submit requests directly to Dean review, and cancel own active future requests |
+| Dean | Give final decisions, reserve and cancel own available-PC bookings, manage users/roles/assignments, and share PC management authority |
 | University operator | Bootstrap the first Dean, OAuth settings, and deployment secrets through protected administration |
 
 ## Proposed solution
@@ -32,7 +33,8 @@ Provide one trusted system that answers:
 Google OAuth
 → trusted Supabase profile and role
 → role-aware booking request
-→ Student: Advisor then Dean decision
+→ Student: Technician, Advisor, then Dean decision
+→ Technician: Advisor then Dean decision
 → Advisor: Dean decision
 → Dean: immediate approval after availability validation
 ~~~
@@ -46,7 +48,7 @@ The shared calendar exposes occupancy, PC, time, access mode, and status to auth
 - One-day requests are in-lab and restricted to 08:00–18:00.
 - A same-day request starts at the next 15-minute Bangkok slot; elapsed calendar slots cannot be selected.
 - Multi-day requests are remote, reserve each included day continuously, and begin on a future date because their first day starts at 00:00.
-- Pending Advisor, pending Dean, and approved requests block availability.
+- Pending Technician, pending Advisor, pending Dean, and approved requests block availability.
 - Rejected, cancelled, and completed records do not block availability.
 - Every role may cancel only its own active booking before it starts; a reason, actor, and timestamp are retained.
 - PostgreSQL prevents overlapping active intervals for the same PC under concurrency.
@@ -72,7 +74,7 @@ The production foundation is implemented locally:
 - booking, approval, rejection, requester-cancellation, and calendar RPCs
 - protected user/Advisor relationship and PC-management RPCs
 - immutable approval events
-- 73 pgTAP database assertions, including server-side future-start and requester-cancellation coverage, plus eight frontend tests
+- 91 pgTAP database assertions, including Technician authorization/workflow, server-side future-start, and requester-cancellation coverage, plus eight frontend tests
 
 The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
 
@@ -84,9 +86,9 @@ In scope:
 
 - authentication and trusted roles
 - PC availability and operational state
-- role-aware request creation for Students, Advisors, and Deans
-- Advisor and Dean decisions
-- Advisor advisee management and Dean user/PC administration
+- role-aware request creation for Students, Technicians, Advisors, and Deans
+- Technician, Advisor, and Dean decisions
+- Technician/Dean PC management, Advisor advisee management, and Dean user administration
 - private request history and sanitized calendar occupancy
 - reason-required cancellation of any role's own active future booking
 - one-day lab and multi-day remote reservations
@@ -97,6 +99,5 @@ Out of scope for this cycle:
 - rebooking
 - recurring reservations
 - email/push notifications
-- technician-specific administration role
 - check-in/check-out and no-show enforcement
 - usage analytics and reporting

@@ -38,9 +38,10 @@ function StudentDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader eyebrow="Student dashboard" title={`Welcome back, ${user.name.split(' ')[0]}`} description="Track your requests and reserve a workstation for your next lab session." action={<Link to="/book"><Button><MonitorUp size={17} />Book a PC</Button></Link>} />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Total Requests" value={mine.length} icon={FileCheck2} detail="All booking requests" />
-        <StatCard label="Pending Advisor" value={count('pending_advisor')} icon={Clock3} tone="amber" detail="Awaiting first review" />
+        <StatCard label="Pending Technician" value={count('pending_technician')} icon={Clock3} tone="blue" detail="Awaiting technical review" />
+        <StatCard label="Pending Advisor" value={count('pending_advisor')} icon={Clock3} tone="amber" detail="Technician approved" />
         <StatCard label="Pending Dean" value={count('pending_dean')} icon={FileClock} tone="violet" detail="Advisor approved" />
         <StatCard label="Approved" value={count('approved')} icon={CheckCircle2} tone="green" detail="Ready to use" />
       </div>
@@ -76,26 +77,31 @@ function StudentDashboard() {
 
 function ReviewerDashboard({ role }) {
   const { user, bookings } = useApp()
-  const isAdvisor = role === 'advisor'
-  const pendingStatus = isAdvisor ? 'pending_advisor' : 'pending_dean'
+  const reviewer = {
+    technician: { label: 'Technician', status: 'pending_technician', decisionAt: 'technicianDecisionAt', description: 'Review technical suitability before Student requests move to their Advisor.', approvedDetail: 'Forwarded to advisor today' },
+    advisor: { label: 'Advisor', status: 'pending_advisor', decisionAt: 'advisorDecisionAt', description: 'Review eligible requests and forward them for final approval.', approvedDetail: 'Forwarded to dean today' },
+    dean: { label: 'Dean', status: 'pending_dean', decisionAt: null, description: 'Complete final review for requests that passed earlier stages.', approvedDetail: 'Final approval given' },
+  }[role]
+  const isDean = role === 'dean'
+  const pendingStatus = reviewer.status
   const pending = bookings.filter((booking) => booking.status === pendingStatus)
   const today = getBangkokDateKey()
-  const approved = bookings.filter((booking) => isAdvisor
-    ? booking.advisorDecisionAt && getBangkokDateKey(booking.advisorDecisionAt) === today
+  const approved = bookings.filter((booking) => !isDean
+    ? booking[reviewer.decisionAt] && getBangkokDateKey(booking[reviewer.decisionAt]) === today
     : booking.deanDecision === 'approved')
   const rejected = bookings.filter((booking) => booking.rejectedBy === role)
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow={`${isAdvisor ? 'Advisor' : 'Dean'} dashboard`} title={`Good morning, ${user.shortName || user.name}`} description={isAdvisor ? 'Review student requests and forward eligible bookings for final approval.' : 'Complete the final review for advisor-approved PC bookings.'} action={<Link to="/requests/pending"><Button>Review pending <ArrowRight size={17} /></Button></Link>} />
+      <PageHeader eyebrow={`${reviewer.label} dashboard`} title={`Good morning, ${user.shortName || user.name}`} description={reviewer.description} action={<Link to="/requests/pending"><Button>Review pending <ArrowRight size={17} /></Button></Link>} />
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Pending Requests" value={pending.length} icon={FileClock} tone="amber" detail="Needs your review" />
-        <StatCard label={isAdvisor ? 'Approved Today' : 'Approved Bookings'} value={approved.length} icon={CheckCircle2} tone="green" detail={isAdvisor ? 'Forwarded to dean today' : 'Final approval given'} />
+        <StatCard label={isDean ? 'Approved Bookings' : 'Approved Today'} value={approved.length} icon={CheckCircle2} tone="green" detail={reviewer.approvedDetail} />
         <StatCard label="Rejected Requests" value={rejected.length} icon={FileX2} tone="red" detail="Reason recorded" />
       </div>
       <Card className="overflow-hidden">
         <SectionTitle title="Requests requiring attention" link="/requests/pending" />
-        {pending.length ? <BookingTable bookings={pending.slice(0, 5)} showRequester showAdvisor={!isAdvisor} /> : <EmptyState title="You're all caught up" description="No booking requests currently need your review." />}
+        {pending.length ? <BookingTable bookings={pending.slice(0, 5)} showRequester showAdvisor={isDean} /> : <EmptyState title="You're all caught up" description="No booking requests currently need your review." />}
       </Card>
       <Card className="overflow-hidden">
         <SectionTitle title="Recent requests" link="/requests/history" linkLabel="View history" />

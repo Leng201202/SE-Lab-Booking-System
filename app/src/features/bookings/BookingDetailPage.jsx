@@ -22,6 +22,7 @@ import { Textarea } from '../../components/ui/FormFields'
 import { ConfirmDialog, Modal } from '../../components/ui/Modal'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { formatBookingDateRange, formatBookingTime, formatRequestDate, isBookingCancellable, isRemoteBooking } from '../../utils/booking'
+import { roleLabels } from '../auth/roles'
 
 function DetailItem({ icon: Icon, label, value }) {
   return (
@@ -53,7 +54,8 @@ function ProgressStep({ title, state, detail, last }) {
 
 function ApprovalProgress({ booking }) {
   const isCancelled = booking.status === 'cancelled'
-  const advisorState = booking.advisorDecision === 'not_required' ? 'skipped' : booking.advisorDecision === 'approved' ? 'complete' : booking.advisorDecision === 'rejected' ? 'rejected' : isCancelled ? 'waiting' : 'current'
+  const technicianState = booking.technicianDecision === 'not_required' ? 'skipped' : booking.technicianDecision === 'approved' ? 'complete' : booking.technicianDecision === 'rejected' ? 'rejected' : booking.status === 'pending_technician' ? 'current' : 'waiting'
+  const advisorState = booking.advisorDecision === 'not_required' ? 'skipped' : booking.advisorDecision === 'approved' ? 'complete' : booking.advisorDecision === 'rejected' ? 'rejected' : booking.status === 'pending_advisor' ? 'current' : 'waiting'
   const deanState = booking.deanDecision === 'approved' ? 'complete' : booking.deanDecision === 'rejected' ? 'rejected' : booking.status === 'pending_dean' ? 'current' : 'waiting'
   const finalState = booking.status === 'approved' || booking.status === 'completed' ? 'complete' : booking.status === 'rejected' ? 'rejected' : isCancelled ? 'cancelled' : 'waiting'
 
@@ -61,8 +63,9 @@ function ApprovalProgress({ booking }) {
     <Card className="p-4 sm:p-6">
       <h2 className="font-bold text-slate-900">Approval progress</h2>
       <div className="mt-6">
-        <ProgressStep title={`${booking.requesterRole === 'student' ? 'Student' : booking.requesterRole === 'advisor' ? 'Advisor' : 'Dean'} submitted`} state="complete" detail={formatRequestDate(booking.requestedAt)} />
-        <ProgressStep title="Advisor review" state={advisorState} detail={booking.advisorDecision === 'not_required' ? 'Skipped for Advisor and Dean requests' : booking.advisorDecision === 'approved' ? `Approved by ${booking.advisorName}` : booking.advisorDecision === 'rejected' ? 'Request returned to the requester' : `Waiting for ${booking.advisorName}`} />
+        <ProgressStep title={`${roleLabels[booking.requesterRole] || booking.requesterRole} submitted`} state="complete" detail={formatRequestDate(booking.requestedAt)} />
+        <ProgressStep title="Technician review" state={technicianState} detail={booking.technicianDecision === 'not_required' ? 'Required only for Student requests' : booking.technicianDecision === 'approved' ? 'Technical review approved' : booking.technicianDecision === 'rejected' ? 'Request rejected during technical review' : booking.status === 'pending_technician' ? 'Waiting for a Technician' : 'Begins before Advisor review'} />
+        <ProgressStep title="Advisor review" state={advisorState} detail={booking.advisorDecision === 'not_required' ? 'Skipped for Advisor and Dean requests' : booking.advisorDecision === 'approved' ? 'Advisor review approved' : booking.advisorDecision === 'rejected' ? 'Request returned to the requester' : booking.status === 'pending_advisor' ? `Waiting for ${booking.advisorId ? booking.advisorName : 'an Advisor'}` : 'Begins after Technician approval'} />
         <ProgressStep title="Dean review" state={deanState} detail={booking.requesterRole === 'dean' ? 'Approved immediately after availability validation' : booking.deanDecision === 'approved' ? 'Final approval granted' : booking.deanDecision === 'rejected' ? 'Final approval declined' : booking.status === 'pending_dean' ? 'Ready for final review' : 'Begins after Advisor approval'} />
         <ProgressStep title="Final booking" state={finalState} detail={finalState === 'complete' ? 'PC booking is confirmed' : finalState === 'rejected' ? 'Booking was rejected' : finalState === 'cancelled' ? 'Requester cancelled and released the PC time' : 'Confirmation pending'} last />
       </div>
@@ -73,7 +76,7 @@ function ApprovalProgress({ booking }) {
 export function BookingDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, bookings, approveAsAdvisor, rejectAsAdvisor, approveAsDean, rejectAsDean, cancelOwnBooking } = useApp()
+  const { user, bookings, approveAsTechnician, rejectAsTechnician, approveAsAdvisor, rejectAsAdvisor, approveAsDean, rejectAsDean, cancelOwnBooking } = useApp()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -89,13 +92,14 @@ export function BookingDetailPage() {
     return <Card className="p-6 text-center sm:p-10"><h1 className="text-xl font-bold text-slate-900">Request not found</h1><p className="mt-2 text-sm text-slate-500">This request does not exist or you do not have permission to view it.</p><Button className="mt-5 w-full sm:w-auto" onClick={() => navigate('/dashboard')}>Back to dashboard</Button></Card>
   }
 
-  const canReview = (user.role === 'advisor' && booking.status === 'pending_advisor') || (user.role === 'dean' && booking.status === 'pending_dean')
+  const canReview = (user.role === 'technician' && booking.status === 'pending_technician') || (user.role === 'advisor' && booking.status === 'pending_advisor') || (user.role === 'dean' && booking.status === 'pending_dean')
   const canCancel = isBookingCancellable(booking, user)
   const approve = async () => {
     setBusy(true)
     setActionError('')
     try {
-      if (user.role === 'advisor') await approveAsAdvisor(booking.id)
+      if (user.role === 'technician') await approveAsTechnician(booking.id)
+      else if (user.role === 'advisor') await approveAsAdvisor(booking.id)
       else await approveAsDean(booking.id)
       setConfirmOpen(false)
     } catch (error) {
@@ -109,7 +113,8 @@ export function BookingDetailPage() {
     setBusy(true)
     setActionError('')
     try {
-      if (user.role === 'advisor') await rejectAsAdvisor(booking.id, reason)
+      if (user.role === 'technician') await rejectAsTechnician(booking.id, reason)
+      else if (user.role === 'advisor') await rejectAsAdvisor(booking.id, reason)
       else await rejectAsDean(booking.id, reason)
       setRejectOpen(false)
       setReason('')
@@ -164,7 +169,7 @@ export function BookingDetailPage() {
             </div>
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
               <DetailItem icon={UserRound} label="Requester" value={`${booking.requesterName} · ${booking.requesterRole} · ${booking.requesterNumber}`} />
-              <DetailItem icon={GraduationCap} label="Advisor review" value={booking.advisorName} />
+              <DetailItem icon={GraduationCap} label="Advisor review" value={booking.requesterRole === 'technician' ? 'Open Advisor queue' : booking.advisorName} />
               <DetailItem icon={MapPin} label="Room" value={booking.room} />
               <DetailItem icon={CalendarDays} label="Booking dates" value={formatBookingDateRange(booking)} />
               <DetailItem icon={Clock3} label={isRemoteBooking(booking) ? 'Access' : 'Lab time'} value={formatBookingTime(booking)} />
@@ -182,7 +187,7 @@ export function BookingDetailPage() {
         <ApprovalProgress booking={booking} />
       </div>
 
-      <ConfirmDialog open={confirmOpen} onClose={() => !busy && setConfirmOpen(false)} onConfirm={approve} title={`Approve ${booking.requestNumber}?`} description={user.role === 'advisor' ? 'This request will move to the Dean for final review.' : 'This will confirm the PC booking for the requester.'} confirmLabel={busy ? 'Approving…' : 'Approve request'} disabled={busy} />
+      <ConfirmDialog open={confirmOpen} onClose={() => !busy && setConfirmOpen(false)} onConfirm={approve} title={`Approve ${booking.requestNumber}?`} description={user.role === 'technician' ? 'This request will move to the assigned Advisor.' : user.role === 'advisor' ? 'This request will move to the Dean for final review.' : 'This will confirm the PC booking for the requester.'} confirmLabel={busy ? 'Approving…' : 'Approve request'} disabled={busy} />
       <Modal open={rejectOpen} onClose={() => !busy && setRejectOpen(false)} title={`Reject ${booking.requestNumber}`} description="The requester will be able to see this reason in their booking details.">
         <label className="block text-sm font-semibold text-slate-700">Rejection reason</label>
         <Textarea className="mt-2" value={reason} onChange={(event) => { setReason(event.target.value); setReasonError('') }} placeholder="Explain why this request cannot be approved…" autoFocus />

@@ -37,6 +37,17 @@ const roleNavigation = {
     { label: 'Calendar', to: '/calendar', icon: CalendarDays },
     { label: 'Profile', to: '/profile', icon: CircleUserRound },
   ],
+  technician: [
+    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+    { label: 'Book a PC', to: '/book', icon: MonitorCog },
+    { label: 'My Bookings', to: '/bookings', icon: BookOpenCheck },
+    { label: 'Pending Requests', to: '/requests/pending', icon: ClipboardCheck },
+    { label: 'Request History', to: '/requests/history', icon: History },
+    { label: 'PC Management', to: '/admin/pcs', icon: Settings2 },
+    { label: 'PC Inventory', to: '/pcs', icon: MonitorCog },
+    { label: 'Calendar', to: '/calendar', icon: CalendarDays },
+    { label: 'Profile', to: '/profile', icon: CircleUserRound },
+  ],
   dean: [
     { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
     { label: 'Book a PC', to: '/book', icon: MonitorCog },

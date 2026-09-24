@@ -24,9 +24,9 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 - Sign-in and callback: app/src/features/auth/
 - Session and shared workspace state: app/src/app/AppContext.jsx
 - Booking request and detail: app/src/features/bookings/
-- Advisor/Dean queues: app/src/features/approvals/
-- Advisor/Dean user management: app/src/features/users/
-- Dean PC management: app/src/features/pcs/PcManagementPage.jsx
+- Technician/Advisor/Dean queues: app/src/features/approvals/
+- Advisor advisee and Dean user management: app/src/features/users/
+- Technician/Dean PC management: app/src/features/pcs/PcManagementPage.jsx
 - Availability calendar: app/src/features/calendar/
 - Shared Bangkok date/time and next-slot calculation: app/src/utils/booking.js
 - Browser client: app/src/lib/supabase.js
@@ -42,12 +42,13 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 5. Booking request form
 6. Student request detail and approval progress
 7. Requester cancellation dialog and retained cancellation reason
-8. Advisor pending queue
-9. Dean final review
-10. Profile showing trusted role and Advisor assignment
-11. Advisor advisee management
-12. Dean user management
-13. Dean PC maintenance editor
+8. Technician technical-review queue
+9. Advisor pending queue
+10. Dean final review
+11. Profile showing trusted role and Advisor assignment
+12. Advisor advisee management
+13. Dean user management
+14. Technician/Dean PC maintenance editor
 
 Screenshots must come from the current app and must not contain real personal data or secrets.
 
@@ -56,7 +57,7 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- the database suite defines 73 pgTAP assertions, including cancellation authorization and state changes; the latest migrations still require database execution
+- the database suite defines 91 pgTAP assertions, including Technician workflow/management and cancellation authorization; the latest migrations still require database execution
 - frontend lint, eight unit tests, and production build
 - schema lint and dependency audit
 
