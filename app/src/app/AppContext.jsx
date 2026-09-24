@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { getCurrentProfile, getSession, onAuthStateChange, signInWithGoogle as signInService, signOut as signOutService } from '../features/auth/authService'
 import {
   approveBooking,
+  cancelBooking,
   createBooking as createBookingService,
   getBookings,
   getCalendarBookings,
@@ -174,6 +175,10 @@ export function AppProvider({ children }) {
       () => rejectBooking(id, reason),
       'Request rejected.',
       'error',
+    ),
+    cancelOwnBooking: (id, reason) => runMutation(
+      () => cancelBooking(id, reason),
+      'Booking cancelled and the PC time was released.',
     ),
   }
 

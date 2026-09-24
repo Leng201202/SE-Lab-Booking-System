@@ -41,12 +41,13 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 4. Day timeline with an occupied and selected interval
 5. Booking request form
 6. Student request detail and approval progress
-7. Advisor pending queue
-8. Dean final review
-9. Profile showing trusted role and Advisor assignment
-10. Advisor advisee management
-11. Dean user management
-12. Dean PC maintenance editor
+7. Student/Advisor cancellation dialog and retained cancellation reason
+8. Advisor pending queue
+9. Dean final review
+10. Profile showing trusted role and Advisor assignment
+11. Advisor advisee management
+12. Dean user management
+13. Dean PC maintenance editor
 
 Screenshots must come from the current app and must not contain real personal data or secrets.
 
@@ -55,8 +56,8 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- RLS and workflow behavior through 57 pgTAP assertions after applying the latest migration
-- frontend lint, unit tests, and production build
+- the database suite defines 71 pgTAP assertions, including cancellation authorization and state changes; the latest migrations still require database execution
+- frontend lint, eight unit tests, and production build
 - schema lint and dependency audit
 
 External verification still required:

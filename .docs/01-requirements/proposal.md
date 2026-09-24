@@ -21,8 +21,8 @@ Provide one trusted system that answers:
 
 | Role | Responsibility |
 |---|---|
-| Student | View availability, submit requests, and track Advisor/Dean decisions |
-| Advisor | Review assigned Students, manage own advisees, submit requests directly to Dean review, and track decisions |
+| Student | View availability, submit requests, track Advisor/Dean decisions, and cancel own active future requests with a reason |
+| Advisor | Review assigned Students, manage own advisees, submit requests directly to Dean review, track decisions, and cancel own active future requests with a reason |
 | Dean | Give final decisions, reserve available PCs directly, manage users/roles/assignments, and manage PC inventory |
 | University operator | Bootstrap the first Dean, OAuth settings, and deployment secrets through protected administration |
 
@@ -48,6 +48,7 @@ The shared calendar exposes occupancy, PC, time, access mode, and status to auth
 - Multi-day requests are remote, reserve each included day continuously, and begin on a future date because their first day starts at 00:00.
 - Pending Advisor, pending Dean, and approved requests block availability.
 - Rejected, cancelled, and completed records do not block availability.
+- Students and Advisors may cancel only their own active booking before it starts; a reason, actor, and timestamp are retained.
 - PostgreSQL prevents overlapping active intervals for the same PC under concurrency.
 
 ## Why this approach
@@ -68,10 +69,10 @@ The production foundation is implemented locally:
 - Google OAuth redirect flow
 - versioned PostgreSQL migration and deterministic PC seed
 - RLS and explicit grants
-- booking, approval, rejection, and calendar RPCs
+- booking, approval, rejection, requester-cancellation, and calendar RPCs
 - protected user/Advisor relationship and PC-management RPCs
 - immutable approval events
-- 57 pgTAP database assertions, including server-side future-start coverage, and frontend verification
+- 71 pgTAP database assertions, including server-side future-start and requester-cancellation coverage, plus eight frontend tests
 
 The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
 
@@ -87,12 +88,13 @@ In scope:
 - Advisor and Dean decisions
 - Advisor advisee management and Dean user/PC administration
 - private request history and sanitized calendar occupancy
+- reason-required cancellation of a Student's or Advisor's own active future booking
 - one-day lab and multi-day remote reservations
 - database conflict prevention and audit events
 
 Out of scope for this cycle:
 
-- Student cancellation and rebooking
+- rebooking
 - recurring reservations
 - email/push notifications
 - technician-specific administration role

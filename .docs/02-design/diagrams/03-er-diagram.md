@@ -6,6 +6,7 @@ erDiagram
     PROFILES ||--o{ PROFILES : "advises"
     PROFILES ||--o{ BOOKINGS : "requester submits"
     PROFILES ||--o{ BOOKINGS : "advisor owns queue"
+    PROFILES ||--o{ BOOKINGS : "requester cancels"
     PCS ||--o{ BOOKINGS : "reserved by"
     BOOKINGS ||--o{ APPROVAL_EVENTS : "has"
     PROFILES ||--o{ APPROVAL_EVENTS : "reviews"
@@ -53,6 +54,9 @@ erDiagram
         advisor_decision advisor_decision
         dean_decision dean_decision
         text rejection_reason
+        text cancellation_reason
+        timestamptz cancelled_at
+        uuid cancelled_by FK
     }
     APPROVAL_EVENTS {
         uuid id PK
@@ -75,4 +79,5 @@ Important integrity rules:
 - Student bookings require an Advisor; Advisor and Dean bookings have no booking-level Advisor assignment.
 - Active booking ranges use half-open [start, end) semantics.
 - A PostgreSQL exclusion constraint prevents overlapping active ranges for the same PC.
+- A cancelled booking must retain a 5–2000 character reason, cancellation time, and its requester as the cancelling actor; non-cancelled rows cannot carry cancellation metadata.
 - Approval events are append-only through application permissions.

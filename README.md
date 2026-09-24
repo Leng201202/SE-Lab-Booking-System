@@ -19,6 +19,7 @@ The production foundation is implemented locally:
 - PostgreSQL migrations, seed data, RLS policies, and RPC functions under `supabase/`
 - Conflict-safe bookings enforced by a PostgreSQL exclusion constraint
 - role-aware booking, assigned-Advisor review, and Dean administration boundaries
+- reason-required cancellation of a Student's or Advisor's own active future booking
 - Advisor advisee management and Dean user/PC management
 - Sanitized shared calendar data and immutable approval history
 - Database and frontend automated checks

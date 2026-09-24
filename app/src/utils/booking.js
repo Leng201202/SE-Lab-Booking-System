@@ -2,6 +2,7 @@ import { format, parseISO } from 'date-fns'
 
 export const APP_TIME_ZONE = 'Asia/Bangkok'
 export const BLOCKING_BOOKING_STATUSES = Object.freeze(['pending_advisor', 'pending_dean', 'approved'])
+export const CANCELLABLE_BOOKING_STATUSES = BLOCKING_BOOKING_STATUSES
 export const LAB_OPEN_TIME = '08:00'
 export const LAB_CLOSE_TIME = '18:00'
 export const BOOKING_SLOT_MINUTES = 15
@@ -145,4 +146,13 @@ export function isBookingConflict(bookings, { pcId, date, startDate, endDate, st
 
 export function isOwnBooking(booking, user) {
   return booking.requesterId === user?.id
+}
+
+export function isBookingCancellable(booking, user, value = new Date()) {
+  if (!booking || !user || !['student', 'advisor'].includes(user.role)) return false
+  if (booking.requesterId !== user.id || !CANCELLABLE_BOOKING_STATUSES.includes(booking.status)) return false
+
+  const startTime = isRemoteBooking(booking) ? '00:00' : booking.startTime
+  const startsAt = new Date(`${getBookingStartDate(booking)}T${startTime}:00+07:00`)
+  return Number.isFinite(startsAt.getTime()) && startsAt > new Date(value)
 }

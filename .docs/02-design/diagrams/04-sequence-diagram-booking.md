@@ -45,6 +45,30 @@ sequenceDiagram
 
 The exclusion constraint remains authoritative if two clients submit simultaneously. Approval functions lock the target row and perform the status transition plus audit insertion in one transaction.
 
+Requester cancellation:
+
+~~~mermaid
+sequenceDiagram
+    actor U as Student or Advisor requester
+    participant W as React app
+    participant C as cancel_booking RPC
+    participant P as PostgreSQL
+
+    U->>W: Open own active future booking
+    W-->>U: Show cancellation dialog
+    U->>W: Submit required reason
+    W->>C: cancel_booking(booking_id, reason)
+    C->>P: Lock row and validate role, owner, status, start, reason
+    alt Invalid, stale, or unauthorized
+        P-->>W: Reject without changing booking
+        W-->>U: Show actionable error
+    else Valid
+        P->>P: Set cancelled status, reason, actor, and time
+        P-->>W: Return cancelled booking
+        W-->>U: Refresh detail and availability
+    end
+~~~
+
 Role variations:
 
 ~~~mermaid
@@ -53,6 +77,9 @@ flowchart LR
     PA --> PD[pending_dean]
     A[Advisor submits] --> PD
     PD --> OK[approved]
+    PA -->|owner cancels before start| C[cancelled]
+    PD -->|owner cancels before start| C
+    OK -->|owner cancels before start| C
     D[Dean submits] --> V{PC and interval valid?}
     V -->|yes| OK
     V -->|no| X[rejected before insert]

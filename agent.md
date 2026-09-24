@@ -102,6 +102,7 @@ React route guards improve navigation only. PostgreSQL grants, RLS policies, con
 - Anonymous users cannot read application data.
 - Students can read only their own private bookings and can create only for themselves.
 - Every role can create and read its own bookings.
+- Students and Advisors can cancel only their own active booking before it starts and must provide a reason; Deans cannot use requester cancellation.
 - Advisors can read and review only assigned Students at `pending_advisor`; their own requests skip Advisor review and require Dean approval.
 - Deans can read records needed for final review and act only at `pending_dean`; their own requests are immediately approved only when all booking and availability rules pass.
 - Advisors may attach only unassigned Students to themselves and may release only their own advisees.
@@ -117,6 +118,7 @@ Consequential mutations use these database functions:
 create_booking
 approve_booking
 reject_booking
+cancel_booking
 create_pc
 update_pc
 set_user_role
@@ -149,7 +151,7 @@ One-day in-lab bookings must be within `08:00–18:00`, use a valid increasing t
 
 Past booking start instants, unavailable PCs, missing Student Advisor assignments, and purposes shorter than five non-whitespace characters are rejected by the database. On the current Bangkok date, one-day bookings begin at the next valid 15-minute slot; full-day multi-day reservations must start on a future date. Advisor and Dean requesters do not require an assigned Advisor.
 
-`cancelled` and `completed` exist in the status model, but user cancellation and automatic completion are not implemented yet.
+Students and Advisors may move their own `pending_advisor`, `pending_dean`, or `approved` future booking to `cancelled` through `cancel_booking`. The function locks the row, requires a trimmed 5–2000 character reason, and records `cancelled_at` and `cancelled_by` atomically. Cancellation fields are protected from direct browser writes. Automatic completion is not implemented yet.
 
 ## Routes and roles
 
@@ -243,6 +245,7 @@ Maintain tests for:
 - Advisor assignment boundaries and Dean-only actions
 - valid and invalid workflow transitions
 - booking overlap and unavailable-PC rejection
+- cancellation ownership, role, status, future-start, and reason boundaries
 - sanitized calendar output
 - approval audit creation and attribution
 - external-domain signup denial

@@ -8,6 +8,7 @@ import {
   getBangkokDateKey,
   getEarliestBookableTime,
   isBookingConflict,
+  isBookingCancellable,
 } from '../../utils/booking.js'
 
 test('detects overlap only for active booking statuses', () => {
@@ -54,6 +55,9 @@ test('maps a database booking to the existing page contract', () => {
     status: 'pending_advisor',
     advisor_decision: 'pending',
     dean_decision: 'waiting',
+    cancellation_reason: null,
+    cancelled_at: null,
+    cancelled_by: null,
     requester: { display_name: 'Student One', university_id: '65315000' },
     advisor: { display_name: 'Advisor One' },
     pc: { code: 'PC-06', room: 'SE Lab B · 402' },
@@ -69,6 +73,7 @@ test('maps a database booking to the existing page contract', () => {
   assert.equal(formatBookingDateRange(booking), '24 Sep–2 Oct 2026')
   assert.equal(bookingOccursOnDate(booking, '2026-09-30'), true)
   assert.equal(bookingOccursOnDate(booking, '2026-10-03'), false)
+  assert.equal(booking.cancellationReason, null)
 })
 
 test('maps sanitized calendar rows without private requester data', () => {
@@ -106,4 +111,35 @@ test('does not offer past dates or a day with no remaining slot', () => {
   assert.equal(getEarliestBookableTime('2026-09-22', '2026-09-23T03:00:00.000Z'), null)
   assert.equal(getEarliestBookableTime('2026-09-24', '2026-09-23T03:00:00.000Z'), '08:00')
   assert.equal(getEarliestBookableTime('2026-09-23', '2026-09-23T10:45:01.000Z'), null)
+})
+
+test('allows only the Student or Advisor owner to cancel an active future booking', () => {
+  const booking = {
+    requesterId: 'requester-1',
+    status: 'pending_dean',
+    startDate: '2026-09-24',
+    endDate: '2026-09-24',
+    startTime: '10:00',
+    endTime: '11:00',
+    accessMode: 'lab',
+  }
+
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'student' }, '2026-09-24T02:00:00.000Z'), true)
+  assert.equal(isBookingCancellable(booking, { id: 'someone-else', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'dean' }, '2026-09-24T02:00:00.000Z'), false)
+})
+
+test('does not allow cancellation after the booking starts or after it closes', () => {
+  const booking = {
+    requesterId: 'requester-1',
+    status: 'approved',
+    startDate: '2026-09-24',
+    endDate: '2026-09-24',
+    startTime: '10:00',
+    endTime: '11:00',
+    accessMode: 'lab',
+  }
+
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'advisor' }, '2026-09-24T03:00:00.000Z'), false)
+  assert.equal(isBookingCancellable({ ...booking, status: 'cancelled' }, { id: 'requester-1', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
 })

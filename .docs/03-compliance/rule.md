@@ -36,8 +36,10 @@ This document is an engineering compliance register, not legal advice. Final app
 | Advisors act only on assigned Student requests at pending Advisor | Enforced | approve_booking/reject_booking |
 | Deans act only after Advisor approval at pending Dean | Enforced | RLS and workflow functions |
 | Rejection requires a reason | Enforced | Function and table constraints |
+| Student/Advisor requester cancellation is limited to the owner's active future booking and requires a reason | Migration deployment required | `cancel_booking` RPC, cancellation-shape constraint, and pgTAP assertions |
+| Successful cancellation records requester/time/reason atomically and releases the interval | Migration deployment required | `20260923000200_add_booking_cancellation.sql` |
 | Every decision appends an attributable approval event in the same transaction | Enforced | Workflow functions and pgTAP tests |
-| Student cancellation, rebooking, automatic completion, and no-show handling | Policy pending / not implemented | Backlog B13, B14, B18 |
+| Rebooking, automatic completion, and no-show handling | Policy pending / not implemented | Backlog B14, B18 |
 
 ## Privacy and data rules
 

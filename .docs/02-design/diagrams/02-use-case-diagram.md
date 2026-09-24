@@ -13,6 +13,7 @@ flowchart LR
     Inventory((View PC inventory))
     Submit((Submit booking request))
     OwnRecords((View own requests))
+    Cancel((Cancel own active future booking))
     AdvisorReview((Review assigned Student request))
     DeanReview((Give final decision))
     Advisees((Manage own advisees))
@@ -27,9 +28,11 @@ flowchart LR
     Student --> Inventory
     Student --> Submit
     Student --> OwnRecords
+    Student --> Cancel
     Advisor --> Availability
     Advisor --> Submit
     Advisor --> OwnRecords
+    Advisor --> Cancel
     Advisor --> AdvisorReview
     Advisor --> Advisees
     Dean --> Availability
@@ -41,10 +44,11 @@ flowchart LR
     Operator --> Configure
 
     Submit -. includes .-> Validate
+    Cancel -. includes .-> Validate
     AdvisorReview -. includes .-> Audit
     DeanReview -. includes .-> Audit
     AdvisorReview -. includes .-> Validate
     DeanReview -. includes .-> Validate
 ~~~
 
-Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Advisors cannot review unassigned Students, and only Deans manage roles or PC inventory. Student requests use both review stages, Advisor requests skip Advisor review, and Dean requests are immediately approved only after database validation.
+Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Advisors cannot review unassigned Students, and only Deans manage roles or PC inventory. Student requests use both review stages, Advisor requests skip Advisor review, and Dean requests are immediately approved only after database validation. Student and Advisor requesters may cancel only their own active future booking with a reason.

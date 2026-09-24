@@ -91,6 +91,8 @@ Dean → immediately approved after availability validation
 
 Only Deans can add or edit PC inventory. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history.
 
+Students and Advisors may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy `20260923000200_add_booking_cancellation.sql` before testing this workflow on the hosted project.
+
 ## Security model
 
 - Application tables deny anonymous access.
@@ -98,7 +100,7 @@ Only Deans can add or edit PC inventory. Setting a PC to `maintenance` or `inact
 - Advisors additionally see bookings for assigned Students.
 - Deans see final-review records and all profiles required for user management.
 - Shared calendar RPC output contains occupancy data but no Student identity, purpose, or rejection details.
-- Booking, approval, rejection, user-management, relationship-management, and PC-management functions derive the actor from `auth.uid()`.
+- Booking, approval, rejection, cancellation, user-management, relationship-management, and PC-management functions derive the actor from `auth.uid()`.
 - Active bookings must start in the future; a database trigger rejects stale creation and approval attempts independently of browser validation.
 - An exclusion constraint prevents concurrent active bookings from overlapping.
 - Every approval/rejection creates an immutable `approval_events` record.

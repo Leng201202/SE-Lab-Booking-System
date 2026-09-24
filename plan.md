@@ -36,7 +36,7 @@ Users should always be able to understand the requested PC and time, access mode
 - Google OAuth sign-in and callback routes
 - restored Supabase sessions and trusted profile loading
 - role-specific Student, Advisor, and Dean navigation
-- dashboards, booking form/history/detail, review queues, PC inventory/management, user/advisee management, profile, and calendar
+- dashboards, booking form/history/detail and requester cancellation, review queues, PC inventory/management, user/advisee management, profile, and calendar
 - one-day lab and multi-day remote booking experiences
 - loading, empty, mutation, configuration, and authentication error states
 - responsive desktop and mobile layouts
@@ -49,7 +49,7 @@ Users should always be able to understand the requested PC and time, access mode
 - private elevated-role allowlist
 - Google-only profile creation with default Student assignment
 - explicit grants plus RLS on exposed tables
-- role-aware booking creation, approval, rejection, inventory-management, and user-management RPCs
+- role-aware booking creation, approval, rejection, requester cancellation, inventory-management, and user-management RPCs
 - database validation for dates, lab hours, remote ranges, PC state, purpose, Advisor assignment, and workflow stage
 - half-open booking intervals with an exclusion constraint preventing concurrent active overlaps
 - indexed foreign keys and role/query access paths
@@ -58,9 +58,9 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 57 pgTAP assertions cover allow/deny, all three booking paths, future-start enforcement, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 71 pgTAP assertions cover allow/deny, all three booking paths, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
-- frontend ESLint, six Node tests, and production Vite build pass after the role-capability and future-start changes
+- frontend ESLint, eight Node tests, and production Vite build pass after the requester-cancellation changes
 
 ## Architecture
 
@@ -136,8 +136,8 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 Role-specific creation and transitions:
 
 ```text
-Student: new request → pending_advisor → pending_dean | rejected → approved | rejected
-Advisor: new request → pending_dean → approved | rejected
+Student: new request → pending_advisor → pending_dean | rejected → approved | rejected; own active future request → cancelled
+Advisor: new request → pending_dean → approved | rejected; own active future request → cancelled
 Dean: new request → approved
 ```
 
@@ -145,7 +145,7 @@ Dean: new request → approved
 
 One-day in-lab requests use `08:00–18:00` bounds. On the current Bangkok date, the form and calendar advance to the next valid 15-minute slot and make elapsed slots read-only. Multi-day requests use remote access, reserve each included day continuously, and must begin on a future date. The future-start trigger rejects stale creation and approval attempts; the database also rejects unavailable PCs, invalid intervals, short purposes, missing Advisor assignments, wrong-stage actions, and overlaps.
 
-Cancellation and automatic completion are not yet exposed as user operations.
+Students and Advisors may cancel only their own `pending_advisor`, `pending_dean`, or `approved` booking before its start instant. Cancellation requires a trimmed reason of 5–2000 characters and records the requester and cancellation time atomically; the cancelled interval immediately stops blocking availability. Deans do not use this requester-cancellation workflow. Automatic completion is not yet implemented.
 
 ## Routes
 
@@ -233,6 +233,7 @@ The local production foundation is accepted when:
 - Advisor bookings begin at Dean review and Dean bookings become approved only after availability checks
 - only Deans can change roles or create/update PC inventory
 - overlapping active bookings cannot both succeed
+- Students and Advisors can cancel only their own active future bookings, must provide a valid reason, and cannot cancel another user's, started, rejected, completed, or already-cancelled booking
 - decisions create durable, attributable audit events
 - shared calendar output contains no private Student data
 - frontend lint/tests/build and database tests/lint pass
@@ -242,7 +243,7 @@ Hosted rollout is accepted only after real OAuth and production redirect behavio
 
 ## Later phases
 
-- Student cancellation rules and cut-off times
+- configurable institutional cancellation cut-off, no-show, and follow-up policy beyond the current before-start rule
 - automatic completion after booking end
 - email or in-app notifications
 - lab technician role
@@ -250,4 +251,3 @@ Hosted rollout is accepted only after real OAuth and production redirect behavio
 - reporting and usage analytics
 - route-level code splitting for the current non-blocking bundle-size warning
 - focused decomposition of the large calendar interaction component
-- reconciliation of `.docs/`, which reflects an older prototype and is not current production evidence

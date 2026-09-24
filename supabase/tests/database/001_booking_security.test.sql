@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(57);
+select plan(71);
 
 select throws_ok(
   $$
@@ -115,8 +115,19 @@ select throws_ok(
   'permission denied for table pcs',
   'anonymous users cannot read PC inventory'
 );
+select throws_ok(
+  $$ select public.cancel_booking(null, 'Anonymous cancellation attempt') $$,
+  'permission denied for function cancel_booking',
+  'anonymous users cannot execute cancellation'
+);
 
 set local role authenticated;
+select set_config('request.jwt.claims', '{}', true);
+select throws_ok(
+  $$ select public.cancel_booking(null, 'Missing authenticated identity') $$,
+  'Authentication is required.',
+  'cancellation requires an authenticated user ID'
+);
 select set_config(
   'request.jwt.claims',
   '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}',
@@ -237,6 +248,11 @@ select is(
   'another Student cannot open private booking details'
 );
 select throws_ok(
+  $$ select public.cancel_booking((select id from public.get_booking_calendar(date '2099-01-10', date '2099-01-10') limit 1), 'Not my booking to cancel') $$,
+  'You can cancel only your own Student or Advisor booking.',
+  'another Student cannot cancel the requester''s booking'
+);
+select throws_ok(
   $$
     select public.create_booking(
       (select id from public.pcs where code = 'PC-02'),
@@ -308,6 +324,39 @@ select set_config(
   'request.jwt.claims',
   '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
+);
+select throws_ok(
+  $$ select public.cancel_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-01')), '   ') $$,
+  'Please provide a cancellation reason of at least 5 characters.',
+  'Student cancellation requires a meaningful reason'
+);
+select lives_ok(
+  $$ select public.cancel_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-01')), 'Project session moved to another day.') $$,
+  'Student can cancel their own approved future booking'
+);
+select is(
+  (select status::text from public.bookings where pc_id = (select id from public.pcs where code = 'PC-01')),
+  'cancelled',
+  'Student cancellation closes the booking'
+);
+select is(
+  (select cancellation_reason from public.bookings where pc_id = (select id from public.pcs where code = 'PC-01')),
+  'Project session moved to another day.',
+  'Student cancellation reason is retained'
+);
+select is(
+  (select cancelled_by from public.bookings where pc_id = (select id from public.pcs where code = 'PC-01')),
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  'Student cancellation records the requester as actor'
+);
+select ok(
+  (select cancelled_at is not null from public.bookings where pc_id = (select id from public.pcs where code = 'PC-01')),
+  'Student cancellation records its timestamp'
+);
+select is(
+  (select count(*) from public.get_booking_calendar(date '2099-01-10', date '2099-01-10') where pc_code = 'PC-01'),
+  0::bigint,
+  'cancelled booking immediately releases calendar availability'
 );
 select lives_ok(
   $$
@@ -403,6 +452,30 @@ select lives_ok(
   $$ select public.approve_booking((select id from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002')) $$,
   'Dean can approve an Advisor booking'
 );
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.cancel_booking((select id from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002'), 'No longer need the lab workstation.') $$,
+  'Advisor can cancel their own approved future booking'
+);
+select is(
+  (select status::text from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002'),
+  'cancelled',
+  'Advisor cancellation closes the booking'
+);
+select is(
+  (select cancellation_reason from public.bookings where requester_id = '20000000-0000-0000-0000-000000000002'),
+  'No longer need the lab workstation.',
+  'Advisor cancellation reason is retained'
+);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"30000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
 select lives_ok(
   $$
     select public.create_booking(
@@ -421,6 +494,11 @@ select is(
   (select status::text from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'),
   'approved',
   'Dean booking is approved immediately'
+);
+select throws_ok(
+  $$ select public.cancel_booking((select id from public.bookings where requester_id = '30000000-0000-0000-0000-000000000001'), 'Dean cancellation is not enabled.') $$,
+  'You can cancel only your own Student or Advisor booking.',
+  'Dean direct bookings are outside the Student and Advisor cancellation feature'
 );
 select lives_ok(
   $$ select public.create_pc('PC-11', 'SE Lab C', '32 GB RAM', 'available', null) $$,
