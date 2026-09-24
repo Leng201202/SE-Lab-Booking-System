@@ -48,7 +48,7 @@ function UserIdentity({ profile }) {
 }
 
 export function AdviseeManagementPage() {
-  const { user } = useApp()
+  const { user, refreshWorkspace } = useApp()
   const { users, loading, error, setError, refresh } = useManagedUsers()
   const [busyId, setBusyId] = useState(null)
   const students = users.filter((profile) => profile.role === 'student')
@@ -58,7 +58,7 @@ export function AdviseeManagementPage() {
     setError('')
     try {
       await assignStudentAdvisor(student.id, advisorId)
-      await refresh()
+      await Promise.all([refresh(), refreshWorkspace()])
     } catch (nextError) {
       setError(nextError.message)
     } finally {
@@ -68,7 +68,7 @@ export function AdviseeManagementPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Advisor tools" title="Manage advisees" description="Assign unassigned Students to yourself or release Students currently assigned to you." />
+      <PageHeader eyebrow="Advisor tools" title="Manage advisees" description="Assign unassigned Students to yourself or release your advisees. Unresolved requests follow the Student when another Advisor claims them." />
       {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">{error}</div>}
       <Card className="overflow-hidden">
         {loading ? <p className="p-6 text-sm text-slate-500">Loading Students…</p> : students.length ? (
@@ -133,9 +133,9 @@ export function UserManagementPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Dean administration" title="User management" description="Manage application roles and assign Students to eligible Advisors." />
+      <PageHeader eyebrow="Dean administration" title="User management" description="Manage application roles and assign Students to eligible Advisors. Unresolved requests follow Advisor reassignment." />
       {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">{error}</div>}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Object.keys(roleLabels).map((role) => <Card key={role} className="p-5"><p className="text-sm text-slate-500">{roleLabels[role]}s</p><p className="mt-2 text-3xl font-bold text-slate-950">{users.filter((profile) => profile.role === role).length}</p></Card>)}
       </div>
       <Card className="overflow-hidden">

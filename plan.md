@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-As of 23 September 2026, the Supabase production foundation is implemented and Google sign-in has been verified from the local frontend against the hosted project. The previous browser-only demo storage and fake role switching have been removed. A repository and unauthenticated production security review is complete; the remediation work below remains open.
+As of 24 September 2026, the Supabase production foundation is implemented and Google sign-in has been verified from the local frontend against the hosted project. The previous browser-only demo storage and fake role switching have been removed. A repository and unauthenticated production security review is complete; the remediation work below remains open.
 
 ```text
 Responsive React UI: implemented
@@ -21,7 +21,8 @@ Security hardening: assessed; high-priority remediation planned
 Replace the manual laboratory equipment request process with a clear, secure workflow:
 
 ```text
-Student request → Advisor review → Dean review → Approved PC booking
+Student request → Technician review → Advisor review → Dean review → Approved PC booking
+Technician request → Advisor review → Dean review → Approved PC booking
 Advisor request → Dean review → Approved PC booking
 Dean request → Approved immediately when the PC is available
 ```
@@ -35,8 +36,8 @@ Users should always be able to understand the requested PC and time, access mode
 - React 19, Vite 8, React Router 7, Tailwind CSS 4
 - Google OAuth sign-in and callback routes
 - restored Supabase sessions and trusted profile loading
-- role-specific Student, Advisor, and Dean navigation
-- dashboards, booking form/history/detail, review queues, PC inventory/management, user/advisee management, profile, and calendar
+- role-specific Student, Technician, Advisor, and Dean navigation
+- dashboards, booking form/history/detail and requester cancellation, review queues, PC inventory/management, user/advisee management, profile, and calendar
 - one-day lab and multi-day remote booking experiences
 - loading, empty, mutation, configuration, and authentication error states
 - responsive desktop and mobile layouts
@@ -49,7 +50,7 @@ Users should always be able to understand the requested PC and time, access mode
 - private elevated-role allowlist
 - Google-only profile creation with default Student assignment
 - explicit grants plus RLS on exposed tables
-- role-aware booking creation, approval, rejection, inventory-management, and user-management RPCs
+- role-aware booking creation, approval, rejection, requester cancellation, inventory-management, and user-management RPCs
 - database validation for dates, lab hours, remote ranges, PC state, purpose, Advisor assignment, and workflow stage
 - half-open booking intervals with an exclusion constraint preventing concurrent active overlaps
 - indexed foreign keys and role/query access paths
@@ -58,9 +59,9 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 57 pgTAP assertions cover allow/deny, all three booking paths, future-start enforcement, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 98 pgTAP assertions cover allow/deny, all four booking paths, three-stage Student review, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
-- frontend ESLint, six Node tests, and production Vite build pass after the role-capability and future-start changes
+- frontend ESLint, eight Node tests, and production Vite build pass after the Technician workflow changes
 
 ## Architecture
 
@@ -116,16 +117,18 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 
 - A verified Google identity creates a profile.
 - Every new user receives `student`; a privileged administrator may promote the existing profile afterward.
-- Advisor and Dean roles never come from the browser.
+- Technician, Advisor, and Dean roles never come from the browser.
 - Students require an Advisor assignment before booking; Advisors may manage their own advisee list and Deans may manage all assignments.
-- Advisors and Deans may also request PCs. Advisor requests skip Advisor review; Dean requests are approved immediately when availability validation succeeds.
-- Deans manage roles and PC inventory, including specification, operational status, and maintenance notes.
+- When a released Student is assigned to a new Advisor, unresolved requests still at Technician or Advisor review move atomically to that new Advisor; decided and final-stage history retains its original Advisor attribution.
+- Technicians, Advisors, and Deans may also request PCs. Technician requests begin at Advisor review, Advisor requests begin at Dean review, and Dean requests are approved immediately when availability validation succeeds.
+- Technicians and Deans manage PC inventory, including specification, operational status, and maintenance notes; only Deans manage user roles and Advisor assignments.
 - Users cannot promote themselves or change protected profile relationships.
 
 ### Data access
 
 - Anonymous access to application data is denied.
 - Every user sees their own private bookings.
+- Technicians see and review Student bookings at the technical stage.
 - Advisors additionally see and review their assigned Students' bookings and can manage only unassigned or already assigned-to-self Students.
 - Deans see all users, manage trusted roles and Advisor assignments, manage PCs, and see requests needed for final review.
 - Calendar consumers receive occupied periods and safe display fields, not identity, purpose, course, or rejection details.
@@ -136,16 +139,17 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 Role-specific creation and transitions:
 
 ```text
-Student: new request → pending_advisor → pending_dean | rejected → approved | rejected
-Advisor: new request → pending_dean → approved | rejected
-Dean: new request → approved
+Student: new request → pending_technician → pending_advisor → pending_dean → approved; any review may reject; own active future request → cancelled
+Technician: new request → pending_advisor → pending_dean → approved | rejected; own active future request → cancelled
+Advisor: new request → pending_dean → approved | rejected; own active future request → cancelled
+Dean: new request → approved; own active future request → cancelled
 ```
 
-`pending_advisor`, `pending_dean`, and `approved` block availability. `rejected`, `cancelled`, and `completed` do not.
+`pending_technician`, `pending_advisor`, `pending_dean`, and `approved` block availability. `rejected`, `cancelled`, and `completed` do not.
 
 One-day in-lab requests use `08:00–18:00` bounds. On the current Bangkok date, the form and calendar advance to the next valid 15-minute slot and make elapsed slots read-only. Multi-day requests use remote access, reserve each included day continuously, and must begin on a future date. The future-start trigger rejects stale creation and approval attempts; the database also rejects unavailable PCs, invalid intervals, short purposes, missing Advisor assignments, wrong-stage actions, and overlaps.
 
-Cancellation and automatic completion are not yet exposed as user operations.
+Students, Technicians, Advisors, and Deans may cancel only their own active booking before its start instant. Cancellation requires a trimmed reason of 5–2000 characters and records the requester and cancellation time atomically; the cancelled interval immediately stops blocking availability. Automatic completion is not yet implemented.
 
 ## Routes
 
@@ -153,9 +157,10 @@ Cancellation and automatic completion are not yet exposed as user operations.
 Public:       /login, /auth/callback
 Shared:       /dashboard, /calendar, /bookings/:id, /profile
 All roles:    /book, /bookings, /pcs
-Reviewers:    /requests/pending, /requests/history
+Reviewers:    /requests/pending, /requests/history (Technician, Advisor, Dean)
 Advisor:      /manage/advisees
-Dean:         /admin/users, /admin/pcs
+Dean only:    /admin/users
+PC managers:  /admin/pcs (Technician, Dean)
 ```
 
 ## Hosted rollout plan
@@ -168,15 +173,15 @@ The hosted Supabase project and Google provider are active, and Google sign-in h
 4. Set the exact production Site URL and `/auth/callback` redirect URL; keep preview origins disabled unless explicitly required.
 5. Confirm Vercel uses the hosted project URL and publishable key, then redeploy after environment changes.
 6. Verify Google sign-in, session restoration, sign-out, role-scoped views, callback errors, and direct route refreshes from the production Vercel origin.
-7. After each intended Advisor/Dean signs in once as Student, promote them through protected administration.
-8. Use Advisor/Dean management screens to assign Students and verify the resulting visibility boundaries.
+7. After each intended Technician/Advisor/Dean signs in once as Student, promote them through protected administration.
+8. Use the Advisor advisee screen or Dean user-management screen to assign Students, then verify the resulting visibility boundaries.
 9. Complete Priority 0 security items H1–H5/B24–B28.
 10. Run authenticated role-adversary, two-client overlap, booking-abuse, and full production smoke tests before launch.
 
 Open institutional decisions:
 
 - allowed university Google email domain or explicit account policy
-- initial Advisor and Dean email addresses
+- initial Technician, Advisor, and Dean email addresses
 - production origin and supported preview origins
 - operational owner for role and Advisor assignments
 
@@ -218,7 +223,7 @@ The 23 September 2026 review found no confirmed critical remote takeover or role
 - Suspended/offboarded users cannot restore a workspace or call application RPCs with an existing session.
 - Every privileged management mutation records actor, target, before/after state, timestamp, and session/request correlation data.
 - Production responses include the approved browser security headers and a tested CSP.
-- Student, Advisor, Dean, anonymous, suspended, external-domain, and wrong-assurance adversarial tests pass against the deployed schema.
+- Student, Technician, Advisor, Dean, anonymous, suspended, external-domain, and wrong-assurance adversarial tests pass against the deployed schema.
 
 ## Acceptance criteria
 
@@ -227,12 +232,14 @@ The local production foundation is accepted when:
 - migrations and seed rebuild from an empty database
 - anonymous and cross-user reads are denied
 - users cannot self-promote
-- Advisors cannot review unassigned Students or perform Dean actions
+- Technicians act only at `pending_technician`; Advisors cannot review unassigned Student requests or perform Dean actions
 - Advisors can manage only unassigned Students or their own advisees
-- Deans cannot bypass the final-review stage for Student or Advisor requests; their own bookings use the explicit validated direct-approval path
-- Advisor bookings begin at Dean review and Dean bookings become approved only after availability checks
-- only Deans can change roles or create/update PC inventory
+- Deans cannot bypass the final-review stage for Student, Technician, or Advisor requests; their own bookings use the explicit validated direct-approval path
+- Student bookings pass Technician, assigned Advisor, and Dean review in order; Technician bookings begin at Advisor review; Advisor bookings begin at Dean review; Dean bookings become approved only after availability checks
+- unresolved Student requests follow a newly assigned Advisor without rewriting completed or already-reviewed history
+- only Deans can change roles; only Technicians and Deans can create/update PC inventory
 - overlapping active bookings cannot both succeed
+- Every role can cancel only its own active future bookings, must provide a valid reason, and cannot cancel another user's, started, rejected, completed, or already-cancelled booking
 - decisions create durable, attributable audit events
 - shared calendar output contains no private Student data
 - frontend lint/tests/build and database tests/lint pass
@@ -242,12 +249,10 @@ Hosted rollout is accepted only after real OAuth and production redirect behavio
 
 ## Later phases
 
-- Student cancellation rules and cut-off times
+- configurable institutional cancellation cut-off, no-show, and follow-up policy beyond the current before-start rule
 - automatic completion after booking end
 - email or in-app notifications
-- lab technician role
 - blackout periods and check-in/check-out
 - reporting and usage analytics
 - route-level code splitting for the current non-blocking bundle-size warning
 - focused decomposition of the large calendar interaction component
-- reconciliation of `.docs/`, which reflects an older prototype and is not current production evidence

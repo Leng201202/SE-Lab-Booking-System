@@ -24,9 +24,9 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 - Sign-in and callback: app/src/features/auth/
 - Session and shared workspace state: app/src/app/AppContext.jsx
 - Booking request and detail: app/src/features/bookings/
-- Advisor/Dean queues: app/src/features/approvals/
-- Advisor/Dean user management: app/src/features/users/
-- Dean PC management: app/src/features/pcs/PcManagementPage.jsx
+- Technician/Advisor/Dean queues: app/src/features/approvals/
+- Advisor advisee and Dean user management: app/src/features/users/
+- Technician/Dean PC management: app/src/features/pcs/PcManagementPage.jsx
 - Availability calendar: app/src/features/calendar/
 - Shared Bangkok date/time and next-slot calculation: app/src/utils/booking.js
 - Browser client: app/src/lib/supabase.js
@@ -41,12 +41,14 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 4. Day timeline with an occupied and selected interval
 5. Booking request form
 6. Student request detail and approval progress
-7. Advisor pending queue
-8. Dean final review
-9. Profile showing trusted role and Advisor assignment
-10. Advisor advisee management
-11. Dean user management
-12. Dean PC maintenance editor
+7. Requester cancellation dialog and retained cancellation reason
+8. Technician technical-review queue
+9. Advisor pending queue
+10. Dean final review
+11. Profile showing trusted role and Advisor assignment
+12. Advisor advisee management
+13. Dean user management
+14. Technician/Dean PC maintenance editor
 
 Screenshots must come from the current app and must not contain real personal data or secrets.
 
@@ -55,8 +57,8 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- RLS and workflow behavior through 57 pgTAP assertions after applying the latest migration
-- frontend lint, unit tests, and production build
+- the database suite defines 98 pgTAP assertions, including Technician workflow/management, Advisor reassignment, and cancellation authorization; the latest migrations still require database execution
+- frontend lint, eight unit tests, and production build
 - schema lint and dependency audit
 
 External verification still required:

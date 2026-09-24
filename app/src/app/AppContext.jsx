@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { getCurrentProfile, getSession, onAuthStateChange, signInWithGoogle as signInService, signOut as signOutService } from '../features/auth/authService'
 import {
   approveBooking,
+  cancelBooking,
   createBooking as createBookingService,
   getBookings,
   getCalendarBookings,
@@ -152,10 +153,21 @@ export function AppProvider({ children }) {
     createBooking: (input, pc) => runMutation(
       () => createBookingService(input, pc),
       user?.role === 'student'
-        ? 'Request submitted for Advisor approval.'
+        ? 'Request submitted for Technician approval.'
+        : user?.role === 'technician'
+          ? 'Request submitted for Advisor approval.'
         : user?.role === 'advisor'
           ? 'Request submitted for Dean approval.'
           : 'Booking approved and reserved.',
+    ),
+    approveAsTechnician: (id) => runMutation(
+      () => approveBooking(id),
+      'Request approved and sent to the advisor.',
+    ),
+    rejectAsTechnician: (id, reason) => runMutation(
+      () => rejectBooking(id, reason),
+      'Request rejected.',
+      'error',
     ),
     approveAsAdvisor: (id) => runMutation(
       () => approveBooking(id),
@@ -174,6 +186,10 @@ export function AppProvider({ children }) {
       () => rejectBooking(id, reason),
       'Request rejected.',
       'error',
+    ),
+    cancelOwnBooking: (id, reason) => runMutation(
+      () => cancelBooking(id, reason),
+      'Booking cancelled and the PC time was released.',
     ),
   }
 

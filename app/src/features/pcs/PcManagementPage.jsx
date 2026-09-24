@@ -11,7 +11,7 @@ import { createPc, updatePc } from './pcService'
 const emptyForm = { code: '', room: '', specification: '', status: 'available', notes: '' }
 
 export function PcManagementPage() {
-  const { pcs, refreshWorkspace } = useApp()
+  const { user, pcs, refreshWorkspace } = useApp()
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState('')
@@ -46,7 +46,7 @@ export function PcManagementPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Dean administration" title="PC management" description="Add workstations, maintain specifications, and remove broken PCs from booking availability." action={<Button onClick={openCreate}><Plus size={17} />Add PC</Button>} />
+      <PageHeader eyebrow={`${user.role === 'technician' ? 'Technician' : 'Dean'} administration`} title="PC management" description="Add workstations, maintain specifications, and remove broken PCs from booking availability." action={<Button onClick={openCreate}><Plus size={17} />Add PC</Button>} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {pcs.map((pc) => (
           <Card key={pc.databaseId} className="p-5">

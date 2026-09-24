@@ -51,7 +51,7 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 - Google OAuth application audience and Workspace organization restriction
 - Supabase CAPTCHA, MFA, session, refresh-token, rate-limit, and Auth-hook configuration
 - Deployed migration parity and database lint
-- Authenticated adversarial tests using Student, Advisor, Dean, suspended, and external-domain accounts
+- Authenticated adversarial tests using Student, Technician, Advisor, Dean, suspended, and external-domain accounts
 - Vercel preview-domain and Supabase redirect allowlists
 - Supabase backup/restore, log retention, alerting, and incident-response ownership
 - Git repository branch protection, required reviews, dependency automation, and secret scanning

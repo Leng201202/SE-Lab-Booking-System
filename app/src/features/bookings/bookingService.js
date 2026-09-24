@@ -26,12 +26,17 @@ export function mapBookingRow(row) {
     course: row.course,
     requestedAt: row.created_at,
     status: row.status,
+    technicianDecision: row.technician_decision,
+    technicianDecisionAt: row.technician_decision_at,
     advisorDecision: row.advisor_decision,
     advisorDecisionAt: row.advisor_decision_at,
     deanDecision: row.dean_decision,
     deanDecisionAt: row.dean_decision_at,
     rejectionReason: row.rejection_reason,
     rejectedBy: row.rejected_by,
+    cancellationReason: row.cancellation_reason,
+    cancelledAt: row.cancelled_at,
+    cancelledBy: row.cancelled_by,
   }
 }
 
@@ -68,12 +73,17 @@ const bookingSelect = `
   course,
   created_at,
   status,
+  technician_decision,
+  technician_decision_at,
   advisor_decision,
   advisor_decision_at,
   dean_decision,
   dean_decision_at,
   rejection_reason,
   rejected_by,
+  cancellation_reason,
+  cancelled_at,
+  cancelled_by,
   requester:profiles!requester_id(display_name, university_id),
   advisor:profiles!advisor_id(display_name),
   pc:pcs!pc_id(code, room)
@@ -124,6 +134,15 @@ export async function approveBooking(id) {
 
 export async function rejectBooking(id, reason) {
   const { data, error } = await requireSupabase().rpc('reject_booking', {
+    p_booking_id: id,
+    p_reason: reason,
+  })
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function cancelBooking(id, reason) {
+  const { data, error } = await requireSupabase().rpc('cancel_booking', {
     p_booking_id: id,
     p_reason: reason,
   })

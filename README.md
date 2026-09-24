@@ -3,7 +3,8 @@
 A Supabase-backed web application for booking computers in the Software Engineering laboratory at Mae Fah Luang University.
 
 ```text
-Student request → Advisor review → Dean review → Approved booking
+Student request → Technician review → Advisor review → Dean review → Approved booking
+Technician request → Advisor review → Dean review → Approved booking
 Advisor request → Dean review → Approved booking
 Dean request → Immediate approval after availability validation
 ```
@@ -18,8 +19,9 @@ The production foundation is implemented locally:
 - Supabase Auth with Google OAuth
 - PostgreSQL migrations, seed data, RLS policies, and RPC functions under `supabase/`
 - Conflict-safe bookings enforced by a PostgreSQL exclusion constraint
-- role-aware booking, assigned-Advisor review, and Dean administration boundaries
-- Advisor advisee management and Dean user/PC management
+- role-aware Technician/Advisor/Dean review and administration boundaries
+- reason-required cancellation of any role's own active future booking
+- Advisor advisee management, Technician/Dean PC management, and Dean user management
 - Sanitized shared calendar data and immutable approval history
 - Database and frontend automated checks
 

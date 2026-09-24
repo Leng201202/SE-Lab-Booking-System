@@ -8,13 +8,24 @@ import {
   getBangkokDateKey,
   getEarliestBookableTime,
   isBookingConflict,
+  isBookingCancellable,
 } from '../../utils/booking.js'
 
 test('detects overlap only for active booking statuses', () => {
   const bookings = [
+    { pcId: 'PC-02', startDate: '2026-09-20', endDate: '2026-09-20', startTime: '08:00', endTime: '09:00', status: 'pending_technician' },
     { pcId: 'PC-03', startDate: '2026-09-20', endDate: '2026-09-20', startTime: '10:00', endTime: '12:00', status: 'approved' },
     { pcId: 'PC-03', startDate: '2026-09-21', endDate: '2026-09-21', startTime: '10:00', endTime: '12:00', status: 'rejected' },
   ]
+  assert.equal(
+    isBookingConflict(bookings, {
+      pcId: 'PC-02',
+      date: '2026-09-20',
+      startTime: '08:30',
+      endTime: '09:30',
+    }),
+    true,
+  )
   assert.equal(
     isBookingConflict(bookings, {
       pcId: 'PC-03',
@@ -51,16 +62,22 @@ test('maps a database booking to the existing page contract', () => {
     purpose: 'Automated workflow test',
     course: 'SE Demo',
     created_at: '2026-09-22T01:00:00Z',
-    status: 'pending_advisor',
+    status: 'pending_technician',
+    technician_decision: 'pending',
+    technician_decision_at: null,
     advisor_decision: 'pending',
     dean_decision: 'waiting',
+    cancellation_reason: null,
+    cancelled_at: null,
+    cancelled_by: null,
     requester: { display_name: 'Student One', university_id: '65315000' },
     advisor: { display_name: 'Advisor One' },
     pc: { code: 'PC-06', room: 'SE Lab B · 402' },
   })
 
   assert.equal(booking.requestNumber, 'REQ-2026-000001')
-  assert.equal(booking.status, 'pending_advisor')
+  assert.equal(booking.status, 'pending_technician')
+  assert.equal(booking.technicianDecision, 'pending')
   assert.equal(booking.requesterRole, 'student')
   assert.equal(booking.accessMode, 'remote')
   assert.equal(booking.startTime, '00:00')
@@ -69,6 +86,7 @@ test('maps a database booking to the existing page contract', () => {
   assert.equal(formatBookingDateRange(booking), '24 Sep–2 Oct 2026')
   assert.equal(bookingOccursOnDate(booking, '2026-09-30'), true)
   assert.equal(bookingOccursOnDate(booking, '2026-10-03'), false)
+  assert.equal(booking.cancellationReason, null)
 })
 
 test('maps sanitized calendar rows without private requester data', () => {
@@ -106,4 +124,36 @@ test('does not offer past dates or a day with no remaining slot', () => {
   assert.equal(getEarliestBookableTime('2026-09-22', '2026-09-23T03:00:00.000Z'), null)
   assert.equal(getEarliestBookableTime('2026-09-24', '2026-09-23T03:00:00.000Z'), '08:00')
   assert.equal(getEarliestBookableTime('2026-09-23', '2026-09-23T10:45:01.000Z'), null)
+})
+
+test('allows every role to cancel only their own active future booking', () => {
+  const booking = {
+    requesterId: 'requester-1',
+    status: 'pending_dean',
+    startDate: '2026-09-24',
+    endDate: '2026-09-24',
+    startTime: '10:00',
+    endTime: '11:00',
+    accessMode: 'lab',
+  }
+
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'student' }, '2026-09-24T02:00:00.000Z'), true)
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'technician' }, '2026-09-24T02:00:00.000Z'), true)
+  assert.equal(isBookingCancellable(booking, { id: 'someone-else', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'dean' }, '2026-09-24T02:00:00.000Z'), true)
+})
+
+test('does not allow cancellation after the booking starts or after it closes', () => {
+  const booking = {
+    requesterId: 'requester-1',
+    status: 'approved',
+    startDate: '2026-09-24',
+    endDate: '2026-09-24',
+    startTime: '10:00',
+    endTime: '11:00',
+    accessMode: 'lab',
+  }
+
+  assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'advisor' }, '2026-09-24T03:00:00.000Z'), false)
+  assert.equal(isBookingCancellable({ ...booking, status: 'cancelled' }, { id: 'requester-1', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
 })

@@ -43,9 +43,14 @@ function DeanOnly({ children }) {
   return user?.role === 'dean' ? children : <Navigate to="/dashboard" replace />
 }
 
+function PcManagerOnly({ children }) {
+  const { user } = useApp()
+  return user?.role === 'technician' || user?.role === 'dean' ? children : <Navigate to="/dashboard" replace />
+}
+
 function ReviewerOnly({ children }) {
   const { user } = useApp()
-  return user?.role === 'advisor' || user?.role === 'dean' ? children : <Navigate to="/dashboard" replace />
+  return ['technician', 'advisor', 'dean'].includes(user?.role) ? children : <Navigate to="/dashboard" replace />
 }
 
 function LoginRoute() {
@@ -70,7 +75,7 @@ export const router = createBrowserRouter([
       { path: '/pcs', element: <PcListPage /> },
       { path: '/manage/advisees', element: <AdvisorOnly><AdviseeManagementPage /></AdvisorOnly> },
       { path: '/admin/users', element: <DeanOnly><UserManagementPage /></DeanOnly> },
-      { path: '/admin/pcs', element: <DeanOnly><PcManagementPage /></DeanOnly> },
+      { path: '/admin/pcs', element: <PcManagerOnly><PcManagementPage /></PcManagerOnly> },
       { path: '/calendar', element: <CalendarPage /> },
       { path: '/profile', element: <ProfilePage /> },
     ],
