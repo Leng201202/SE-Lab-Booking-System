@@ -74,8 +74,10 @@
 
 1. Advisor may claim an unassigned Student or release an existing advisee.
 2. Advisor cannot take a Student assigned to another Advisor.
-3. Dean views all profiles, changes trusted roles, and assigns Students to eligible Advisors.
-4. Technician or Dean adds or edits PCs, including specifications, notes, and maintenance/inactive state.
+3. When another Advisor claims the released Student, unresolved requests waiting for Technician or Advisor review move to the new Advisor atomically.
+4. Requests that already passed Advisor review or reached a closed state retain their original Advisor attribution.
+5. Dean views all profiles, changes trusted roles, and assigns Students to eligible Advisors.
+6. Technician or Dean adds or edits PCs, including specifications, notes, and maintenance/inactive state.
 
 ## Journey 11 — A requester cancels a booking
 

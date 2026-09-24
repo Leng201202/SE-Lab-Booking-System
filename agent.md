@@ -107,6 +107,7 @@ React route guards improve navigation only. PostgreSQL grants, RLS policies, con
 - Advisors can read and review assigned Students and Technician requests at `pending_advisor`; their own requests skip earlier review and require Dean approval.
 - Deans can read records needed for final review and act only at `pending_dean`; their own requests are immediately approved only when all booking and availability rules pass.
 - Advisors may attach only unassigned Students to themselves and may release only their own advisees.
+- Assigning a released Student to a new Advisor atomically retargets only unresolved `pending_technician` and `pending_advisor` requests. Never rewrite final-stage, approved, rejected, cancelled, or completed Advisor attribution.
 - Deans may view and manage all profiles, roles, and Advisor assignments.
 - Only Technicians and Deans may create PCs or update PC code, room, specification, status, and maintenance notes.
 - Shared calendar output omits Student identity, university ID, purpose, course, and rejection information.

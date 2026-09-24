@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(91);
+select plan(98);
 
 select throws_ok(
   $$
@@ -438,6 +438,84 @@ select is((select count(*) from public.approval_events), 5::bigint, 'rejection a
 
 select set_config(
   'request.jwt.claims',
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$
+    select public.create_booking(
+      (select id from public.pcs where code = 'PC-06'),
+      date '2099-01-10',
+      date '2099-01-10',
+      '09:00',
+      '11:00',
+      'Advisor reassignment integration test',
+      'SE Test'
+    )
+  $$,
+  'Student can create a request before changing Advisors'
+);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', null) $$,
+  'current Advisor can release a Student with an unresolved request'
+);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002') $$,
+  'another Advisor can claim the released Student'
+);
+reset role;
+select is(
+  (
+    select advisor_id
+    from public.bookings
+    where pc_id = (select id from public.pcs where code = 'PC-06')
+  ),
+  '20000000-0000-0000-0000-000000000002'::uuid,
+  'unresolved Student request moves to the newly assigned Advisor'
+);
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select is(
+  (select count(*) from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06')),
+  0::bigint,
+  'previous Advisor loses access to the reassigned unresolved request'
+);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06'))) $$,
+  'Technician can advance the reassigned Student request'
+);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
+  true
+);
+select is(
+  (select count(*) from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06') and status = 'pending_advisor'),
+  1::bigint,
+  'new Advisor receives the reassigned request after Technician approval'
+);
+
+select set_config(
+  'request.jwt.claims',
   '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
 );
@@ -499,9 +577,9 @@ select is(
   'Advisor assignment is persisted'
 );
 select throws_ok(
-  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002') $$,
-  'This Student is already assigned to another Advisor.',
-  'Advisor cannot take another Advisor''s Student'
+  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001') $$,
+  'Advisors can assign Students only to themselves.',
+  'Advisor cannot directly hand an advisee to another Advisor'
 );
 select throws_ok(
   $$ select public.set_user_role('10000000-0000-0000-0000-000000000002', 'dean') $$,

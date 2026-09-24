@@ -57,7 +57,7 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- the database suite defines 91 pgTAP assertions, including Technician workflow/management and cancellation authorization; the latest migrations still require database execution
+- the database suite defines 98 pgTAP assertions, including Technician workflow/management, Advisor reassignment, and cancellation authorization; the latest migrations still require database execution
 - frontend lint, eight unit tests, and production build
 - schema lint and dependency audit
 

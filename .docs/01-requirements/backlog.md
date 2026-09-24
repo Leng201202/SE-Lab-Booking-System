@@ -41,6 +41,7 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 | B33 | As a requester, PC operational state and booking creation remain consistent under concurrent changes. | Must | Planned | Security review M6 |
 | B34 | As a Technician, I can approve or reject Student requests before they reach the assigned Advisor. | Must | Done | Institutional workflow |
 | B35 | As a Technician, my own booking skips technical review and proceeds through Advisor then Dean review. | Must | Done | Institutional workflow |
+| B36 | As a newly assigned Advisor, I receive the Student's unresolved requests without changing completed review history. | Must | Done | Advisor reassignment defect |
 
 ## Acceptance notes
 
@@ -51,6 +52,7 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 - PostgreSQL rejects a pending or approved booking when its start instant is no longer in the future, including stale submissions and late approvals.
 - Students need an assigned Advisor before creating a request.
 - Student requests pass Technician, assigned Advisor, and Dean review in order. Technician requests start at pending Advisor, Advisor requests start at pending Dean, and Dean requests become approved immediately after availability validation.
+- Reassigning a released Student moves only unresolved pending-Technician/pending-Advisor requests to the new Advisor; later-stage and closed history keeps its original attribution.
 - Every role can cancel only its own active booking before it starts, with a trimmed 5–2000 character reason; cancellation records actor/time and releases the interval.
 - Google identity does not grant an elevated application role; Technician, Advisor, and Dean roles come from a protected allowlist.
 - Current Google-provider validation does not yet enforce the approved university domain; B24 is required before broad production use.

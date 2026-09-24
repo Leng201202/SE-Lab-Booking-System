@@ -6,7 +6,7 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 |---|---|---|---|
 | PDPA — purpose and data minimization | Collect only fields needed for authentication, role assignment, contact/identification, booking, approval, and audit | profiles/bookings schema; sanitized calendar RPC | Technical minimization implemented; field-by-field university approval pending |
 | PDPA — lawful basis and transparency | Identify the controller, purpose, basis, recipients, retention, rights, and contact before collection | No approved production privacy notice in repository | Gap |
-| PDPA — access control/security | Prevent anonymous, cross-user, wrong-stage Technician/Advisor/Dean review, unauthorized administration, stale booking-start access, and unauthorized cancellation | Explicit grants, RLS, trusted role allowlist, RPC/trigger validation, 91 pgTAP assertions | Core controls implemented; latest migration deployment plus institutional-domain, MFA, suspension, and anti-abuse remediation remain open |
+| PDPA — access control/security | Prevent anonymous, cross-user, wrong-stage Technician/Advisor/Dean review, unauthorized administration, stale booking-start access, and unauthorized cancellation | Explicit grants, RLS, trusted role allowlist, RPC/trigger validation, 98 pgTAP assertions | Core controls implemented; latest migration deployment plus institutional-domain, MFA, suspension, and anti-abuse remediation remain open |
 | PDPA — disclosure control | Availability should not disclose unrelated personal booking details | get_booking_calendar omits Student identity, university ID, purpose, course, and rejection reason | Enforced locally |
 | PDPA — data quality/correction | Allow appropriate correction without self-promotion, relationship tampering, or unverified identity claims | Role/Advisor protected; university ID is currently self-writable | Gap: make university ID trusted/admin-controlled and define correction process |
 | PDPA — data-subject rights | Handle access, correction, export, restriction, objection, and deletion where applicable | Users see their own records; no request-management process | Gap |
@@ -24,6 +24,7 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 - supabase/migrations/20260924000100_allow_dean_booking_cancellation.sql
 - supabase/migrations/20260924000200_add_technician_role_values.sql
 - supabase/migrations/20260924000300_implement_technician_workflow.sql
+- supabase/migrations/20260924000400_reassign_pending_student_bookings.sql
 - supabase/tests/database/001_booking_security.test.sql
 - app/src/lib/supabase.js
 - app/src/features/auth/authService.js

@@ -59,7 +59,7 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 91 pgTAP assertions cover allow/deny, all four booking paths, three-stage Student review, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 98 pgTAP assertions cover allow/deny, all four booking paths, three-stage Student review, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
 - frontend ESLint, eight Node tests, and production Vite build pass after the Technician workflow changes
 
@@ -119,6 +119,7 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 - Every new user receives `student`; a privileged administrator may promote the existing profile afterward.
 - Technician, Advisor, and Dean roles never come from the browser.
 - Students require an Advisor assignment before booking; Advisors may manage their own advisee list and Deans may manage all assignments.
+- When a released Student is assigned to a new Advisor, unresolved requests still at Technician or Advisor review move atomically to that new Advisor; decided and final-stage history retains its original Advisor attribution.
 - Technicians, Advisors, and Deans may also request PCs. Technician requests begin at Advisor review, Advisor requests begin at Dean review, and Dean requests are approved immediately when availability validation succeeds.
 - Technicians and Deans manage PC inventory, including specification, operational status, and maintenance notes; only Deans manage user roles and Advisor assignments.
 - Users cannot promote themselves or change protected profile relationships.
@@ -235,6 +236,7 @@ The local production foundation is accepted when:
 - Advisors can manage only unassigned Students or their own advisees
 - Deans cannot bypass the final-review stage for Student, Technician, or Advisor requests; their own bookings use the explicit validated direct-approval path
 - Student bookings pass Technician, assigned Advisor, and Dean review in order; Technician bookings begin at Advisor review; Advisor bookings begin at Dean review; Dean bookings become approved only after availability checks
+- unresolved Student requests follow a newly assigned Advisor without rewriting completed or already-reviewed history
 - only Deans can change roles; only Technicians and Deans can create/update PC inventory
 - overlapping active bookings cannot both succeed
 - Every role can cancel only its own active future bookings, must provide a valid reason, and cannot cancel another user's, started, rejected, completed, or already-cancelled booking

@@ -56,6 +56,7 @@ This document is an engineering compliance register, not legal advice. Final app
 | Users cannot change their role or Advisor assignment | Enforced | Column grants and RLS |
 | University ID is populated or verified only through a trusted university process | Planned | Current self-update grant must be removed; backlog B27 |
 | Advisors can manage only unassigned Students or their own advisees | Enforced | assign_student_advisor RPC and profile RLS |
+| Assigning a released Student retargets only unresolved pending-Technician/pending-Advisor requests and preserves decided history | Migration deployment required | `20260924000400_reassign_pending_student_bookings.sql` and pgTAP assertions |
 | Only Deans manage roles; only Technicians and Deans manage PC inventory/specifications/status | Migration deployment required | security-definer management RPCs and execution checks |
 | The frontend contains no Google secret, database password, Supabase secret key, or service_role key | Enforced by repository policy; verify per deployment | Environment templates, ignore rules, credential scan |
 | Display name, email, optional university ID, role, and Advisor relationship have documented operational purposes | Policy pending | University data inventory/owner approval required |

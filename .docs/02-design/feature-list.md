@@ -26,6 +26,7 @@
 | Rebook/edit | Atomically change PC or interval | Planned |
 | Notifications | Email or durable in-app decision notifications | Proposed |
 | Advisor relationship management | Advisor claims unassigned Students or releases own advisees | Done |
+| Pending-request reassignment | A newly assigned Advisor receives unresolved Student requests; reviewed and closed history remains attributed to the original Advisor | Done |
 | Dean user management | View all profiles, change roles, and assign Advisors | Done |
 | Technician/Dean PC management | Add PCs and update room, specification, status, and notes | Done |
 | Realtime refresh | Automatic cross-device refresh | Optional follow-up; current app refetches after mutations |

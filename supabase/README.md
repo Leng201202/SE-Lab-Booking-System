@@ -82,6 +82,8 @@ Students without an assigned Advisor can sign in and inspect their profile, but 
 
 After bootstrap, Advisors manage unassigned/their own advisees in the application. Deans manage all roles, including Technician promotion, and Advisor assignments through the User Management screen; direct private-schema access remains unavailable to the browser.
 
+If a Student is released and then assigned to a different Advisor, unresolved requests at `pending_technician` or `pending_advisor` move to the new Advisor in the same transaction. Requests that already passed Advisor review, or that are approved, rejected, cancelled, or completed, retain their original Advisor attribution for audit history.
+
 Booking routing is role-aware:
 
 ```text
@@ -93,7 +95,7 @@ Dean → immediately approved after availability validation
 
 Technicians and Deans can add or edit PC inventory, specifications, operational status, and maintenance notes. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history. Only Deans can manage user roles and Advisor assignments.
 
-Every role may cancel only its own active booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy migrations through `20260924000300_implement_technician_workflow.sql` before testing this workflow on the hosted project.
+Every role may cancel only its own active booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy migrations through `20260924000400_reassign_pending_student_bookings.sql` before testing this workflow on the hosted project.
 
 ## Security model
 

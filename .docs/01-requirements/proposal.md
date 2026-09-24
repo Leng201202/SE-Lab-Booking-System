@@ -74,7 +74,7 @@ The production foundation is implemented locally:
 - booking, approval, rejection, requester-cancellation, and calendar RPCs
 - protected user/Advisor relationship and PC-management RPCs
 - immutable approval events
-- 91 pgTAP database assertions, including Technician authorization/workflow, server-side future-start, and requester-cancellation coverage, plus eight frontend tests
+- 98 pgTAP database assertions, including Technician authorization/workflow, Advisor reassignment, server-side future-start, and requester-cancellation coverage, plus eight frontend tests
 
 The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
 
