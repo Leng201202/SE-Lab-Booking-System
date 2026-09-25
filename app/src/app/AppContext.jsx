@@ -198,9 +198,9 @@ export function AppProvider({ children }) {
       try {
         await updateMyUniversityId(trimmed)
         setUser((current) => ({ ...current, studentId: trimmed }))
-        notify('Student ID saved.')
+        notify(t('toast.studentIdSaved'))
       } catch (error) {
-        notify(error.message, 'error')
+        notify(t('toast.studentIdUpdateFailed'), 'error')
         throw error
       }
     },

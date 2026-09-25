@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
-import { ArrowLeft, CalendarDays, Clock3, Info, Monitor, Wifi } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock3, IdCard, Info, Monitor, Wifi } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -109,6 +109,7 @@ export function BookingFormPage() {
   const multiDayStartsToday = isMultiDay && startDate === today
   const earliestStartTime = startDate ? getEarliestBookableTime(startDate, currentTime) : LAB_OPEN_TIME
   const noTimesRemaining = !isMultiDay && startDate === today && !earliestStartTime
+  const missingStudentId = user.role === 'student' && !user.studentId
 
   const onSubmit = async (values) => {
     const pc = pcs.find((item) => item.id === values.pcId)
@@ -152,6 +153,19 @@ export function BookingFormPage() {
         title={t('form.title')}
         description={formDescription}
       />
+      {missingStudentId && (
+        <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+          <IdCard className="mt-0.5 shrink-0" size={18} />
+          <div>
+            <p className="font-semibold">{t('form.missingStudentIdTitle')}</p>
+            <p className="mt-1 leading-6">
+              {t('form.missingStudentIdDescription')}{' '}
+              <Link to="/profile" className="font-semibold underline underline-offset-2">{t('form.setStudentIdOnProfile')}</Link>{' '}
+              {t('form.beforeSubmittingRequest')}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card className="p-4 sm:p-7">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
@@ -210,7 +224,7 @@ export function BookingFormPage() {
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
               <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? t('form.backToCalendar') : t('common.cancel')}</Button></Link>
-              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday}>{t('form.submitRequest')}</Button>
+              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday || missingStudentId}>{t('form.submitRequest')}</Button>
             </div>
           </form>
         </Card>
