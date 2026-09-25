@@ -69,7 +69,7 @@ function useRoleNavigation(t) {
 function Brand() {
   return (
     <div className="flex items-center gap-3 px-3">
-      <span className="grid size-11 place-items-center rounded-xl bg-white p-1.5 shadow-lg shadow-black/20"><img src="/SE_Logo.png" alt="Software Engineering logo" className="h-full w-auto object-contain" /></span>
+      <span className="grid size-11 place-items-center"><img src="/SE_Logo.png" alt="Software Engineering logo" className="h-full w-auto object-contain drop-shadow-lg" /></span>
       <div>
         <p className="font-bold tracking-tight text-white">SE Lab</p>
         <p className="text-xs text-emerald-100/65">MFU · Software Engineering</p>

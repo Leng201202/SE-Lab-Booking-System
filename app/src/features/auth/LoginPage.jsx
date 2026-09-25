@@ -32,7 +32,7 @@ export function LoginPage() {
       <div className="relative mx-auto flex min-h-[calc(100dvh-3rem)] max-w-5xl flex-col justify-center sm:min-h-[calc(100dvh-5rem)]">
         <div className="absolute right-0 top-0"><LanguageToggle tone="dark" /></div>
         <div className="mb-6 text-center sm:mb-10">
-          <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-white p-2 shadow-xl shadow-black/30 sm:mb-5 sm:size-16"><img src="/SE_Logo.png" alt="Software Engineering logo" className="h-full w-auto object-contain" /></div>
+          <div className="mx-auto mb-4 grid size-14 place-items-center sm:mb-5 sm:size-16"><img src="/SE_Logo.png" alt="Software Engineering logo" className="h-full w-auto object-contain drop-shadow-lg" /></div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Mae Fah Luang University · ADT</p>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-4xl">SE Lab PC Booking System</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-100/60">{t('login.subtitle')}</p>
@@ -72,7 +72,7 @@ export function AuthCallbackPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-mfu-950 p-4 text-white">
       <div className="max-w-md text-center">
-        <img src="/SE_Logo.png" alt="Software Engineering logo" className="mx-auto h-16 w-auto rounded-xl bg-white p-2" />
+        <img src="/SE_Logo.png" alt="Software Engineering logo" className="mx-auto h-16 w-auto object-contain drop-shadow-lg" />
         <h1 className="mt-5 text-xl font-bold">{t('login.completingSignIn')}</h1>
         <p className="mt-2 text-sm leading-6 text-emerald-100/65">{appError || (!authReady || workspaceLoading ? t('login.loadingAccount') : t('login.noSession'))}</p>
         {authReady && !workspaceLoading && !user && <Link to="/login" className="mt-5 inline-flex text-sm font-semibold text-emerald-300">{t('login.returnToSignIn')}</Link>}
