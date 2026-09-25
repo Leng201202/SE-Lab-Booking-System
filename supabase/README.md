@@ -95,7 +95,11 @@ Dean → immediately approved after availability validation
 
 Technicians and Deans can add or edit PC inventory, specifications, operational status, and maintenance notes. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history. Only Deans can manage user roles and Advisor assignments.
 
-Every role may cancel only its own active booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval. Deploy migrations through `20260924000400_reassign_pending_student_bookings.sql` before testing this workflow on the hosted project.
+Every role may cancel only its own active booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval.
+
+Student identity is handled by `20260924000500_auto_university_id_from_lamduan_email.sql`. A 10-digit numeric `@lamduan.mfu.ac.th` local part is copied into `profiles.university_id`; collision handling preserves profile creation instead of breaking Google sign-in. Other Students may submit a 10-digit value through the authenticated `update_my_student_id` RPC. Direct REST updates to the column are revoked, and Lamduan Students cannot replace the email-derived value. Manually entered IDs are self-declared until the university verification process in backlog B27 is implemented.
+
+Deploy migrations through `20260924000500_auto_university_id_from_lamduan_email.sql` before testing Student ID capture on the hosted project.
 
 ## Security model
 

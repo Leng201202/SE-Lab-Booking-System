@@ -49,6 +49,7 @@ Users should always be able to understand the requested PC and time, access mode
 - `profiles`, `pcs`, role-neutral requester bookings, and append-only `approval_events`
 - private elevated-role allowlist
 - Google-only profile creation with default Student assignment
+- collision-safe 10-digit Student ID extraction from Lamduan email plus a Student-only manual-entry RPC for other accounts
 - explicit grants plus RLS on exposed tables
 - role-aware booking creation, approval, rejection, requester cancellation, inventory-management, and user-management RPCs
 - database validation for dates, lab hours, remote ranges, PC state, purpose, Advisor assignment, and workflow stage
@@ -59,7 +60,7 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 98 pgTAP assertions cover allow/deny, all four booking paths, three-stage Student review, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 108 pgTAP assertions cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
 - frontend ESLint, eight Node tests, and production Vite build pass after the Technician workflow changes
 
@@ -194,7 +195,7 @@ The 23 September 2026 review found no confirmed critical remote takeover or role
 1. Enforce the approved university email domain with a Supabase Before User Created hook and configure the Google OAuth audience consistently.
 2. Disable unused hosted email/password authentication so Google is the only supported identity provider.
 3. Require Supabase MFA assurance level `aal2` for Dean operations and approval/management operations selected by university policy.
-4. Remove direct Student write access to `university_id`; populate or verify it through a trusted university/Dean process.
+4. Add university/Dean verification for manually entered Student IDs. Direct column writes are revoked and Lamduan IDs are email-derived, but non-Lamduan manual values remain self-declared until verified.
 5. Add maximum duration, maximum advance window, per-user active/pending quotas, and request throttling so pending requests cannot monopolize inventory.
 6. Add an account state and offboarding workflow that blocks suspended users, revokes sessions, and defines session timebox/inactivity settings.
 

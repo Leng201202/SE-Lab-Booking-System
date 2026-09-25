@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { getCurrentProfile, getSession, onAuthStateChange, signInWithGoogle as signInService, signOut as signOutService } from '../features/auth/authService'
+import { getCurrentProfile, getSession, onAuthStateChange, signInWithGoogle as signInService, signOut as signOutService, updateMyUniversityId } from '../features/auth/authService'
 import {
   approveBooking,
   cancelBooking,
@@ -193,6 +193,17 @@ export function AppProvider({ children }) {
       () => cancelBooking(id, reason),
       t('toast.bookingCancelled'),
     ),
+    updateStudentId: async (universityId) => {
+      const trimmed = universityId.trim()
+      try {
+        await updateMyUniversityId(trimmed)
+        setUser((current) => ({ ...current, studentId: trimmed }))
+        notify('Student ID saved.')
+      } catch (error) {
+        notify(error.message, 'error')
+        throw error
+      }
+    },
   }
 
   const workspaceLoading = Boolean(session && !user && !appError)

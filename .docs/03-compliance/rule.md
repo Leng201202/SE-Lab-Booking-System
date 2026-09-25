@@ -54,7 +54,7 @@ This document is an engineering compliance register, not legal advice. Final app
 | Deans read pending-final-review and reviewed records | Enforced | bookings RLS |
 | Deans can read all profiles for user management | Enforced | profiles RLS |
 | Users cannot change their role or Advisor assignment | Enforced | Column grants and RLS |
-| University ID is populated or verified only through a trusted university process | Planned | Current self-update grant must be removed; backlog B27 |
+| Lamduan Student ID is derived from verified email and cannot be replaced; manual IDs use a Student-only validated RPC | Migration deployment required | `20260924000500_auto_university_id_from_lamduan_email.sql`; manual verification remains backlog B27 |
 | Advisors can manage only unassigned Students or their own advisees | Enforced | assign_student_advisor RPC and profile RLS |
 | Assigning a released Student retargets only unresolved pending-Technician/pending-Advisor requests and preserves decided history | Migration deployment required | `20260924000400_reassign_pending_student_bookings.sql` and pgTAP assertions |
 | Only Deans manage roles; only Technicians and Deans manage PC inventory/specifications/status | Migration deployment required | security-definer management RPCs and execution checks |

@@ -27,6 +27,13 @@ export async function signOut() {
   if (error) throw error
 }
 
+export async function updateMyUniversityId(universityId) {
+  const { error } = await requireSupabase().rpc('update_my_student_id', {
+    p_university_id: universityId,
+  })
+  if (error) throw new Error(error.message)
+}
+
 export async function getCurrentProfile(userId) {
   const supabase = requireSupabase()
   const { data, error } = await supabase

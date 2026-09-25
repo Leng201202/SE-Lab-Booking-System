@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(98);
+select plan(108);
 
 select throws_ok(
   $$
@@ -33,7 +33,93 @@ select is(
   'Google signup creates a Student profile before email confirmation is finalized'
 );
 
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"40000000-0000-0000-0000-000000000002","role":"authenticated"}',
+  true
+);
+select throws_ok(
+  $$
+    select public.create_booking(
+      (select id from public.pcs where code = 'PC-01'),
+      date '2099-01-10', date '2099-01-10', '09:00', '10:00',
+      'Missing Student ID booking test', 'SE Test'
+    )
+  $$,
+  'Add your Student ID on your Profile page before requesting a booking.',
+  'Student without a Student ID cannot create a booking'
+);
+reset role;
 delete from auth.users where id = '40000000-0000-0000-0000-000000000002';
+
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at, raw_app_meta_data,
+  raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous
+) values (
+  '40000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated',
+  '6631503086@lamduan.mfu.ac.th', now(), '{"provider":"google"}', '{"full_name":"Lamduan Student"}',
+  now(), now(), false, false
+);
+
+select is(
+  (select university_id from public.profiles where id = '40000000-0000-0000-0000-000000000003'),
+  '6631503086',
+  'Lamduan Google signup derives the 10-digit Student ID'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"40000000-0000-0000-0000-000000000003","role":"authenticated"}',
+  true
+);
+select throws_ok(
+  $$ select public.update_my_student_id('6631503999') $$,
+  'Your Student ID must match your Lamduan email.',
+  'Lamduan Student cannot replace the email-derived Student ID'
+);
+reset role;
+delete from auth.users where id = '40000000-0000-0000-0000-000000000003';
+
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at, raw_app_meta_data,
+  raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous
+) values (
+  '40000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated',
+  'manual.id.claimant@example.edu', now(), '{"provider":"google"}', '{"full_name":"Manual Claimant"}',
+  now(), now(), false, false
+);
+
+update public.profiles
+set university_id = '6631503999'
+where id = '40000000-0000-0000-0000-000000000004';
+
+select lives_ok(
+  $$
+    insert into auth.users (
+      id, aud, role, email, email_confirmed_at, raw_app_meta_data,
+      raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous
+    ) values (
+      '40000000-0000-0000-0000-000000000005', 'authenticated', 'authenticated',
+      '6631503999@lamduan.mfu.ac.th', now(), '{"provider":"google"}', '{"full_name":"Conflicted Lamduan Student"}',
+      now(), now(), false, false
+    )
+  $$,
+  'Student ID collision does not abort Lamduan Google profile creation'
+);
+
+select is(
+  (select university_id from public.profiles where id = '40000000-0000-0000-0000-000000000005'),
+  null::text,
+  'conflicted Lamduan profile is created without overwriting the claimed Student ID'
+);
+
+delete from auth.users
+where id in (
+  '40000000-0000-0000-0000-000000000004',
+  '40000000-0000-0000-0000-000000000005'
+);
 
 insert into auth.users (
   id,
@@ -132,6 +218,11 @@ select throws_ok(
   'permission denied for function cancel_booking',
   'anonymous users cannot execute cancellation'
 );
+select throws_ok(
+  $$ select public.update_my_student_id('6631503001') $$,
+  'permission denied for function update_my_student_id',
+  'anonymous users cannot update a Student ID'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{}', true);
@@ -155,6 +246,25 @@ select throws_ok(
   $$ update public.profiles set role = 'dean' where id = '10000000-0000-0000-0000-000000000001' $$,
   'permission denied for table profiles',
   'students cannot promote their own role'
+);
+select throws_ok(
+  $$ update public.profiles set university_id = '6631503001' where id = '10000000-0000-0000-0000-000000000001' $$,
+  'permission denied for table profiles',
+  'Students cannot bypass Student ID validation with a direct profile update'
+);
+select throws_ok(
+  $$ select public.update_my_student_id('student-001') $$,
+  'Student ID must contain exactly 10 digits.',
+  'manual Student ID update rejects an invalid format'
+);
+select lives_ok(
+  $$ select public.update_my_student_id('6631503001') $$,
+  'Student can save a valid 10-digit Student ID through the guarded RPC'
+);
+select is(
+  (select university_id from public.profiles where id = '10000000-0000-0000-0000-000000000001'),
+  '6631503001',
+  'guarded Student ID update persists the normalized value'
 );
 select throws_ok(
   $$ insert into public.bookings default values $$,

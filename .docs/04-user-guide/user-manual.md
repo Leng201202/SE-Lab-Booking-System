@@ -51,7 +51,7 @@ The left sidebar shows the pages available for your role. On a phone, tap the **
 | Book a PC | ✓ | ✓ | ✓ | Submit a new booking request |
 | My Bookings | ✓ | ✓ | ✓ | Your own requests and their status |
 | Calendar | ✓ | ✓ | ✓ | Weekly/daily availability of every PC |
-| Profile | ✓ | ✓ | ✓ | Your account details, role, and Advisor |
+| Profile | ✓ | ✓ | ✓ | Your account details, Student ID, role, and Advisor |
 | Pending Requests / Pending Approval | | ✓ | ✓ | Requests waiting for your decision |
 | Request History / Approval History | | ✓ | ✓ | Requests you have already decided |
 | Manage Advisees | | ✓ | | Assign or release Students |
@@ -78,7 +78,12 @@ The left sidebar shows the pages available for your role. On a phone, tap the **
 
 ### 5.1 Before your first booking
 
-You must have an **assigned Advisor** before you can submit a request. Check **Profile → School / Advisor**. If it says *Advisor not assigned*, ask your Advisor to assign you in the system (or contact the Dean).
+You must have a **Student ID** and an **assigned Advisor** before you can submit a request.
+
+- For a 10-digit numeric `@lamduan.mfu.ac.th` account, the Student ID is filled automatically from the email address and cannot be changed in the application. Contact the system administrator if the university account is incorrect.
+- Otherwise, open **Profile**, click the **Student ID** row, enter the 10-digit ID from your university record, click **Review Student ID**, and confirm the exact value before saving.
+- To correct a manually entered value, click the same **Student ID** row and complete the confirmation flow again.
+- Check **Profile → School / Advisor**. If it says *Advisor not assigned*, ask your Advisor to assign you in the system (or contact the Dean).
 
 ### 5.2 Check availability on the Calendar
 

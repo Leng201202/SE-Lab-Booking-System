@@ -45,7 +45,7 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 8. Technician technical-review queue
 9. Advisor pending queue
 10. Dean final review
-11. Profile showing trusted role and Advisor assignment
+11. Profile showing trusted role, Advisor assignment, locked Lamduan Student ID, or manual Student ID edit/confirmation dialogs
 12. Advisor advisee management
 13. Dean user management
 14. Technician/Dean PC maintenance editor
@@ -57,7 +57,7 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- the database suite defines 98 pgTAP assertions, including Technician workflow/management, Advisor reassignment, and cancellation authorization; the latest migrations still require database execution
+- the database suite defines 108 pgTAP assertions, including Technician workflow/management, Student ID security, Advisor reassignment, and cancellation authorization; the latest migrations still require database execution
 - frontend lint, eight unit tests, and production build
 - schema lint and dependency audit
 
