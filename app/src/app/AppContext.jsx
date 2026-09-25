@@ -1,6 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { getCurrentProfile, getSession, onAuthStateChange, signInWithGoogle as signInService, signOut as signOutService, updateMyUniversityId } from '../features/auth/authService'
+import {
+  getCurrentProfile,
+  getSession,
+  onAuthStateChange,
+  reactivateMyAccount as reactivateMyAccountService,
+  requestAccountDeletion as requestAccountDeletionService,
+  signInWithGoogle as signInService,
+  signOut as signOutService,
+  updateMyUniversityId,
+} from '../features/auth/authService'
 import {
   approveBooking,
   cancelBooking,
@@ -102,13 +111,16 @@ export function AppProvider({ children }) {
     let active = true
     if (!session) return undefined
 
-    Promise.all([getCurrentProfile(session.user.id), getBookings(), getPcs()])
-      .then(([profile, nextBookings, nextPcs]) => {
+    getCurrentProfile(session.user.id)
+      .then(async (profile) => {
         if (!active) return
         setUser(profile)
+        setAppError(null)
+        if (profile.isDeactivated) return
+        const [nextBookings, nextPcs] = await Promise.all([getBookings(), getPcs()])
+        if (!active) return
         setBookings(nextBookings)
         setPcs(nextPcs)
-        setAppError(null)
       })
       .catch((error) => {
         if (!active) return
@@ -203,6 +215,22 @@ export function AppProvider({ children }) {
         notify(t('toast.studentIdUpdateFailed'), 'error')
         throw error
       }
+    },
+    requestAccountDeletion: async () => {
+      await requestAccountDeletionService()
+      await logout()
+    },
+    reactivateAccount: async () => {
+      await reactivateMyAccountService()
+      const [profile, nextBookings, nextPcs] = await Promise.all([
+        getCurrentProfile(session.user.id),
+        getBookings(),
+        getPcs(),
+      ])
+      setUser(profile)
+      setBookings(nextBookings)
+      setPcs(nextPcs)
+      notify(t('toast.accountReactivated'))
     },
   }
 

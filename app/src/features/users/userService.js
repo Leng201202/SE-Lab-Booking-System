@@ -17,6 +17,7 @@ export async function getManageableUsers() {
   const { data, error } = await requireSupabase()
     .from('profiles')
     .select('id, email, display_name, university_id, role, advisor_id')
+    .eq('is_deactivated', false)
     .order('display_name')
 
   if (error) throw error

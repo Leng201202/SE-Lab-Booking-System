@@ -34,11 +34,21 @@ export async function updateMyUniversityId(universityId) {
   if (error) throw new Error(error.message)
 }
 
+export async function requestAccountDeletion() {
+  const { error } = await requireSupabase().rpc('request_account_deletion')
+  if (error) throw new Error(error.message)
+}
+
+export async function reactivateMyAccount() {
+  const { error } = await requireSupabase().rpc('reactivate_my_account')
+  if (error) throw new Error(error.message)
+}
+
 export async function getCurrentProfile(userId) {
   const supabase = requireSupabase()
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, display_name, university_id, role, advisor_id')
+    .select('id, email, display_name, university_id, role, advisor_id, is_deactivated, deletion_requested_at')
     .eq('id', userId)
     .maybeSingle()
 
@@ -68,5 +78,7 @@ export async function getCurrentProfile(userId) {
     advisorId: data.advisor_id,
     advisor: advisorName,
     department: 'School of Applied Digital Technology',
+    isDeactivated: data.is_deactivated,
+    deletionRequestedAt: data.deletion_requested_at,
   }
 }

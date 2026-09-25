@@ -73,6 +73,7 @@ export const translations = {
       loadingAccount: 'Loading your account and permissions…',
       noSession: 'No active session was returned.',
       returnToSignIn: 'Return to sign in',
+      accountDeletedNotice: 'Your account has been deactivated. Sign in again within 7 days to reactivate it.',
     },
     dashboard: {
       studentEyebrow: 'Student dashboard',
@@ -361,6 +362,13 @@ export const translations = {
       confirmStudentIdDescription: 'Save {{id}} as your Student ID? Make sure it exactly matches your university record.',
       confirmUpdate: 'Confirm update',
       confirmAndSave: 'Confirm and save',
+      dangerZoneTitle: 'Danger zone',
+      dangerZoneDescription: 'Deleting your account deactivates it immediately and signs you out. Sign back in within 7 days to reactivate it — after that, it can no longer be recovered.',
+      deleteAccount: 'Delete account',
+      deleteAccountModalTitle: 'Delete your account?',
+      deleteAccountModalDescription: 'Your account will be deactivated immediately and you will be signed out. Sign back in within 7 days to reactivate it — after that, it can no longer be recovered.',
+      deleteAccountConfirm: 'Confirm',
+      deletingAccount: 'Deleting…',
     },
     users: {
       advisorToolsEyebrow: 'Advisor tools',
@@ -408,6 +416,7 @@ export const translations = {
       bookingCancelled: 'Booking cancelled and the PC time was released.',
       studentIdSaved: 'Student ID saved.',
       studentIdUpdateFailed: 'Student ID could not be saved. Review the value and try again.',
+      accountReactivated: 'Welcome back! Your account has been reactivated.',
     },
     status: {
       pending_technician: 'Pending Technician',
@@ -420,6 +429,18 @@ export const translations = {
     },
     booking: {
       remoteAccess: '24-hour remote access',
+    },
+    accountDeactivated: {
+      title: 'Your account is scheduled for deletion',
+      description: 'You requested to delete your account on {{date}}. You can reactivate it now and keep full access, or let it be permanently removed.',
+      daysRemaining: '{{count}} days remaining to reactivate.',
+      lastDay: 'Today is the last day to reactivate this account.',
+      reactivate: 'Reactivate account',
+      reactivating: 'Reactivating…',
+      cancelLogout: 'Cancel / Logout',
+      expiredTitle: 'This account has been deleted',
+      expiredDescription: 'The 7-day recovery period has ended, so this account can no longer be reactivated. Contact an administrator if you believe this is a mistake.',
+      logout: 'Logout',
     },
   },
   th: {
@@ -496,6 +517,7 @@ export const translations = {
       loadingAccount: 'กำลังโหลดบัญชีและสิทธิ์การใช้งานของคุณ…',
       noSession: 'ไม่พบเซสชันที่ใช้งานอยู่',
       returnToSignIn: 'กลับไปหน้าเข้าสู่ระบบ',
+      accountDeletedNotice: 'บัญชีของคุณถูกปิดใช้งานแล้ว เข้าสู่ระบบอีกครั้งภายใน 7 วันเพื่อกู้คืนบัญชี',
     },
     dashboard: {
       studentEyebrow: 'แดชบอร์ดนักศึกษา',
@@ -784,6 +806,13 @@ export const translations = {
       confirmStudentIdDescription: 'บันทึก {{id}} เป็นรหัสนักศึกษาของคุณใช่หรือไม่ กรุณาตรวจสอบให้ตรงกับข้อมูลของมหาวิทยาลัย',
       confirmUpdate: 'ยืนยันการอัปเดต',
       confirmAndSave: 'ยืนยันและบันทึก',
+      dangerZoneTitle: 'โซนอันตราย',
+      dangerZoneDescription: 'การลบบัญชีจะปิดใช้งานบัญชีของคุณทันทีและออกจากระบบให้คุณ เข้าสู่ระบบอีกครั้งภายใน 7 วันเพื่อกู้คืนบัญชี หลังจากนั้นจะไม่สามารถกู้คืนได้อีก',
+      deleteAccount: 'ลบบัญชี',
+      deleteAccountModalTitle: 'ต้องการลบบัญชีของคุณใช่หรือไม่?',
+      deleteAccountModalDescription: 'บัญชีของคุณจะถูกปิดใช้งานทันทีและคุณจะถูกออกจากระบบ เข้าสู่ระบบอีกครั้งภายใน 7 วันเพื่อกู้คืนบัญชี หลังจากนั้นจะไม่สามารถกู้คืนได้อีก',
+      deleteAccountConfirm: 'ยืนยัน',
+      deletingAccount: 'กำลังลบ…',
     },
     users: {
       advisorToolsEyebrow: 'เครื่องมือสำหรับอาจารย์ที่ปรึกษา',
@@ -831,6 +860,7 @@ export const translations = {
       bookingCancelled: 'ยกเลิกการจองและปล่อยเวลาการใช้เครื่องแล้ว',
       studentIdSaved: 'บันทึกรหัสนักศึกษาแล้ว',
       studentIdUpdateFailed: 'ไม่สามารถบันทึกรหัสนักศึกษาได้ กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง',
+      accountReactivated: 'ยินดีต้อนรับกลับมา! บัญชีของคุณได้รับการกู้คืนแล้ว',
     },
     status: {
       pending_technician: 'รอช่างเทคนิค',
@@ -843,6 +873,18 @@ export const translations = {
     },
     booking: {
       remoteAccess: 'เข้าถึงระยะไกล 24 ชั่วโมง',
+    },
+    accountDeactivated: {
+      title: 'บัญชีของคุณกำลังจะถูกลบ',
+      description: 'คุณได้ขอลบบัญชีเมื่อ {{date}} คุณยังสามารถกู้คืนบัญชีเพื่อใช้งานได้ตามปกติ หรือปล่อยให้ถูกลบถาวร',
+      daysRemaining: 'เหลือเวลาอีก {{count}} วันในการกู้คืนบัญชี',
+      lastDay: 'วันนี้เป็นวันสุดท้ายที่สามารถกู้คืนบัญชีได้',
+      reactivate: 'กู้คืนบัญชี',
+      reactivating: 'กำลังกู้คืน…',
+      cancelLogout: 'ยกเลิก / ออกจากระบบ',
+      expiredTitle: 'บัญชีนี้ถูกลบแล้ว',
+      expiredDescription: 'ระยะเวลากู้คืน 7 วันสิ้นสุดลงแล้ว ไม่สามารถกู้คืนบัญชีนี้ได้อีก หากคิดว่านี่เป็นความผิดพลาด กรุณาติดต่อผู้ดูแลระบบ',
+      logout: 'ออกจากระบบ',
     },
   },
 }

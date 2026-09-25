@@ -1,5 +1,6 @@
-import { Building2, IdCard, Mail, Pencil, ShieldCheck, UserRound } from 'lucide-react'
+import { Building2, IdCard, Mail, Pencil, ShieldCheck, Trash2, UserRound } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { Card, PageHeader } from '../../components/ui/Card'
@@ -118,6 +119,49 @@ function StudentIdEditor({ onClose }) {
   )
 }
 
+function DeleteAccountSection() {
+  const { requestAccountDeletion } = useApp()
+  const { t } = useLanguage()
+  const navigate = useNavigate()
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState('')
+
+  const confirmDelete = async () => {
+    setDeleting(true)
+    setError('')
+    try {
+      await requestAccountDeletion()
+      navigate('/login', { state: { accountDeleted: true } })
+    } catch (deleteError) {
+      setError(deleteError.message)
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <Card className="max-w-3xl border-red-200 p-4 sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600"><Trash2 size={18} /></span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-bold text-red-900">{t('profile.dangerZoneTitle')}</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">{t('profile.dangerZoneDescription')}</p>
+          <Button className="mt-4" variant="danger" onClick={() => setConfirmOpen(true)}>
+            <Trash2 size={16} />{t('profile.deleteAccount')}
+          </Button>
+        </div>
+      </div>
+      <Modal open={confirmOpen} onClose={() => !deleting && setConfirmOpen(false)} title={t('profile.deleteAccountModalTitle')} description={t('profile.deleteAccountModalDescription')}>
+        {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</p>}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button className="w-full sm:w-auto" variant="secondary" disabled={deleting} onClick={() => setConfirmOpen(false)}>{t('common.cancel')}</Button>
+          <Button className="w-full sm:w-auto" variant="danger" disabled={deleting} onClick={confirmDelete}>{deleting ? t('profile.deletingAccount') : t('profile.deleteAccountConfirm')}</Button>
+        </div>
+      </Modal>
+    </Card>
+  )
+}
+
 export function ProfilePage() {
   const { user } = useApp()
   const { t } = useLanguage()
@@ -170,6 +214,7 @@ export function ProfilePage() {
         </div>
       </Card>
       {isStudent && studentIdEditorOpen && <StudentIdEditor onClose={() => setStudentIdEditorOpen(false)} />}
+      <DeleteAccountSection />
     </div>
   )
 }

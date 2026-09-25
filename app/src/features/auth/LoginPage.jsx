@@ -1,6 +1,6 @@
 import { ArrowRight, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
-import { Navigate, Link } from 'react-router-dom'
+import { Navigate, Link, useLocation } from 'react-router-dom'
 import { useApp } from '../../app/AppContext'
 import { LanguageToggle } from '../../components/ui/LanguageToggle'
 import { useLanguage } from '../../i18n/LanguageContext'
@@ -8,8 +8,10 @@ import { useLanguage } from '../../i18n/LanguageContext'
 export function LoginPage() {
   const { signInWithGoogle, isSupabaseConfigured, appError } = useApp()
   const { t } = useLanguage()
+  const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const accountDeleted = Boolean(location.state?.accountDeleted)
 
   const login = async () => {
     setSubmitting(true)
@@ -35,6 +37,11 @@ export function LoginPage() {
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-4xl">SE Lab PC Booking System</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-emerald-100/60">{t('login.subtitle')}</p>
         </div>
+        {accountDeleted && (
+          <div className="mx-auto mb-6 w-full max-w-md rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100" role="status">
+            {t('login.accountDeletedNotice')}
+          </div>
+        )}
         <div className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl backdrop-blur sm:p-7">
           <span className="grid size-11 place-items-center rounded-xl bg-mfu-500/15 text-emerald-200"><ShieldCheck size={22} /></span>
           <h2 className="mt-5 text-xl font-bold">{t('login.secureHeading')}</h2>

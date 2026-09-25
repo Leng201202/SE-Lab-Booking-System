@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
 import { Card } from '../components/ui/Card'
 import { ApprovalHistoryPage, PendingRequestsPage } from '../features/approvals/ApprovalListPage'
+import { AccountDeactivatedPage } from '../features/auth/AccountDeactivatedPage'
 import { AuthCallbackPage, LoginPage } from '../features/auth/LoginPage'
 import { ProfilePage } from '../features/auth/ProfilePage'
 import { BookingDetailPage } from '../features/bookings/BookingDetailPage'
@@ -19,7 +20,9 @@ function RequireSession() {
   const { user, authReady, workspaceLoading, appError, logout } = useApp()
   if (!authReady || workspaceLoading) return <FullPageStatus message="Loading your secure workspace…" />
   if (appError && !user) return <FullPageStatus message={appError} action={logout} />
-  return user ? <AppShell /> : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  if (user.isDeactivated) return <AccountDeactivatedPage />
+  return <AppShell />
 }
 
 function FullPageStatus({ message, action }) {
