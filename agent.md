@@ -53,6 +53,7 @@ Google OAuth proves identity; it does not grant an application role.
 - `technician`, `advisor`, and `dean` come only from `private.role_allowlist` or another privileged administrative process.
 - Never accept a role, Advisor assignment, ownership field, or workflow status from browser-controlled identity metadata.
 - Users may read their own profile but cannot change their role or Advisor assignment.
+- Direct browser updates to `university_id` are forbidden. Lamduan IDs come from the verified email local part; other Students use `update_my_student_id`, and those manual values remain self-declared until an institutional verification process is implemented.
 - The Google OAuth secret stays in Supabase provider configuration. Never expose it through Vite.
 - The browser may contain only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; never use a secret or `service_role` key.
 

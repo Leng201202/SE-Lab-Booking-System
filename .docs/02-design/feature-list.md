@@ -4,6 +4,7 @@
 |---|---|---|
 | Google OAuth | Redirects through Supabase Auth; sessions persist and restore | Implemented; provider deployment configuration required |
 | Trusted roles | Every new Google user starts as Student; Technician/Advisor/Dean require a later protected allowlist update | Done |
+| Student ID capture | A 10-digit Lamduan email ID is filled and locked automatically; other Students use a guarded Profile modal and confirmation before booking | Done; institutional verification of manual values remains planned |
 | Signed-out gate | Visitors see the sign-in page and cannot read application tables or calendar RPC output | Done |
 | Role-specific navigation | Student, Technician, Advisor, and Dean receive appropriate pages and actions | Done |
 | PC inventory | Ten seeded PCs with room, specification, available/maintenance/inactive state | Done |

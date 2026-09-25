@@ -194,7 +194,7 @@ export function AppProvider({ children }) {
     updateStudentId: async (universityId) => {
       const trimmed = universityId.trim()
       try {
-        await updateMyUniversityId(user.id, trimmed)
+        await updateMyUniversityId(trimmed)
         setUser((current) => ({ ...current, studentId: trimmed }))
         notify('Student ID saved.')
       } catch (error) {

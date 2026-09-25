@@ -1,8 +1,7 @@
--- Lamduan students' Google email local-part is their numeric student ID
--- (e.g. 6631503086@lamduan.mfu.ac.th). Capture it automatically at signup
--- so they never have to type it in. Anyone who signs in with a different
--- email must fill in their Student ID (profiles.university_id) themselves
--- before they can submit a booking request.
+-- A 10-digit Lamduan Google email local-part is the authoritative Student ID
+-- (e.g. 6631503086@lamduan.mfu.ac.th). Capture it automatically at signup.
+-- Other Student accounts may provide a 10-digit ID through the guarded RPC
+-- below. A uniqueness collision must never abort Auth profile creation.
 
 create or replace function private.handle_new_user()
 returns trigger
@@ -13,8 +12,8 @@ as $$
 declare
   profile_name text;
   email_local_part text;
-  email_domain text;
   derived_university_id text;
+  violated_constraint text;
 begin
   -- Supabase may finalize email_confirmed_at after the initial auth.users insert.
   -- The provider metadata is controlled by Supabase Auth and is available when
@@ -31,22 +30,42 @@ begin
   );
 
   email_local_part := split_part(lower(trim(new.email)), '@', 1);
-  email_domain := split_part(lower(trim(new.email)), '@', 2);
 
-  if email_domain = 'lamduan.mfu.ac.th' and email_local_part ~ '^[0-9]+$' then
+  if lower(trim(new.email)) ~ '^[0-9]{10}@lamduan[.]mfu[.]ac[.]th$' then
     derived_university_id := email_local_part;
   else
     derived_university_id := null;
   end if;
 
-  insert into public.profiles (id, email, display_name, role, university_id)
-  values (
-    new.id,
-    lower(trim(new.email)),
-    left(profile_name, 120),
-    'student'::public.app_role,
-    derived_university_id
-  );
+  begin
+    insert into public.profiles (id, email, display_name, role, university_id)
+    values (
+      new.id,
+      lower(trim(new.email)),
+      left(profile_name, 120),
+      'student'::public.app_role,
+      derived_university_id
+    );
+  exception when unique_violation then
+    get stacked diagnostics violated_constraint = constraint_name;
+
+    -- A manually entered ID may already occupy this unique value. Preserve
+    -- sign-in by creating the profile without an ID; an administrator can
+    -- resolve the conflicting identity without a generic Auth callback error.
+    if derived_university_id is null
+      or violated_constraint <> 'profiles_university_id_key' then
+      raise;
+    end if;
+
+    insert into public.profiles (id, email, display_name, role, university_id)
+    values (
+      new.id,
+      lower(trim(new.email)),
+      left(profile_name, 120),
+      'student'::public.app_role,
+      null
+    );
+  end;
 
   return new;
 end;
@@ -54,13 +73,83 @@ $$;
 
 revoke all on function private.handle_new_user() from public, anon, authenticated;
 
+-- Student IDs are identity data. Remove the broad column write granted by the
+-- initial schema before backfilling, then briefly block concurrent profile
+-- writes so the collision check and update remain race-free.
+revoke update (university_id) on public.profiles from authenticated;
+
 -- Backfill accounts that signed up before this change, under a lamduan
 -- email, and never manually set a Student ID.
-update public.profiles
-set university_id = split_part(email, '@', 1)
-where university_id is null
-  and split_part(email, '@', 2) = 'lamduan.mfu.ac.th'
-  and split_part(email, '@', 1) ~ '^[0-9]+$';
+do $backfill$
+begin
+  lock table public.profiles in share row exclusive mode;
+
+  update public.profiles as profile
+  set university_id = split_part(profile.email, '@', 1)
+  where profile.university_id is null
+    and profile.email ~ '^[0-9]{10}@lamduan[.]mfu[.]ac[.]th$'
+    and not exists (
+      select 1
+      from public.profiles as claimant
+      where claimant.id <> profile.id
+        and claimant.university_id = split_part(profile.email, '@', 1)
+    );
+end;
+$backfill$;
+
+create function public.update_my_student_id(p_university_id text)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor_id uuid := (select auth.uid());
+  actor public.profiles;
+  clean_university_id text := trim(p_university_id);
+  email_local_part text;
+begin
+  if actor_id is null then
+    raise exception 'Authentication is required.' using errcode = '42501';
+  end if;
+
+  select * into actor
+  from public.profiles
+  where id = actor_id
+  for update;
+
+  if actor.id is null then
+    raise exception 'An application profile is required.' using errcode = '42501';
+  end if;
+  if actor.role <> 'student' then
+    raise exception 'Only Students can update a Student ID.' using errcode = '42501';
+  end if;
+  if clean_university_id is null or clean_university_id !~ '^[0-9]{10}$' then
+    raise exception 'Student ID must contain exactly 10 digits.' using errcode = '23514';
+  end if;
+
+  email_local_part := split_part(actor.email, '@', 1);
+
+  if actor.email ~ '^[0-9]{10}@lamduan[.]mfu[.]ac[.]th$'
+    and clean_university_id <> email_local_part then
+    raise exception 'Your Student ID must match your Lamduan email.' using errcode = '23514';
+  end if;
+
+  begin
+    update public.profiles
+    set university_id = clean_university_id
+    where id = actor.id
+    returning * into actor;
+  exception when unique_violation then
+    raise exception 'This Student ID is already in use.' using errcode = '23505';
+  end;
+
+  return actor;
+end;
+$$;
+
+revoke all on function public.update_my_student_id(text) from public, anon;
+grant execute on function public.update_my_student_id(text) to authenticated;
 
 -- Require a Student ID on file before a Student can submit a booking
 -- request. Lamduan students already have one auto-filled above; anyone

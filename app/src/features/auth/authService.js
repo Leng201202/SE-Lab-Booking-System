@@ -27,11 +27,10 @@ export async function signOut() {
   if (error) throw error
 }
 
-export async function updateMyUniversityId(userId, universityId) {
-  const { error } = await requireSupabase()
-    .from('profiles')
-    .update({ university_id: universityId })
-    .eq('id', userId)
+export async function updateMyUniversityId(universityId) {
+  const { error } = await requireSupabase().rpc('update_my_student_id', {
+    p_university_id: universityId,
+  })
   if (error) throw new Error(error.message)
 }
 
