@@ -14,7 +14,7 @@
 2. Student chooses an available one-day lab interval beginning at the next valid Bangkok slot, or a multi-day range beginning on a future date.
 3. The form collects PC, dates/times, purpose, and optional course/project.
 4. The database validates identity, Advisor assignment, PC state, future start instant, interval, purpose, and overlap.
-5. A valid request is created as pending Advisor.
+5. A valid request is created as pending Technician.
 6. Student sees the request detail and approval progress.
 
 ## Journey 3 — Technician reviews
