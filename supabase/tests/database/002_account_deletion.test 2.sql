@@ -60,7 +60,7 @@ select set_config(
 );
 select lives_ok(
   $$ select public.reactivate_my_account() $$,
-  'reactivating within the 90-day window succeeds'
+  'reactivating within the 7-day window succeeds'
 );
 select throws_ok(
   $$ select public.reactivate_my_account() $$,
@@ -113,7 +113,7 @@ reset role;
 
 alter table public.profiles disable trigger profiles_block_writes_while_deactivated;
 update public.profiles
-set deletion_requested_at = now() - interval '91 days'
+set deletion_requested_at = now() - interval '9 days'
 where id = '50000000-0000-0000-0000-000000000002';
 alter table public.profiles enable trigger profiles_block_writes_while_deactivated;
 
@@ -125,8 +125,8 @@ select set_config(
 );
 select throws_ok(
   $$ select public.reactivate_my_account() $$,
-  'The 90-day recovery period has expired. This account can no longer be reactivated.',
-  'reactivation fails once the 90-day recovery window has passed'
+  'The 7-day recovery period has expired. This account can no longer be reactivated.',
+  'reactivation fails once the 7-day recovery window has passed'
 );
 reset role;
 

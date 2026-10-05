@@ -5,7 +5,7 @@ import { useApp } from '../../app/AppContext'
 import { Button } from '../../components/ui/Button'
 import { useLanguage } from '../../i18n/LanguageContext'
 
-const RECOVERY_WINDOW_DAYS = 90
+const RECOVERY_WINDOW_DAYS = 7
 const RECOVERY_WINDOW_MS = RECOVERY_WINDOW_DAYS * 24 * 60 * 60 * 1000
 
 function formatRequestedDate(isoDate) {
