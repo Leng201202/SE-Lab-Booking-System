@@ -13,6 +13,7 @@ import { CalendarPage } from '../features/calendar/CalendarPage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { PcListPage } from '../features/pcs/PcListPage'
 import { PcManagementPage } from '../features/pcs/PcManagementPage'
+import { LegalPage } from '../features/legal/LegalPage'
 import { AdviseeManagementPage, UserManagementPage } from '../features/users/UserManagementPage'
 import { useApp } from './AppContext'
 
@@ -65,6 +66,8 @@ function LoginRoute() {
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginRoute /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
+  { path: '/privacy-policy', element: <LegalPage document="privacy" /> },
+  { path: '/terms-of-service', element: <LegalPage document="terms" /> },
   {
     element: <RequireSession />,
     children: [

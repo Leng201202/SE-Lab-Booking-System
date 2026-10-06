@@ -1,5 +1,8 @@
+import { legalTranslations } from './legalTranslations'
+
 export const translations = {
   en: {
+    legal: legalTranslations.en,
     common: {
       back: 'Back',
       cancel: 'Cancel',
@@ -444,6 +447,7 @@ export const translations = {
     },
   },
   th: {
+    legal: legalTranslations.th,
     common: {
       back: 'ย้อนกลับ',
       cancel: 'ยกเลิก',

@@ -51,6 +51,10 @@ export function LoginPage() {
             {submitting ? t('login.redirecting') : t('login.continueWithGoogle')}
             {!submitting && <ArrowRight size={17} className="transition group-hover:translate-x-1" />}
           </button>
+          <nav aria-label={t('legal.navigationLabel')} className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs leading-5 text-emerald-100">
+            <Link to="/privacy-policy" className="rounded underline underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-300">{t('legal.privacy.title')}</Link>
+            <Link to="/terms-of-service" className="rounded underline underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-300">{t('legal.terms.title')}</Link>
+          </nav>
           {!isSupabaseConfigured && (
             <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">
               {t('login.notConfiguredPrefix')} <code>app/.env.example</code> {t('login.notConfiguredSuffix')} <code>app/.env.local</code>.
