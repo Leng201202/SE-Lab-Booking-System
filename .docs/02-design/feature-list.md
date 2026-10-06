@@ -5,6 +5,8 @@
 | Google OAuth | Redirects through Supabase Auth; sessions persist and restore | Implemented; provider deployment configuration required |
 | Trusted roles | Every new Google user starts as Student; Technician/Advisor/Dean require a later protected allowlist update | Done |
 | Student ID capture | A 10-digit Lamduan email ID is filled and locked automatically; other Students use a guarded Profile modal and confirmation before booking | Done; institutional verification of manual values remains planned |
+| Account deactivation and recovery | Any role can soft-deactivate its own profile, is signed out, and can reactivate after Google sign-in within seven days | Implemented; database-wide access denial/session revocation remains B28 |
+| Permanent account deletion | Expired deactivated Auth/profile data and related records are deleted or pseudonymized according to approved retention and booking-history rules | Planned (B38); no cleanup job currently exists |
 | Signed-out gate | Visitors see the sign-in page and cannot read application tables or calendar RPC output | Done |
 | Role-specific navigation | Student, Technician, Advisor, and Dean receive appropriate pages and actions | Done |
 | PC inventory | Ten seeded PCs with room, specification, available/maintenance/inactive state | Done |
@@ -33,3 +35,5 @@
 | Realtime refresh | Automatic cross-device refresh | Optional follow-up; current app refetches after mutations |
 
 Database authorization is authoritative. Frontend route guards and disabled controls are usability features only.
+
+The current account control is intentionally described as **soft deactivation**, not completed erasure. After seven days, self-service reactivation is rejected, but the stored account is not automatically removed.

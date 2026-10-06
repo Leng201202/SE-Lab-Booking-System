@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-As of 24 September 2026, the Supabase production foundation is implemented and Google sign-in has been verified from the local frontend against the hosted project. The previous browser-only demo storage and fake role switching have been removed. A repository and unauthenticated production security review is complete; the remediation work below remains open.
+As of 26 September 2026, the Supabase production foundation is implemented and Google sign-in has been verified from the local frontend against the hosted project. The previous browser-only demo storage and fake role switching have been removed. Self-service account deactivation and seven-day reactivation are implemented, but permanent deletion and database-wide denial for deactivated sessions remain release-blocking work.
 
 ```text
 Responsive React UI: implemented
@@ -40,6 +40,7 @@ Users should always be able to understand the requested PC and time, access mode
 - dashboards, booking form/history/detail and requester cancellation, review queues, PC inventory/management, user/advisee management, profile, and calendar
 - one-day lab and multi-day remote booking experiences
 - loading, empty, mutation, configuration, and authentication error states
+- Profile danger zone, immediate sign-out after deactivation, and a seven-day self-service reactivation screen
 - responsive desktop and mobile layouts
 
 ### Backend
@@ -56,13 +57,14 @@ Users should always be able to understand the requested PC and time, access mode
 - half-open booking intervals with an exclusion constraint preventing concurrent active overlaps
 - indexed foreign keys and role/query access paths
 - sanitized shared calendar occupancy without private Student fields
+- profile deactivation timestamps plus authenticated self-deactivation/reactivation RPCs; no permanent cleanup job exists yet
 
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 108 pgTAP assertions cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, and audit behavior; the expanded suite awaits database execution
+- 122 pgTAP assertions across the booking/security and account-deactivation files cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, reactivation-window behavior, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
-- frontend ESLint, eight Node tests, and production Vite build pass after the Technician workflow changes
+- frontend ESLint, eight Node tests, translation-key parity, and the production Vite build pass with the account-deactivation UI
 
 ## Architecture
 
@@ -124,6 +126,7 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 - Technicians, Advisors, and Deans may also request PCs. Technician requests begin at Advisor review, Advisor requests begin at Dean review, and Dean requests are approved immediately when availability validation succeeds.
 - Technicians and Deans manage PC inventory, including specification, operational status, and maintenance notes; only Deans manage user roles and Advisor assignments.
 - Users cannot promote themselves or change protected profile relationships.
+- A user may mark their own profile deactivated and reactivate it within seven days. This currently gates the React workspace and profile writes, but it does not yet revoke the Supabase session or deny every RLS path and RPC.
 
 ### Data access
 
@@ -176,8 +179,9 @@ The hosted Supabase project and Google provider are active, and Google sign-in h
 6. Verify Google sign-in, session restoration, sign-out, role-scoped views, callback errors, and direct route refreshes from the production Vercel origin.
 7. After each intended Technician/Advisor/Dean signs in once as Student, promote them through protected administration.
 8. Use the Advisor advisee screen or Dean user-management screen to assign Students, then verify the resulting visibility boundaries.
-9. Complete Priority 0 security items H1–H5/B24–B28.
-10. Run authenticated role-adversary, two-client overlap, booking-abuse, and full production smoke tests before launch.
+9. Complete Priority 0 security items H1–H6, including B24–B28 and B38.
+10. Verify deactivation, in-window reactivation, expired recovery, active-booking disposition, and direct API denial for every role.
+11. Run authenticated role-adversary, two-client overlap, booking-abuse, and full production smoke tests before launch.
 
 Open institutional decisions:
 
@@ -185,10 +189,11 @@ Open institutional decisions:
 - initial Technician, Advisor, and Dean email addresses
 - production origin and supported preview origins
 - operational owner for role and Advisor assignments
+- privacy owner for recovery, retention, active-booking disposition, and deletion/pseudonymization requests
 
 ## Security-hardening workstream
 
-The 23 September 2026 review found no confirmed critical remote takeover or role-escalation path. The database foundation already denies anonymous application access, uses RLS, derives actors from `auth.uid()`, keeps roles in protected database state, pins `security definer` search paths, and prevents concurrent active overlaps. The full evidence and limitations are recorded in [`.docs/03-compliance/security-review.md`](.docs/03-compliance/security-review.md).
+The security review, updated 26 September 2026, found no confirmed critical remote takeover or role-escalation path. The database foundation already denies anonymous application access, uses RLS, derives actors from `auth.uid()`, keeps roles in protected database state, pins `security definer` search paths, and prevents concurrent active overlaps. The full evidence and account-deactivation limitations are recorded in [`.docs/03-compliance/security-review.md`](.docs/03-compliance/security-review.md).
 
 ### Priority 0 — required before broad production use
 
@@ -197,7 +202,8 @@ The 23 September 2026 review found no confirmed critical remote takeover or role
 3. Require Supabase MFA assurance level `aal2` for Dean operations and approval/management operations selected by university policy.
 4. Add university/Dean verification for manually entered Student IDs. Direct column writes are revoked and Lamduan IDs are email-derived, but non-Lamduan manual values remain self-declared until verified.
 5. Add maximum duration, maximum advance window, per-user active/pending quotas, and request throttling so pending requests cannot monopolize inventory.
-6. Add an account state and offboarding workflow that blocks suspended users, revokes sessions, and defines session timebox/inactivity settings.
+6. Complete account-state enforcement. The current self-deactivation UI and profile-write trigger do not stop a valid deactivated session from reading through existing RLS policies or invoking every booking/approval/management RPC.
+7. Define and implement the post-recovery lifecycle: session revocation, active-booking handling, approved retention/pseudonymization rules, and a privileged hard-deletion or anonymization job. Do not describe the current soft-deactivation row as permanently deleted.
 
 ### Priority 1 — defense in depth and accountability
 
@@ -222,6 +228,7 @@ The 23 September 2026 review found no confirmed critical remote takeover or role
 - A Student cannot assign or change a trusted university ID through direct REST calls.
 - Duration, advance-window, and per-user limits prevent one requester from blocking all inventory with pending requests.
 - Suspended/offboarded users cannot restore a workspace or call application RPCs with an existing session.
+- An account past its recovery window is processed according to the approved retention policy, and the UI never promises erasure before that process succeeds.
 - Every privileged management mutation records actor, target, before/after state, timestamp, and session/request correlation data.
 - Production responses include the approved browser security headers and a tested CSP.
 - Student, Technician, Advisor, Dean, anonymous, suspended, external-domain, and wrong-assurance adversarial tests pass against the deployed schema.

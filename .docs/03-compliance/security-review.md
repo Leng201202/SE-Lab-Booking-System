@@ -1,4 +1,4 @@
-# Security review — 23 September 2026
+# Security review — updated 26 September 2026
 
 ## Scope and assurance
 
@@ -9,7 +9,7 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 ## Summary
 
 - No confirmed critical remote takeover, SQL injection, cross-site scripting sink, anonymous data disclosure, or direct role-escalation path was found.
-- Five high-priority design/authentication risks require remediation before broad production use.
+- Six high-priority design/authentication/privacy risks require remediation before broad production use.
 - Six medium-priority privacy, accountability, browser-hardening, and concurrency issues remain.
 - The database authorization model is materially stronger than frontend route guards and remains the authoritative boundary.
 
@@ -21,7 +21,8 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 | H2 | High | Dean/Advisor privileged RPCs accept ordinary `aal1` sessions and do not require MFA/step-up authentication. | MFA enrollment/challenge plus database `aal2` enforcement | B25 |
 | H3 | High | Pending bookings block availability without maximum duration, advance window, per-user quota, or application RPC throttling. | Database-enforced booking limits and abuse monitoring | B26 |
 | H4 | High | Direct column writes are revoked and Lamduan IDs are email-derived, but non-Lamduan Students may still submit a self-declared ID through a guarded RPC. | Administrator/directory verification or an explicit verified/unverified state | B27 |
-| H5 | High | No application suspension/offboarding state is checked by RLS/RPCs; session timebox and inactivity controls are not defined. | Active-state checks, session revocation, lifecycle process, timeout policy | B28 |
+| H5 | High | Self-service deactivation now gates the React workspace and blocks profile-to-profile writes, but valid deactivated sessions can still use RLS paths and security-definer booking, review, cancellation, PC, or user-management RPCs that do not check `is_deactivated`. | Active-state checks in every RLS/RPC path, session revocation, lifecycle process, timeout policy, and adversarial tests for all roles | B28 |
+| H6 | High | The UI says an expired account may be permanently removed, but no cleanup job deletes or pseudonymizes Auth/profile data. Active bookings and retained audit/history records also have no approved deletion disposition. | Approved retention/rights policy plus privileged cleanup or pseudonymization process, session revocation, booking handling, and truthful user copy | B38 |
 | M1 | Medium | Approval decisions are audited, but role, Advisor assignment, PC, and suspension changes are not. | Immutable privileged-action audit events | B29 |
 | M2 | Medium | Production has HSTS but no repository-defined CSP, frame protection, MIME-sniffing protection, referrer policy, or permissions policy. | Tested Vercel response headers and CSP | B30 |
 | M3 | Medium | Hosted Auth exposes the email provider even though the repository describes a Google-only system. | Disable unused provider and monitor configuration drift | B31 |
@@ -45,6 +46,7 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 - Production source maps were not publicly retrievable and Vercel supplies HSTS.
 - `npm audit` reported zero known vulnerabilities across 238 dependencies.
 - Frontend unit tests, ESLint, and the production build passed during the review.
+- Account-deactivation tests cover self-request, profile-write blocking, in-window reactivation, consistency, and expired recovery; they do not yet cover denial of the other exposed RPC/RLS paths.
 
 ## Verification still required
 
@@ -58,4 +60,4 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 
 ## Remediation gate
 
-Priority 0 items H1–H5 block broad production rollout. Priority 1 items M1–M6 should be completed before the system becomes the authoritative university booking record. The implementation sequence and acceptance criteria are maintained in the root `plan.md`; traceable user stories are B24–B33 in the product backlog.
+Priority 0 items H1–H6 block broad production rollout. Priority 1 items M1–M6 should be completed before the system becomes the authoritative university booking record. The implementation sequence and acceptance criteria are maintained in the root `plan.md`; traceable work is maintained through B38 in the product backlog.

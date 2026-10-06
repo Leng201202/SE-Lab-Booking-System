@@ -6,11 +6,11 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 |---|---|---|---|
 | PDPA — purpose and data minimization | Collect only fields needed for authentication, role assignment, contact/identification, booking, approval, and audit | profiles/bookings schema; sanitized calendar RPC | Technical minimization implemented; field-by-field university approval pending |
 | PDPA — lawful basis and transparency | Identify the controller, purpose, basis, recipients, retention, rights, and contact before collection | No approved production privacy notice in repository | Gap |
-| PDPA — access control/security | Prevent anonymous, cross-user, wrong-stage Technician/Advisor/Dean review, unauthorized administration, stale booking-start access, and unauthorized cancellation | Explicit grants, RLS, trusted role allowlist, RPC/trigger validation, 108 pgTAP assertions | Core controls implemented; latest migration deployment plus institutional-domain, MFA, suspension, and anti-abuse remediation remain open |
+| PDPA — access control/security | Prevent anonymous, cross-user, wrong-stage Technician/Advisor/Dean review, unauthorized administration, stale booking-start access, unauthorized cancellation, and continued use by deactivated sessions | Explicit grants, RLS, trusted role allowlist, RPC/trigger validation, 122 pgTAP assertions across two files | Core controls implemented; deactivated-session denial, institutional-domain, MFA, and anti-abuse remediation remain open |
 | PDPA — disclosure control | Availability should not disclose unrelated personal booking details | get_booking_calendar omits Student identity, university ID, purpose, course, and rejection reason | Enforced locally |
 | PDPA — data quality/correction | Allow appropriate correction without self-promotion, relationship tampering, or unverified identity claims | Role/Advisor protected; direct Student ID writes revoked; Lamduan ID email-derived; other manual IDs remain self-declared | Gap: verify manual IDs through an approved university process and define correction handling |
-| PDPA — data-subject rights | Handle access, correction, export, restriction, objection, and deletion where applicable | Users see their own records; no request-management process | Gap |
-| PDPA — retention/deletion | Keep records only for an approved period and dispose safely | Booking/reviewer foreign keys may prevent user deletion; no approved retention, pseudonymization, or automated disposal process | Gap |
+| PDPA — data-subject rights | Handle access, correction, export, restriction, objection, and deletion where applicable | Users see their own records and may request soft deactivation with seven-day self-service recovery; no complete rights-request process | Partial; soft deactivation is not erasure |
+| PDPA — retention/deletion | Keep records only for an approved period and dispose safely | Deactivation timestamp is recorded, but no job removes/pseudonymizes Auth, profile, booking, or audit data; relationship constraints and history requirements need an approved disposition | Gap; B38 |
 | PDPA — incident response | Detect, assess, document, and respond to personal-data incidents | Database authorization and secret separation reduce risk; response process absent | Gap |
 | Computer-Related Crime Act §26 | Determine whether operator is an in-scope service provider and any traffic/user-data retention duty | Booking/audit records exist but are not claimed as compliant traffic logs | Applicability pending legal review |
 | Electronic Transactions Act | Avoid misrepresenting ordinary booking approval as a legally qualified signature | UI describes booking approval/status only; no signature claim | Current scope avoids signature claim; institutional record policy pending |
@@ -26,7 +26,9 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 - supabase/migrations/20260924000300_implement_technician_workflow.sql
 - supabase/migrations/20260924000400_reassign_pending_student_bookings.sql
 - supabase/migrations/20260924000500_auto_university_id_from_lamduan_email.sql
+- supabase/migrations/20260925000100_add_account_deletion.sql
 - supabase/tests/database/001_booking_security.test.sql
+- supabase/tests/database/002_account_deletion.test.sql
 - app/src/lib/supabase.js
 - app/src/features/auth/authService.js
 - app/src/features/bookings/bookingService.js
@@ -39,7 +41,7 @@ This trace maps the W2 legal topics to current engineering controls and open gov
 2. Approve the lawful basis and production privacy notice.
 3. Approve each personal-data field and its purpose.
 4. Define retention periods for auth profiles, bookings, rejection reasons, and approval events.
-5. Define data-subject request and account-deletion procedures.
+5. Define data-subject request and account-deletion procedures, including the difference between deactivation, retention, pseudonymization, and erasure.
 6. Define incident response, breach assessment, and escalation.
 7. Assess cross-border/third-party processing for Google, Supabase, and Vercel.
 8. Determine Computer-Related Crime Act applicability and logging obligations.

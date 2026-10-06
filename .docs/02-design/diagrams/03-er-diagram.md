@@ -23,6 +23,8 @@ erDiagram
         text university_id UK
         app_role role
         uuid advisor_id FK
+        boolean is_deactivated
+        timestamptz deletion_requested_at
         timestamptz created_at
         timestamptz updated_at
     }
@@ -83,3 +85,4 @@ Important integrity rules:
 - A PostgreSQL exclusion constraint prevents overlapping active ranges for the same PC.
 - A cancelled booking must retain a 5–2000 character reason, cancellation time, and its requester as the cancelling actor; non-cancelled rows cannot carry cancellation metadata.
 - Approval events are append-only through application permissions.
+- Active profiles have a null deletion request timestamp; deactivated profiles must retain one. The flag is a recovery state, not proof that Auth/profile/history data has been permanently erased.

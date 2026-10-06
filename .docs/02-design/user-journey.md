@@ -14,7 +14,7 @@
 2. Student chooses an available one-day lab interval beginning at the next valid Bangkok slot, or a multi-day range beginning on a future date.
 3. The form collects PC, dates/times, purpose, and optional course/project.
 4. The database validates identity, Advisor assignment, PC state, future start instant, interval, purpose, and overlap.
-5. A valid request is created as pending Advisor.
+5. A valid request is created as pending Technician.
 6. Student sees the request detail and approval progress.
 
 ## Journey 3 — Technician reviews
@@ -89,3 +89,13 @@
 6. The detail page shows the retained cancellation information; an invalid or stale request returns an actionable error without changing the booking.
 
 Rebooking and notifications are not part of the current journeys.
+
+## Journey 12 — Deactivate and recover an account
+
+1. An authenticated Student, Technician, Advisor, or Dean opens **Profile → Danger zone** and confirms account deletion.
+2. The database marks the profile deactivated and records the request time; the browser then signs out.
+3. Signing in again during the next seven days opens the restricted recovery screen instead of the normal workspace.
+4. Choosing **Reactivate account** clears the deactivation fields and restores the workspace. Choosing logout leaves the account deactivated.
+5. Once seven days have elapsed, self-service reactivation is rejected.
+
+This journey currently stops at soft deactivation. No scheduled process permanently removes or pseudonymizes the Supabase Auth user, profile, bookings, or audit history after the window. Database-wide denial for every valid deactivated session and the treatment of active bookings are also pending under B28/B38.

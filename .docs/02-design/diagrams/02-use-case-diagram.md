@@ -24,6 +24,8 @@ flowchart LR
     Audit((Record approval event))
     Validate((Validate role, PC, interval, and conflict))
     Configure((Configure roles, assignments, and PCs))
+    Deactivate((Deactivate own account))
+    Reactivate((Reactivate within 7 days))
 
     Visitor --> SignIn
     Student --> Availability
@@ -31,6 +33,7 @@ flowchart LR
     Student --> Submit
     Student --> OwnRecords
     Student --> Cancel
+    Student --> Deactivate
     Technician --> Availability
     Technician --> Inventory
     Technician --> Submit
@@ -38,12 +41,14 @@ flowchart LR
     Technician --> Cancel
     Technician --> TechnicianReview
     Technician --> PCs
+    Technician --> Deactivate
     Advisor --> Availability
     Advisor --> Submit
     Advisor --> OwnRecords
     Advisor --> Cancel
     Advisor --> AdvisorReview
     Advisor --> Advisees
+    Advisor --> Deactivate
     Dean --> Availability
     Dean --> Submit
     Dean --> OwnRecords
@@ -51,6 +56,11 @@ flowchart LR
     Dean --> DeanReview
     Dean --> Users
     Dean --> PCs
+    Dean --> Deactivate
+    Student --> Reactivate
+    Technician --> Reactivate
+    Advisor --> Reactivate
+    Dean --> Reactivate
     Operator --> Configure
 
     Submit -. includes .-> Validate
@@ -63,4 +73,4 @@ flowchart LR
     DeanReview -. includes .-> Validate
 ~~~
 
-Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Technicians act only at technical review, Advisors cannot review unassigned Student requests, and only Deans manage roles. Technicians and Deans manage PC inventory. Student requests use Technician, Advisor, then Dean review; Technician requests start at Advisor review; Advisor requests start at Dean review; and Dean requests are immediately approved only after validation. Every requester role may cancel only its own active future booking with a reason.
+Google authentication identifies the user. Trusted database profiles authorize each use case. Students cannot choose their role, Technicians act only at technical review, Advisors cannot review unassigned Student requests, and only Deans manage roles. Technicians and Deans manage PC inventory. Student requests use Technician, Advisor, then Dean review; Technician requests start at Advisor review; Advisor requests start at Dean review; and Dean requests are immediately approved only after validation. Every requester role may cancel only its own active future booking with a reason. Account deletion currently means recoverable profile deactivation; permanent erasure remains planned.

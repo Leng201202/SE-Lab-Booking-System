@@ -2,7 +2,7 @@
 
 This is a living log of bugs and known limitations. The system is still in development, so update it whenever a bug is found or fixed.
 
-_Last updated: 23 September 2026_
+_Last updated: 26 September 2026_
 
 ## How to use this log
 
@@ -25,6 +25,8 @@ _Last updated: 23 September 2026_
 | BUG-04 | Users could book a PC on a past day, or at a time that had already passed today | Booking form / calendar | High | 2026-09-23 | Fixed | `8b9a03d`, `e2adeb3` | Frontend blocks past dates and elapsed slots; migration `20260923000100_enforce_future_booking_start.sql` also enforces it in the database |
 | BUG-05 | "Supabase Preview" GitHub check fails on pushes to `main` with `column "student_id" does not exist` | Deployment / database migrations | Medium | 2026-09-23 | Open | — | Migration `20260922000400_expand_role_capabilities.sql` tries to rename a column that is already renamed in the hosted database. Likely fix: `supabase migration repair --status applied 20260922000400` after checking `supabase migration list`, or make the rename conditional. The Vercel deployment is not affected |
 | BUG-06 | The future-start database rule (BUG-04) has not been confirmed on the hosted Supabase project | Deployment | Medium | 2026-09-23 | Open | — | Blocked by BUG-05. Verify after the migration history is repaired |
+| BUG-07 | A deactivated account is blocked by the React workspace and profile-write trigger, but its still-valid Supabase session can call RLS paths and RPCs that do not check `is_deactivated` | Auth / database authorization | High | 2026-09-26 | Open | — | Complete B28 and add direct API tests for Student, Technician, Advisor, and Dean |
+| BUG-08 | Account-deletion copy implies permanent removal after seven days, but no cleanup job deletes or pseudonymizes Auth/profile/history data | Privacy / account lifecycle | High | 2026-09-26 | Open | — | Implement approved retention, booking disposition, session revocation, and cleanup under B38; update UI copy until then |
 
 ## Known limitations
 
@@ -32,12 +34,12 @@ These are features that are not built yet. Users may run into them, so they are 
 
 | Limitation | Workaround | Backlog |
 |---|---|---|
-| Students cannot cancel a request | Ask the Advisor to reject it, or contact the Dean | B13 |
 | A booking cannot be edited or moved to another PC/time | Submit a new request (the old one still blocks the slot until it is rejected) | B14 |
 | No email or in-app notifications for decisions | Check **My Bookings** or the request detail page | B17 |
 | No limits on booking length or number of pending requests per user | Advisors and the Dean should reject unreasonable requests | B26 |
 | Pages do not refresh automatically when someone else changes data | Reload the page to see the latest status | — |
 | Any Google account can sign in, not only university accounts | Only use university accounts. Roles above Student are still controlled by the allowlist | B24 |
+| Account deletion currently means soft deactivation, not erasure | Reactivate within seven days or contact the system/privacy administrator | B28, B38 |
 
 Other security gaps (MFA, user suspension, audit of role changes, security headers) are tracked in the [security review](../03-compliance/security-review.md) as backlog items B25–B33.
 
@@ -46,3 +48,4 @@ Other security gaps (MFA, user suspension, audit of role changes, security heade
 | Date | Change |
 |---|---|
 | 2026-09-23 | Log created with bugs found from the commit history and current CI status |
+| 2026-09-26 | Added account-deactivation authorization and permanent-cleanup gaps; removed the obsolete cancellation limitation |

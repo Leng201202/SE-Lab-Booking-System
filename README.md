@@ -21,11 +21,14 @@ The production foundation is implemented locally:
 - Conflict-safe bookings enforced by a PostgreSQL exclusion constraint
 - role-aware Technician/Advisor/Dean review and administration boundaries
 - reason-required cancellation of any role's own active future booking
+- recoverable account soft deactivation with a seven-day self-service reactivation window
 - Advisor advisee management, Technician/Dean PC management, and Dean user management
 - Sanitized shared calendar data and immutable approval history
 - Database and frontend automated checks
 
 Hosted rollout still requires a Supabase project, a Google OAuth client, production redirect URLs, Vercel environment variables, and a protected post-login promotion for the first Dean.
+
+The account control currently soft-deactivates the profile; it does not yet revoke every valid session/RPC path or permanently erase retained data after seven days. Those release blockers are tracked as B28 and B38 in the product backlog.
 
 ## Local setup
 

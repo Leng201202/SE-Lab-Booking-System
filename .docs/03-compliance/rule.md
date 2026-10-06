@@ -17,6 +17,7 @@ This document is an engineering compliance register, not legal advice. Final app
 | Frontend route guards are not treated as the security boundary | Enforced by design | PostgreSQL grants, RLS, functions, and constraints |
 | Privileged operations require an `aal2` MFA session | Planned | Security review H2; backlog B25 |
 | Suspended/offboarded users and their existing sessions cannot use application data or RPCs | Planned / Operational | Security review H5; backlog B28 |
+| Users may request soft deactivation and reactivate within seven days | Migration deployment required; partial control | `20260925000100_add_account_deletion.sql`; this does not replace B28 database-wide denial |
 
 ## Booking and workflow rules
 
@@ -63,6 +64,7 @@ This document is an engineering compliance register, not legal advice. Final app
 | Privacy notice and lawful basis are approved before production collection | Policy pending | No approved notice recorded |
 | Retention/deletion schedule for profiles, bookings, and audit events | Policy pending | No approved schedule recorded |
 | Data-subject access, correction, export, restriction, and deletion procedure | Policy pending | Operational process not defined |
+| Expired deactivated accounts are permanently deleted or pseudonymized only under an approved retention process | Planned / Policy pending | No automated cleanup exists; backlog B38 |
 | Incident and breach response procedure | Policy pending | Operational process not defined |
 
 ## Infrastructure rules
@@ -100,7 +102,7 @@ Official source index: [ETDA — Electronic Transactions laws](https://www.etda.
 
 | Item | Status |
 |---|---|
-| Engineering control review | Security review updated 23 Sep 2026 |
+| Engineering control review | Security review updated 26 Sep 2026 |
 | University data owner | Not recorded |
 | Legal/supervisor reviewer | Pending |
 | Approved lawful basis and notice | Pending |

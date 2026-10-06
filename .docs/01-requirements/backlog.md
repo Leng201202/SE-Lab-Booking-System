@@ -1,6 +1,6 @@
 # Product backlog — SE Lab PC Booking System
 
-Status reflects the repository as of 24 September 2026.
+Status reflects the repository as of 26 September 2026.
 
 Legend: **Done** = implemented and locally verified · **Configured deployment required** = code exists but external credentials/configuration remain · **Planned** = accepted but not built · **Proposed** = candidate requiring validation.
 
@@ -42,6 +42,8 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 | B34 | As a Technician, I can approve or reject Student requests before they reach the assigned Advisor. | Must | Done | Institutional workflow |
 | B35 | As a Technician, my own booking skips technical review and proceeds through Advisor then Dean review. | Must | Done | Institutional workflow |
 | B36 | As a newly assigned Advisor, I receive the Student's unresolved requests without changing completed review history. | Must | Done | Advisor reassignment defect |
+| B37 | As a user, I can deactivate my own account, sign out immediately, and reactivate it within seven days. | Must | Implemented; release-blocked by B28 | Account-deletion feature |
+| B38 | As the privacy/operator owner, I permanently delete or pseudonymize expired deactivated accounts under an approved retention policy, revoke sessions, and define what happens to active bookings and audit history. | Must | Planned | Account-deletion review; security H6 |
 
 ## Acceptance notes
 
@@ -58,4 +60,5 @@ Legend: **Done** = implemented and locally verified · **Configured deployment r
 - Current Google-provider validation does not yet enforce the approved university domain; B24 is required before broad production use.
 - Current privileged RPCs do not yet enforce MFA assurance level `aal2`; B25 is open.
 - Current pending requests block availability without duration or per-user quotas; B26 is open.
+- Account deactivation is currently a soft profile flag. The React workspace is gated, but database-wide denial and session revocation remain B28, and permanent cleanup/booking disposition remain B38.
 - Rebooking and notifications are not implemented and must not be described as shipped. The exact institutional cancellation cut-off and no-show policy remain open beyond the implemented before-start rule.

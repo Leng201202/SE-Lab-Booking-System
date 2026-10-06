@@ -67,7 +67,7 @@ Required production configuration that is intentionally not committed:
 
 ## Security hardening guardrails
 
-The 23 September 2026 security review is recorded in `.docs/03-compliance/security-review.md`; remediation is tracked as backlog B24–B33. Do not describe these controls as implemented until their migrations, application behavior, hosted settings, and negative tests are complete.
+The security review is recorded in `.docs/03-compliance/security-review.md`; remediation is tracked in backlog B24–B38. Do not describe these controls as implemented until their migrations, application behavior, hosted settings, and negative tests are complete.
 
 Priority 0 release gates are:
 
@@ -77,6 +77,7 @@ Priority 0 release gates are:
 - prevent users from self-asserting a trusted university ID
 - enforce booking duration, advance-window, active-request, and abuse limits
 - enforce suspended/offboarded account state in RLS and every exposed RPC
+- complete permanent deletion or approved pseudonymization after the recovery window, including session and booking handling
 
 Privileged role, Advisor assignment, PC, and suspension mutations must eventually produce immutable audit events. Production frontend changes must preserve a strict CSP and browser security headers once introduced. Security enforcement belongs in Auth configuration and PostgreSQL; UI hiding, route guards, and client validation never satisfy these requirements alone.
 
@@ -114,6 +115,8 @@ React route guards improve navigation only. PostgreSQL grants, RLS policies, con
 - Shared calendar output omits Student identity, university ID, purpose, course, and rejection information.
 - Direct table writes cannot bypass ownership or workflow rules.
 - Approval events are append-only application audit records.
+- `request_account_deletion` currently performs soft deactivation only. The React gate and profile-write trigger are not a complete authorization boundary: until B28 is finished, a valid deactivated session may still reach RLS-protected reads or RPCs that do not check account state.
+- Never describe expiry of the seven-day recovery window as permanent erasure until a protected cleanup process has actually removed or pseudonymized the retained Auth/profile and related data.
 
 Consequential mutations use these database functions:
 
@@ -126,6 +129,8 @@ create_pc
 update_pc
 set_user_role
 assign_student_advisor
+request_account_deletion
+reactivate_my_account
 ```
 
 They derive the actor from `auth.uid()`, validate the trusted role and current stage, and change workflow/audit state atomically. Security-definer functions must keep `search_path = ''`, schema-qualify referenced objects, and expose execution only to intended roles.
@@ -262,6 +267,7 @@ Maintain tests for:
 - external-domain signup denial
 - wrong-assurance (`aal1`) denial for privileged operations
 - suspended-user denial with an otherwise valid session
+- account-deactivation ownership, repeated-request, recovery-boundary, expired-recovery, direct-RPC denial, and retained-booking disposition
 - trusted university-ID write denial
 - booking duration, quota, and abuse boundaries
 

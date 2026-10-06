@@ -99,7 +99,11 @@ Every role may cancel only its own active booking before it starts. `cancel_book
 
 Student identity is handled by `20260924000500_auto_university_id_from_lamduan_email.sql`. A 10-digit numeric `@lamduan.mfu.ac.th` local part is copied into `profiles.university_id`; collision handling preserves profile creation instead of breaking Google sign-in. Other Students may submit a 10-digit value through the authenticated `update_my_student_id` RPC. Direct REST updates to the column are revoked, and Lamduan Students cannot replace the email-derived value. Manually entered IDs are self-declared until the university verification process in backlog B27 is implemented.
 
-Deploy migrations through `20260924000500_auto_university_id_from_lamduan_email.sql` before testing Student ID capture on the hosted project.
+Account deletion is currently a recoverable soft-deactivation workflow implemented by `20260925000100_add_account_deletion.sql`. `request_account_deletion` sets `profiles.is_deactivated` and records the request time; `reactivate_my_account` clears those fields only during the seven-day recovery window. The migration does **not** delete the Supabase Auth user, profile, bookings, or approval history after seven days.
+
+The current React gate and profile-write trigger are not sufficient offboarding controls. Until backlog B28 is complete, a valid deactivated session may still reach RLS reads or RPCs that do not check `is_deactivated`. Backlog B38 covers the approved post-window retention, booking disposition, session revocation, and permanent deletion/pseudonymization process.
+
+Deploy migrations through `20260925000100_add_account_deletion.sql` before testing account deactivation on the hosted project.
 
 ## Security model
 
@@ -113,5 +117,6 @@ Deploy migrations through `20260924000500_auto_university_id_from_lamduan_email.
 - Active bookings must start in the future; a database trigger rejects stale creation and approval attempts independently of browser validation.
 - An exclusion constraint prevents concurrent active bookings from overlapping.
 - Every approval/rejection creates an immutable `approval_events` record.
+- Account deactivation is not yet a complete database authorization boundary or permanent-erasure mechanism; do not rely on the frontend gate alone.
 
 Run the pgTAP suite after every schema or policy change.

@@ -74,11 +74,12 @@ The production foundation is implemented locally:
 - booking, approval, rejection, requester-cancellation, and calendar RPCs
 - protected user/Advisor relationship and PC-management RPCs
 - immutable approval events
-- 108 pgTAP database assertions, including Technician authorization/workflow, Student ID security, Advisor reassignment, server-side future-start, and requester-cancellation coverage, plus eight frontend tests
+- self-service soft deactivation with a seven-day reactivation window; permanent cleanup is not yet implemented
+- 122 pgTAP database assertions across two files, including Technician authorization/workflow, Student ID security, Advisor reassignment, server-side future-start, requester cancellation, and account-recovery coverage, plus eight frontend tests
 
 The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
 
-The 23 September 2026 security review also makes institutional-domain enforcement, privileged MFA, booking anti-abuse limits, trusted university-ID handling, and account offboarding mandatory before broad production use. Administrative audit coverage, production browser headers, data minimization, and concurrency hardening follow as Priority 1 work. See [the security review](../03-compliance/security-review.md) and backlog B24–B33.
+The security review also makes institutional-domain enforcement, privileged MFA, booking anti-abuse limits, trusted university-ID handling, database-enforced account offboarding, and a real post-recovery deletion/pseudonymization process mandatory before broad production use. Administrative audit coverage, production browser headers, data minimization, and concurrency hardening follow as Priority 1 work. See [the security review](../03-compliance/security-review.md) and backlog B24–B38.
 
 ## Scope
 
@@ -93,6 +94,7 @@ In scope:
 - reason-required cancellation of any role's own active future booking
 - one-day lab and multi-day remote reservations
 - database conflict prevention and audit events
+- user-initiated account soft deactivation and seven-day self-service reactivation
 
 Out of scope for this cycle:
 
@@ -101,3 +103,4 @@ Out of scope for this cycle:
 - email/push notifications
 - check-in/check-out and no-show enforcement
 - usage analytics and reporting
+- automatic permanent account deletion/pseudonymization and approved retention processing (planned release gate rather than shipped behavior)
