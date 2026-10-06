@@ -1,0 +1,204 @@
+<mxfile host="app.diagrams.net" modified="2026-10-06T00:00:00.000Z" agent="Claude" version="24.0.0" type="device">
+  <diagram id="use-case-all-roles" name="Use case — all roles">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- System boundary -->
+        <mxCell id="boundary" value="SE Lab PC Booking System" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=none;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="270" y="0" width="560" height="760" as="geometry" />
+        </mxCell>
+
+        <!-- Actors -->
+        <mxCell id="actor-visitor" value="Visitor" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="10" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-student" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="140" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-technician" value="Technician" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="270" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-advisor" value="Advisor" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="400" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-dean" value="Dean" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="530" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-operator" value="University operator" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="660" width="30" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Use cases, column A -->
+        <mxCell id="uc-signin" value="Sign in with Google" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="30" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-availability" value="View sanitized availability" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="110" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-inventory" value="View PC inventory" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="190" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-submit" value="Submit booking request" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="270" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-ownrecords" value="View own requests" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="350" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-cancel" value="Cancel own active future booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="430" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-techreview" value="Perform technical review" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="300" y="510" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-advreview" value="Review assigned Student request" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="300" y="590" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-deanreview" value="Give final decision" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="300" y="670" width="200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Use cases, column B -->
+        <mxCell id="uc-advisees" value="Manage own advisees" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="560" y="30" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-users" value="Manage users and roles" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="560" y="110" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-pcs" value="Manage PC inventory" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="560" y="190" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-audit" value="Record approval event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="560" y="270" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-validate" value="Validate role, PC, interval, and conflict" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="560" y="350" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-configure" value="Configure roles, assignments, and PCs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="560" y="430" width="200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Associations: Visitor -->
+        <mxCell id="a-visitor-signin" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-visitor" target="uc-signin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Associations: Student -->
+        <mxCell id="a-student-availability" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-student" target="uc-availability">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-student-inventory" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-student" target="uc-inventory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-student-submit" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-student" target="uc-submit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-student-ownrecords" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-student" target="uc-ownrecords">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-student-cancel" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-student" target="uc-cancel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Associations: Technician -->
+        <mxCell id="a-tech-availability" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-availability">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-tech-inventory" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-inventory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-tech-submit" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-submit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-tech-ownrecords" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-ownrecords">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-tech-cancel" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-cancel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-tech-techreview" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-techreview">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-tech-pcs" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-technician" target="uc-pcs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Associations: Advisor -->
+        <mxCell id="a-adv-availability" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-advisor" target="uc-availability">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-adv-submit" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-advisor" target="uc-submit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-adv-ownrecords" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-advisor" target="uc-ownrecords">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-adv-cancel" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-advisor" target="uc-cancel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-adv-advreview" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-advisor" target="uc-advreview">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-adv-advisees" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-advisor" target="uc-advisees">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Associations: Dean -->
+        <mxCell id="a-dean-availability" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-availability">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dean-submit" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-submit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dean-ownrecords" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-ownrecords">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dean-cancel" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-cancel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dean-deanreview" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-deanreview">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dean-users" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-users">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dean-pcs" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-dean" target="uc-pcs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Associations: Operator -->
+        <mxCell id="a-operator-configure" style="endArrow=none;html=1;" edge="1" parent="1" source="actor-operator" target="uc-configure">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Includes -->
+        <mxCell id="i-submit-validate" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-submit" target="uc-validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-cancel-validate" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-cancel" target="uc-validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-techreview-audit" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-techreview" target="uc-audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-techreview-validate" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-techreview" target="uc-validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-advreview-audit" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-advreview" target="uc-audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-advreview-validate" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-advreview" target="uc-validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-deanreview-audit" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-deanreview" target="uc-audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-deanreview-validate" value="&lt;&lt;include&gt;&gt;" style="dashed=1;endArrow=open;html=1;" edge="1" parent="1" source="uc-deanreview" target="uc-validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
