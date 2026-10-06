@@ -164,6 +164,8 @@ Public routes:
 ```text
 /login
 /auth/callback
+/privacy-policy
+/terms-of-service
 ```
 
 Authenticated shared routes:
