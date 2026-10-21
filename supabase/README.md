@@ -54,7 +54,7 @@ http://127.0.0.1:5173/auth/callback
 
 Never expose the Google Client Secret, database password, Supabase secret key, or `service_role` key through Vite or commit them to the repository.
 
-## Roles and Advisor assignment
+## Roles and Advisor selection
 
 All new Google users default to Student, even if their email already appears in the allowlist. Have the user sign in once, then promote the existing profile through a protected SQL/admin connection:
 
@@ -67,33 +67,22 @@ values
 on conflict (email) do update set role = excluded.role;
 ```
 
-The allowlist trigger updates the existing matching Student profile. Use it to bootstrap the first Dean; that Dean can promote later users in the User Management screen. Advisor assignments are also available in the UI. A protected SQL fallback is:
+The allowlist trigger updates the existing matching Student profile. Use it to bootstrap the first Dean; that Dean can promote later users in the User Management screen. Deans manage all roles, including Technician promotion; direct private-schema access remains unavailable to the browser.
 
-```sql
-update public.profiles as student
-set advisor_id = advisor.id
-from public.profiles as advisor
-where student.email = 'student@university.example'
-  and advisor.email = 'advisor@university.example'
-  and advisor.role = 'advisor';
-```
+Students have no permanent Advisor. Each Student booking request names its reviewing Advisor: the booking form lists eligible Advisors through `list_booking_advisors` (id and display name only), and `create_booking` requires `p_advisor_id` for Students and stores it on `bookings.advisor_id`. An eligible Advisor has the `advisor` role and an active (not deactivated) profile. Technician, Advisor, and Dean requests do not take an Advisor. An Advisor named on unresolved `pending_technician` or `pending_advisor` requests cannot change role until those requests are decided or cancelled.
 
-Students without an assigned Advisor can sign in and inspect their profile, but the database rejects booking creation until the assignment exists.
-
-After bootstrap, Advisors manage unassigned/their own advisees in the application. Deans manage all roles, including Technician promotion, and Advisor assignments through the User Management screen; direct private-schema access remains unavailable to the browser.
-
-If a Student is released and then assigned to a different Advisor, unresolved requests at `pending_technician` or `pending_advisor` move to the new Advisor in the same transaction. Requests that already passed Advisor review, or that are approved, rejected, cancelled, or completed, retain their original Advisor attribution for audit history.
+Migration `20261021000100_select_advisor_per_booking.sql` removed `profiles.advisor_id` and `assign_student_advisor`. Bookings created earlier keep the Advisor they were created with. The former profile assignments are archived in `private.student_advisor_assignment_archive` for audit and are no longer used by the application.
 
 Booking routing is role-aware:
 
 ```text
-Student → Technician → assigned Advisor → Dean
+Student → Technician → selected Advisor → Dean
 Technician → Advisor → Dean
 Advisor → Dean
 Dean → immediately approved after availability validation
 ```
 
-Technicians and Deans can add or edit PC inventory, specifications, operational status, and maintenance notes. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history. Only Deans can manage user roles and Advisor assignments.
+Technicians and Deans can add or edit PC inventory, specifications, operational status, and maintenance notes. Setting a PC to `maintenance` or `inactive` prevents new bookings without deleting its history. Only Deans can manage user roles.
 
 Every role may cancel only its own active booking before it starts. `cancel_booking` requires a 5–2000 character reason, records the requester and cancellation time, and releases the interval.
 
@@ -110,7 +99,7 @@ Deploy migrations through `20260925000100_add_account_deletion.sql` before testi
 - Application tables deny anonymous access.
 - Every role sees its own private booking records.
 - Technicians see Student requests at the technical-review stage and their technical-review history.
-- Advisors additionally see bookings for assigned Students.
+- Advisors additionally see Student requests that name them, once those requests reach Advisor review.
 - Deans see final-review records and all profiles required for user management.
 - Shared calendar RPC output contains occupancy data but no Student identity, purpose, or rejection details.
 - Booking, approval, rejection, cancellation, user-management, relationship-management, and PC-management functions derive the actor from `auth.uid()`.

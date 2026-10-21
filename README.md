@@ -22,7 +22,7 @@ The production foundation is implemented locally:
 - role-aware Technician/Advisor/Dean review and administration boundaries
 - reason-required cancellation of any role's own active future booking
 - recoverable account soft deactivation with a seven-day self-service reactivation window
-- Advisor advisee management, Technician/Dean PC management, and Dean user management
+- per-booking Advisor selection for Student requests, Technician/Dean PC management, and Dean user management
 - Sanitized shared calendar data and immutable approval history
 - Database and frontend automated checks
 
@@ -54,7 +54,7 @@ Use the local project URL and publishable key printed by `supabase status` in `a
 npm run dev --prefix app
 ```
 
-See [supabase/README.md](supabase/README.md) for Google redirect configuration, hosted deployment, trusted roles, and Advisor assignment.
+See [supabase/README.md](supabase/README.md) for Google redirect configuration, hosted deployment, trusted roles, and Advisor selection.
 
 ## Checks
 

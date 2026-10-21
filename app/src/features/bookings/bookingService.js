@@ -89,6 +89,23 @@ const bookingSelect = `
   pc:pcs!pc_id(code, room)
 `
 
+export function mapAdvisorRow(row) {
+  return { id: row.id, name: row.display_name }
+}
+
+export function buildCreateBookingParams(input, pc) {
+  return {
+    p_pc_id: pc.databaseId,
+    p_start_date: input.startDate,
+    p_end_date: input.endDate,
+    p_start_time: input.startTime || null,
+    p_end_time: input.endTime || null,
+    p_purpose: input.purpose,
+    p_course: input.course || null,
+    p_advisor_id: input.advisorId || null,
+  }
+}
+
 export async function getBookings() {
   const { data, error } = await requireSupabase()
     .from('bookings')
@@ -109,18 +126,16 @@ export async function getCalendarBookings(startDate, endDate) {
   return data.map(mapCalendarRow)
 }
 
+export async function getBookingAdvisors() {
+  const { data, error } = await requireSupabase().rpc('list_booking_advisors')
+  if (error) throw new Error(error.message)
+  return data.map(mapAdvisorRow)
+}
+
 export async function createBooking(input, pc) {
   if (!pc?.databaseId) throw new Error('The selected PC could not be found.')
 
-  const { data, error } = await requireSupabase().rpc('create_booking', {
-    p_pc_id: pc.databaseId,
-    p_start_date: input.startDate,
-    p_end_date: input.endDate,
-    p_start_time: input.startTime || null,
-    p_end_time: input.endTime || null,
-    p_purpose: input.purpose,
-    p_course: input.course || null,
-  })
+  const { data, error } = await requireSupabase().rpc('create_booking', buildCreateBookingParams(input, pc))
 
   if (error) throw new Error(error.message)
   return data

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mapBookingRow, mapCalendarRow } from './bookingService.js'
+import { buildCreateBookingParams, mapAdvisorRow, mapBookingRow, mapCalendarRow } from './bookingService.js'
 import {
   bookingOccursOnDate,
   formatBookingDateRange,
@@ -156,4 +156,38 @@ test('does not allow cancellation after the booking starts or after it closes', 
 
   assert.equal(isBookingCancellable(booking, { id: 'requester-1', role: 'advisor' }, '2026-09-24T03:00:00.000Z'), false)
   assert.equal(isBookingCancellable({ ...booking, status: 'cancelled' }, { id: 'requester-1', role: 'advisor' }, '2026-09-24T02:00:00.000Z'), false)
+})
+
+test('sends the selected Advisor with a booking request', () => {
+  const params = buildCreateBookingParams({
+    startDate: '2099-01-10',
+    endDate: '2099-01-10',
+    startTime: '09:00',
+    endTime: '10:00',
+    purpose: 'Capstone integration tests',
+    course: '',
+    advisorId: 'advisor-uuid',
+  }, { databaseId: 'pc-uuid' })
+
+  assert.deepEqual(params, {
+    p_pc_id: 'pc-uuid',
+    p_start_date: '2099-01-10',
+    p_end_date: '2099-01-10',
+    p_start_time: '09:00',
+    p_end_time: '10:00',
+    p_purpose: 'Capstone integration tests',
+    p_course: null,
+    p_advisor_id: 'advisor-uuid',
+  })
+  assert.equal('p_requester_id' in params, false)
+})
+
+test('sends no Advisor when none is selected so the database can reject Student requests', () => {
+  const params = buildCreateBookingParams({ startDate: '2099-01-10', endDate: '2099-01-12', purpose: 'Remote training run', advisorId: '' }, { databaseId: 'pc-uuid' })
+  assert.equal(params.p_advisor_id, null)
+  assert.equal(params.p_start_time, null)
+})
+
+test('maps the Advisor listing to dropdown options', () => {
+  assert.deepEqual(mapAdvisorRow({ id: 'advisor-uuid', display_name: 'Advisor One' }), { id: 'advisor-uuid', name: 'Advisor One' })
 })

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(108);
+select plan(106);
 
 select throws_ok(
   $$
@@ -170,10 +170,6 @@ set university_id = case
       when id = '10000000-0000-0000-0000-000000000001' then '65315001'
       when id = '10000000-0000-0000-0000-000000000002' then '65315002'
       else university_id
-    end,
-    advisor_id = case
-      when id = '10000000-0000-0000-0000-000000000001' then '20000000-0000-0000-0000-000000000001'::uuid
-      else advisor_id
     end;
 
 select is(
@@ -196,14 +192,9 @@ select is(
   'dean',
   'allowlisted Dean receives the trusted role'
 );
-select throws_ok(
-  $$
-    update public.profiles
-    set advisor_id = '10000000-0000-0000-0000-000000000001'
-    where id = '10000000-0000-0000-0000-000000000002'
-  $$,
-  'Assigned advisor must have the Advisor role.',
-  'profile integrity rejects an Advisor assignment to a non-Advisor'
+select hasnt_column(
+  'public', 'profiles', 'advisor_id',
+  'Student profiles no longer store a permanent Advisor assignment'
 );
 
 set local role anon;
@@ -239,8 +230,8 @@ select set_config(
 select is((select count(*) from public.pcs), 10::bigint, 'authenticated students can read PC inventory');
 select is(
   (select count(*) from public.profiles),
-  2::bigint,
-  'Student can read only their profile and assigned Advisor profile'
+  1::bigint,
+  'Student without bookings can read only their own profile'
 );
 select throws_ok(
   $$ update public.profiles set role = 'dean' where id = '10000000-0000-0000-0000-000000000001' $$,
@@ -322,10 +313,11 @@ select lives_ok(
       '09:00',
       '11:00',
       'Database security integration test',
-      'SE Test'
+      'SE Test',
+      '20000000-0000-0000-0000-000000000001'
     )
   $$,
-  'assigned Student can create a valid booking'
+  'Student can create a valid booking with a selected Advisor'
 );
 select is(
   (select status::text from public.bookings where requester_id = '10000000-0000-0000-0000-000000000001'),
@@ -341,7 +333,8 @@ select throws_ok(
       '10:00',
       '12:00',
       'Overlapping database integration test',
-      'SE Test'
+      'SE Test',
+      '20000000-0000-0000-0000-000000000001'
     )
   $$,
   'This PC is unavailable during the selected time.',
@@ -382,12 +375,12 @@ select throws_ok(
       date '2099-01-10',
       '09:00',
       '11:00',
-      'Request without an assigned advisor',
+      'Request without a selected advisor',
       'SE Test'
     )
   $$,
-  'Your account does not have an assigned advisor yet.',
-  'unassigned Student cannot create a booking'
+  'Select an Advisor to review this booking request.',
+  'Student cannot create a booking without selecting an Advisor'
 );
 
 select set_config(
@@ -395,11 +388,11 @@ select set_config(
   '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
   true
 );
-select is((select count(*) from public.bookings), 0::bigint, 'unassigned Advisor cannot read another Advisor request');
+select is((select count(*) from public.bookings), 0::bigint, 'Advisor not selected on a request cannot read it');
 select throws_ok(
   $$ select public.approve_booking((select id from public.get_booking_calendar(date '2099-01-10', date '2099-01-10') limit 1)) $$,
   'You cannot approve this request at its current stage.',
-  'unassigned Advisor cannot approve another Advisor request'
+  'Advisor not selected on a request cannot approve it'
 );
 
 select set_config(
@@ -420,7 +413,7 @@ select set_config(
   '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
 );
-select is((select count(*) from public.bookings), 0::bigint, 'assigned Advisor cannot read a request before Technician approval');
+select is((select count(*) from public.bookings), 0::bigint, 'selected Advisor cannot read a request before Technician approval');
 select set_config(
   'request.jwt.claims',
   '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
@@ -440,10 +433,10 @@ select set_config(
   '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
   true
 );
-select is((select count(*) from public.bookings), 1::bigint, 'assigned Advisor can read the Technician-approved request');
+select is((select count(*) from public.bookings), 1::bigint, 'selected Advisor can read the Technician-approved request');
 select lives_ok(
   $$ select public.approve_booking((select id from public.bookings limit 1)) $$,
-  'assigned Advisor can approve the request'
+  'selected Advisor can approve the request'
 );
 select is((select status::text from public.bookings limit 1), 'pending_dean', 'Advisor approval advances to Dean review');
 select is((select count(*) from public.approval_events), 2::bigint, 'Advisor decision creates an audit event');
@@ -509,7 +502,8 @@ select lives_ok(
       '13:00',
       '15:00',
       'Rejection workflow integration test',
-      'SE Test'
+      'SE Test',
+      '20000000-0000-0000-0000-000000000001'
     )
   $$,
   'Student can create a second non-conflicting request'
@@ -537,7 +531,7 @@ select throws_ok(
 );
 select lives_ok(
   $$ select public.reject_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-02')), 'PC requires maintenance before this session.') $$,
-  'assigned Advisor can reject a pending request'
+  'selected Advisor can reject a pending request'
 );
 select is(
   (select status::text from public.bookings where pc_id = (select id from public.pcs where code = 'PC-02')),
@@ -559,29 +553,12 @@ select lives_ok(
       date '2099-01-10',
       '09:00',
       '11:00',
-      'Advisor reassignment integration test',
-      'SE Test'
+      'Different Advisor integration test',
+      'SE Test',
+      '20000000-0000-0000-0000-000000000002'
     )
   $$,
-  'Student can create a request before changing Advisors'
-);
-select set_config(
-  'request.jwt.claims',
-  '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
-  true
-);
-select lives_ok(
-  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', null) $$,
-  'current Advisor can release a Student with an unresolved request'
-);
-select set_config(
-  'request.jwt.claims',
-  '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
-  true
-);
-select lives_ok(
-  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002') $$,
-  'another Advisor can claim the released Student'
+  'Student can select a different Advisor for another booking'
 );
 reset role;
 select is(
@@ -591,9 +568,27 @@ select is(
     where pc_id = (select id from public.pcs where code = 'PC-06')
   ),
   '20000000-0000-0000-0000-000000000002'::uuid,
-  'unresolved Student request moves to the newly assigned Advisor'
+  'the selected Advisor is stored on the new booking'
+);
+select is(
+  (
+    select count(distinct advisor_id)
+    from public.bookings
+    where requester_id = '10000000-0000-0000-0000-000000000001'
+  ),
+  2::bigint,
+  'bookings by the same Student keep their own Advisors'
 );
 set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$ select public.approve_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06'))) $$,
+  'Technician can advance the request addressed to the other Advisor'
+);
 select set_config(
   'request.jwt.claims',
   '{"sub":"20000000-0000-0000-0000-000000000001","role":"authenticated"}',
@@ -602,16 +597,7 @@ select set_config(
 select is(
   (select count(*) from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06')),
   0::bigint,
-  'previous Advisor loses access to the reassigned unresolved request'
-);
-select set_config(
-  'request.jwt.claims',
-  '{"sub":"15000000-0000-0000-0000-000000000001","role":"authenticated"}',
-  true
-);
-select lives_ok(
-  $$ select public.approve_booking((select id from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06'))) $$,
-  'Technician can advance the reassigned Student request'
+  'an Advisor who was not selected cannot read the request'
 );
 select set_config(
   'request.jwt.claims',
@@ -621,7 +607,7 @@ select set_config(
 select is(
   (select count(*) from public.bookings where pc_id = (select id from public.pcs where code = 'PC-06') and status = 'pending_advisor'),
   1::bigint,
-  'new Advisor receives the reassigned request after Technician approval'
+  'the selected Advisor receives the request after Technician approval'
 );
 
 select set_config(
@@ -677,19 +663,15 @@ select set_config(
   '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated"}',
   true
 );
-select lives_ok(
-  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002') $$,
-  'Advisor can assign an unassigned Student to themselves'
-);
-select is(
-  (select advisor_id from public.profiles where id = '10000000-0000-0000-0000-000000000002'),
-  '20000000-0000-0000-0000-000000000002'::uuid,
-  'Advisor assignment is persisted'
+select hasnt_function(
+  'public', 'assign_student_advisor',
+  'the Student-to-Advisor assignment RPC is removed'
 );
 select throws_ok(
-  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001') $$,
-  'Advisors can assign Students only to themselves.',
-  'Advisor cannot directly hand an advisee to another Advisor'
+  $$ select public.assign_student_advisor('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002') $$,
+  '42883',
+  null,
+  'Advisors can no longer call the removed assignment RPC'
 );
 select throws_ok(
   $$ select public.set_user_role('10000000-0000-0000-0000-000000000002', 'dean') $$,
@@ -765,7 +747,7 @@ select set_config(
 select lives_ok(
   $$
     select public.create_booking(
-      (select id from public.pcs where code = 'PC-04'),
+      (select id from public.pcs where code = 'PC-07'),
       date '2099-01-10',
       date '2099-01-10',
       '09:00',

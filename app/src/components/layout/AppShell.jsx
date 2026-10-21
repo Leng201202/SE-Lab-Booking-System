@@ -35,7 +35,6 @@ function useRoleNavigation(t) {
       { label: t('nav.myBookings'), to: '/bookings', icon: BookOpenCheck },
       { label: t('nav.pendingRequests'), to: '/requests/pending', icon: ClipboardCheck },
       { label: t('nav.requestHistory'), to: '/requests/history', icon: History },
-      { label: t('nav.manageAdvisees'), to: '/manage/advisees', icon: Users },
       { label: t('nav.pcInventory'), to: '/pcs', icon: MonitorCog },
       { label: t('nav.calendar'), to: '/calendar', icon: CalendarDays },
       { label: t('nav.profile'), to: '/profile', icon: CircleUserRound },

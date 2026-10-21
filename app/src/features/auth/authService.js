@@ -45,10 +45,9 @@ export async function reactivateMyAccount() {
 }
 
 export async function getCurrentProfile(userId) {
-  const supabase = requireSupabase()
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('profiles')
-    .select('id, email, display_name, university_id, role, advisor_id, is_deactivated, deletion_requested_at')
+    .select('id, email, display_name, university_id, role, is_deactivated, deletion_requested_at')
     .eq('id', userId)
     .maybeSingle()
 
@@ -57,26 +56,12 @@ export async function getCurrentProfile(userId) {
     throw new Error('Your Google account is authenticated, but its application profile is missing. Deploy the latest Supabase migrations and sign in again.')
   }
 
-  let advisorName = null
-  if (data.advisor_id) {
-    const { data: advisor, error: advisorError } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', data.advisor_id)
-      .maybeSingle()
-
-    if (advisorError) throw advisorError
-    advisorName = advisor?.display_name || null
-  }
-
   return {
     id: data.id,
     email: data.email,
     name: data.display_name,
     studentId: data.university_id,
     role: data.role,
-    advisorId: data.advisor_id,
-    advisor: advisorName,
     department: 'School of Applied Digital Technology',
     isDeactivated: data.is_deactivated,
     deletionRequestedAt: data.deletion_requested_at,

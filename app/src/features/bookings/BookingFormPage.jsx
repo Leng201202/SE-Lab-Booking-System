@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
-import { ArrowLeft, CalendarDays, Clock3, IdCard, Info, Monitor, Wifi } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock3, IdCard, Info, Monitor, RotateCcw, Wifi } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -16,8 +16,9 @@ import {
   getBangkokDateKey,
   getEarliestBookableTime,
 } from '../../utils/booking'
+import { useBookingAdvisors } from './useBookingAdvisors'
 
-function createBookingSchema(t) {
+function createBookingSchema(t, requiresAdvisor) {
   return z
     .object({
       pcId: z.string().min(1, t('form.pcRequired')),
@@ -30,8 +31,12 @@ function createBookingSchema(t) {
       endTime: z.string().optional(),
       purpose: z.string().trim().min(5, t('form.purposeMinError')),
       course: z.string().optional(),
+      advisorId: z.string().optional(),
     })
     .superRefine((data, context) => {
+      if (requiresAdvisor && !data.advisorId) {
+        context.addIssue({ code: 'custom', message: t('form.advisorRequired'), path: ['advisorId'] })
+      }
       if (data.startDate && data.endDate && data.startDate > data.endDate) {
         context.addIssue({ code: 'custom', message: t('form.endDateOrderError'), path: ['endDate'] })
         return
@@ -92,8 +97,12 @@ export function BookingFormPage() {
     endTime: fromCalendar ? requestedEnd : '',
     purpose: '',
     course: '',
+    advisorId: '',
   }
-  const bookingSchema = useMemo(() => createBookingSchema(t), [t])
+  const requiresAdvisor = user.role === 'student'
+  const { advisors, loading: advisorsLoading, error: advisorsError, retry: retryAdvisors } = useBookingAdvisors(requiresAdvisor)
+  const advisorsUnavailable = requiresAdvisor && (advisorsLoading || Boolean(advisorsError) || !advisors.length)
+  const bookingSchema = useMemo(() => createBookingSchema(t, requiresAdvisor), [t, requiresAdvisor])
   const {
     register,
     handleSubmit,
@@ -212,6 +221,27 @@ export function BookingFormPage() {
                   {noTimesRemaining && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 sm:col-span-2">{t('form.noTimesRemainError')}</div>}
                 </>
               )}
+              {requiresAdvisor && (
+                <div className="space-y-3 sm:col-span-2">
+                  <Field
+                    label={t('form.advisor')}
+                    required
+                    error={errors.advisorId?.message}
+                    hint={advisorsLoading ? t('form.advisorsLoading') : !advisorsError && !advisors.length ? t('form.noAdvisorsAvailable') : t('form.advisorHint')}
+                  >
+                    <Select disabled={advisorsUnavailable} {...register('advisorId')}>
+                      <option value="">{advisorsLoading ? t('form.advisorsLoading') : t('form.selectAdvisor')}</option>
+                      {advisors.map((advisor) => <option key={advisor.id} value={advisor.id}>{advisor.name}</option>)}
+                    </Select>
+                  </Field>
+                  {advisorsError && (
+                    <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between" role="alert">
+                      <p>{t('form.advisorsLoadError')}</p>
+                      <Button type="button" size="sm" variant="secondary" onClick={retryAdvisors}><RotateCcw size={16} />{t('form.retry')}</Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <Field label={t('common.purpose')} required error={errors.purpose?.message} hint={t('form.purposeHint')}>
               <Textarea placeholder={t('form.purposePlaceholder')} {...register('purpose')} />
@@ -224,7 +254,7 @@ export function BookingFormPage() {
             )}
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-between">
               <Link className="block w-full sm:w-auto" to={fromCalendar ? '/calendar' : '/dashboard'}><Button className="w-full sm:w-auto" type="button" variant="ghost"><ArrowLeft size={17} />{fromCalendar ? t('form.backToCalendar') : t('common.cancel')}</Button></Link>
-              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday || missingStudentId}>{t('form.submitRequest')}</Button>
+              <Button className="w-full sm:w-auto" type="submit" disabled={isSubmitting || noTimesRemaining || multiDayStartsToday || missingStudentId || advisorsUnavailable}>{t('form.submitRequest')}</Button>
             </div>
           </form>
         </Card>

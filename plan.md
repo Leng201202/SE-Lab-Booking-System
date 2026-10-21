@@ -37,7 +37,7 @@ Users should always be able to understand the requested PC and time, access mode
 - Google OAuth sign-in and callback routes
 - restored Supabase sessions and trusted profile loading
 - role-specific Student, Technician, Advisor, and Dean navigation
-- dashboards, booking form/history/detail and requester cancellation, review queues, PC inventory/management, user/advisee management, profile, and calendar
+- dashboards, booking form/history/detail and requester cancellation, review queues, PC inventory/management, Dean user management, per-booking Advisor selection, profile, and calendar
 - one-day lab and multi-day remote booking experiences
 - loading, empty, mutation, configuration, and authentication error states
 - Profile danger zone, immediate sign-out after deactivation, and a seven-day self-service reactivation screen
@@ -53,7 +53,7 @@ Users should always be able to understand the requested PC and time, access mode
 - collision-safe 10-digit Student ID extraction from Lamduan email plus a Student-only manual-entry RPC for other accounts
 - explicit grants plus RLS on exposed tables
 - role-aware booking creation, approval, rejection, requester cancellation, inventory-management, and user-management RPCs
-- database validation for dates, lab hours, remote ranges, PC state, purpose, Advisor assignment, and workflow stage
+- database validation for dates, lab hours, remote ranges, PC state, purpose, selected Advisor eligibility, and workflow stage
 - half-open booking intervals with an exclusion constraint preventing concurrent active overlaps
 - indexed foreign keys and role/query access paths
 - sanitized shared calendar occupancy without private Student fields
@@ -62,7 +62,7 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 122 pgTAP assertions across the booking/security and account-deactivation files cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, pending-request Advisor reassignment, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, reactivation-window behavior, and audit behavior; the expanded suite awaits database execution
+- 147 pgTAP assertions across the booking/security, account-deactivation, and Advisor-selection files cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, per-booking Advisor selection and eligibility, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, reactivation-window behavior, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
 - frontend ESLint, eight Node tests, translation-key parity, and the production Vite build pass with the account-deactivation UI
 
@@ -121,10 +121,10 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 - A verified Google identity creates a profile.
 - Every new user receives `student`; a privileged administrator may promote the existing profile afterward.
 - Technician, Advisor, and Dean roles never come from the browser.
-- Students require an Advisor assignment before booking; Advisors may manage their own advisee list and Deans may manage all assignments.
-- When a released Student is assigned to a new Advisor, unresolved requests still at Technician or Advisor review move atomically to that new Advisor; decided and final-stage history retains its original Advisor attribution.
+- Students have no permanent Advisor. Each Student booking request selects an eligible Advisor, stored on the booking; different requests may name different Advisors.
+- Bookings created before per-booking selection keep the Advisor they were created with; the former profile assignments are archived privately.
 - Technicians, Advisors, and Deans may also request PCs. Technician requests begin at Advisor review, Advisor requests begin at Dean review, and Dean requests are approved immediately when availability validation succeeds.
-- Technicians and Deans manage PC inventory, including specification, operational status, and maintenance notes; only Deans manage user roles and Advisor assignments.
+- Technicians and Deans manage PC inventory, including specification, operational status, and maintenance notes; only Deans manage user roles.
 - Users cannot promote themselves or change protected profile relationships.
 - A user may mark their own profile deactivated and reactivate it within seven days. This currently gates the React workspace and profile writes, but it does not yet revoke the Supabase session or deny every RLS path and RPC.
 
@@ -133,8 +133,8 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 - Anonymous access to application data is denied.
 - Every user sees their own private bookings.
 - Technicians see and review Student bookings at the technical stage.
-- Advisors additionally see and review their assigned Students' bookings and can manage only unassigned or already assigned-to-self Students.
-- Deans see all users, manage trusted roles and Advisor assignments, manage PCs, and see requests needed for final review.
+- Advisors additionally see and review Student requests that name them.
+- Deans see all users, manage trusted roles, manage PCs, and see requests needed for final review.
 - Calendar consumers receive occupied periods and safe display fields, not identity, purpose, course, or rejection details.
 - Frontend guards tailor navigation; PostgreSQL is authoritative.
 
@@ -151,7 +151,7 @@ Dean: new request → approved; own active future request → cancelled
 
 `pending_technician`, `pending_advisor`, `pending_dean`, and `approved` block availability. `rejected`, `cancelled`, and `completed` do not.
 
-One-day in-lab requests use `08:00–18:00` bounds. On the current Bangkok date, the form and calendar advance to the next valid 15-minute slot and make elapsed slots read-only. Multi-day requests use remote access, reserve each included day continuously, and must begin on a future date. The future-start trigger rejects stale creation and approval attempts; the database also rejects unavailable PCs, invalid intervals, short purposes, missing Advisor assignments, wrong-stage actions, and overlaps.
+One-day in-lab requests use `08:00–18:00` bounds. On the current Bangkok date, the form and calendar advance to the next valid 15-minute slot and make elapsed slots read-only. Multi-day requests use remote access, reserve each included day continuously, and must begin on a future date. The future-start trigger rejects stale creation and approval attempts; the database also rejects unavailable PCs, invalid intervals, short purposes, missing or ineligible Student Advisor selections, wrong-stage actions, and overlaps.
 
 Students, Technicians, Advisors, and Deans may cancel only their own active booking before its start instant. Cancellation requires a trimmed reason of 5–2000 characters and records the requester and cancellation time atomically; the cancelled interval immediately stops blocking availability. Automatic completion is not yet implemented.
 
@@ -162,7 +162,6 @@ Public:       /login, /auth/callback
 Shared:       /dashboard, /calendar, /bookings/:id, /profile
 All roles:    /book, /bookings, /pcs
 Reviewers:    /requests/pending, /requests/history (Technician, Advisor, Dean)
-Advisor:      /manage/advisees
 Dean only:    /admin/users
 PC managers:  /admin/pcs (Technician, Dean)
 ```
@@ -178,7 +177,7 @@ The hosted Supabase project and Google provider are active, and Google sign-in h
 5. Confirm Vercel uses the hosted project URL and publishable key, then redeploy after environment changes.
 6. Verify Google sign-in, session restoration, sign-out, role-scoped views, callback errors, and direct route refreshes from the production Vercel origin.
 7. After each intended Technician/Advisor/Dean signs in once as Student, promote them through protected administration.
-8. Use the Advisor advisee screen or Dean user-management screen to assign Students, then verify the resulting visibility boundaries.
+8. Create Student requests naming different Advisors, then verify each Advisor's visibility and review boundaries.
 9. Complete Priority 0 security items H1–H6, including B24–B28 and B38.
 10. Verify deactivation, in-window reactivation, expired recovery, active-booking disposition, and direct API denial for every role.
 11. Run authenticated role-adversary, two-client overlap, booking-abuse, and full production smoke tests before launch.
@@ -188,7 +187,7 @@ Open institutional decisions:
 - allowed university Google email domain or explicit account policy
 - initial Technician, Advisor, and Dean email addresses
 - production origin and supported preview origins
-- operational owner for role and Advisor assignments
+- operational owner for role management
 - privacy owner for recovery, retention, active-booking disposition, and deletion/pseudonymization requests
 
 ## Security-hardening workstream
@@ -207,9 +206,9 @@ The security review, updated 26 September 2026, found no confirmed critical remo
 
 ### Priority 1 — defense in depth and accountability
 
-1. Append immutable audit events for role changes, Advisor assignments, PC creation/status changes, and account suspension.
+1. Append immutable audit events for role changes, PC creation/status changes, and account suspension.
 2. Add a production Content Security Policy, clickjacking protection, MIME-sniffing protection, referrer policy, and permissions policy in `vercel.json`.
-3. Minimize calendar output for unrelated users and review whether all Advisors should see every unassigned Student's email and university ID.
+3. Minimize calendar output for unrelated users.
 4. Close the PC-status/booking concurrency window with a row lock or database invariant.
 5. Add database and edge-level abuse monitoring for repeated invalid RPC calls, excessive booking attempts, and privileged changes.
 
@@ -240,11 +239,11 @@ The local production foundation is accepted when:
 - migrations and seed rebuild from an empty database
 - anonymous and cross-user reads are denied
 - users cannot self-promote
-- Technicians act only at `pending_technician`; Advisors cannot review unassigned Student requests or perform Dean actions
-- Advisors can manage only unassigned Students or their own advisees
+- Technicians act only at `pending_technician`; Advisors cannot review Student requests that name another Advisor or perform Dean actions
+- Students must select an eligible Advisor for every request and need no prior assignment
 - Deans cannot bypass the final-review stage for Student, Technician, or Advisor requests; their own bookings use the explicit validated direct-approval path
-- Student bookings pass Technician, assigned Advisor, and Dean review in order; Technician bookings begin at Advisor review; Advisor bookings begin at Dean review; Dean bookings become approved only after availability checks
-- unresolved Student requests follow a newly assigned Advisor without rewriting completed or already-reviewed history
+- Student bookings pass Technician, selected Advisor, and Dean review in order; Technician bookings begin at Advisor review; Advisor bookings begin at Dean review; Dean bookings become approved only after availability checks
+- each booking keeps its own Advisor attribution
 - only Deans can change roles; only Technicians and Deans can create/update PC inventory
 - overlapping active bookings cannot both succeed
 - Every role can cancel only its own active future bookings, must provide a valid reason, and cannot cancel another user's, started, rejected, completed, or already-cancelled booking

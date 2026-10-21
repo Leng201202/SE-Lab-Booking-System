@@ -210,7 +210,7 @@ export function ProfilePage() {
           )}
           <div className="flex min-w-0 gap-3"><Mail className="mt-0.5 shrink-0 text-slate-400" size={18} /><div className="min-w-0"><p className="text-xs text-slate-400">{t('common.email')}</p><p className="mt-1 break-all text-sm font-semibold text-slate-800">{user.email}</p></div></div>
           <div className="flex min-w-0 gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-slate-400" size={18} /><div className="min-w-0"><p className="text-xs text-slate-400">{t('common.role')}</p><p className="mt-1 text-sm font-semibold text-slate-800">{translatedRoleLabel(t, user.role)}</p></div></div>
-          <div className="flex min-w-0 gap-3"><Building2 className="mt-0.5 shrink-0 text-slate-400" size={18} /><div className="min-w-0"><p className="text-xs text-slate-400">{t('profile.schoolAdvisor')}</p><p className="mt-1 break-words text-sm font-semibold text-slate-800">{user.role === 'student' ? (user.advisor ? t('profile.advisorNamed', { name: user.advisor }) : t('profile.advisorNotAssigned')) : user.department}</p></div></div>
+          <div className="flex min-w-0 gap-3"><Building2 className="mt-0.5 shrink-0 text-slate-400" size={18} /><div className="min-w-0"><p className="text-xs text-slate-400">{t('profile.school')}</p><p className="mt-1 break-words text-sm font-semibold text-slate-800">{user.department}</p></div></div>
         </div>
       </Card>
       {isStudent && studentIdEditorOpen && <StudentIdEditor onClose={() => setStudentIdEditorOpen(false)} />}

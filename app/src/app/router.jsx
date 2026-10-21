@@ -14,7 +14,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { PcListPage } from '../features/pcs/PcListPage'
 import { PcManagementPage } from '../features/pcs/PcManagementPage'
 import { LegalPage } from '../features/legal/LegalPage'
-import { AdviseeManagementPage, UserManagementPage } from '../features/users/UserManagementPage'
+import { UserManagementPage } from '../features/users/UserManagementPage'
 import { useApp } from './AppContext'
 
 function RequireSession() {
@@ -35,11 +35,6 @@ function FullPageStatus({ message, action }) {
       </Card>
     </main>
   )
-}
-
-function AdvisorOnly({ children }) {
-  const { user } = useApp()
-  return user?.role === 'advisor' ? children : <Navigate to="/dashboard" replace />
 }
 
 function DeanOnly({ children }) {
@@ -79,7 +74,6 @@ export const router = createBrowserRouter([
       { path: '/requests/pending', element: <ReviewerOnly><PendingRequestsPage /></ReviewerOnly> },
       { path: '/requests/history', element: <ReviewerOnly><ApprovalHistoryPage /></ReviewerOnly> },
       { path: '/pcs', element: <PcListPage /> },
-      { path: '/manage/advisees', element: <AdvisorOnly><AdviseeManagementPage /></AdvisorOnly> },
       { path: '/admin/users', element: <DeanOnly><UserManagementPage /></DeanOnly> },
       { path: '/admin/pcs', element: <PcManagerOnly><PcManagementPage /></PcManagerOnly> },
       { path: '/calendar', element: <CalendarPage /> },
