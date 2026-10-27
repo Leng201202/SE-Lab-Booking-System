@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-As of 26 September 2026, the Supabase production foundation is implemented and Google sign-in has been verified from the local frontend against the hosted project. The previous browser-only demo storage and fake role switching have been removed. Self-service account deactivation and seven-day reactivation are implemented, but permanent deletion and database-wide denial for deactivated sessions remain release-blocking work.
+As of 28 October 2026, the Supabase production foundation is implemented and Google sign-in has been verified from the local frontend against the hosted project. The previous browser-only demo storage and fake role switching have been removed. Per-booking Advisor selection and 90-day self-service account reactivation are implemented, but permanent deletion and database-wide denial for deactivated sessions remain release-blocking work.
 
 ```text
 Responsive React UI: implemented
@@ -21,7 +21,7 @@ Security hardening: assessed; high-priority remediation planned
 Replace the manual laboratory equipment request process with a clear, secure workflow:
 
 ```text
-Student request → Technician review → Advisor review → Dean review → Approved PC booking
+Student request → Technician review → selected Advisor review → Dean review → Approved PC booking
 Technician request → Advisor review → Dean review → Approved PC booking
 Advisor request → Dean review → Approved PC booking
 Dean request → Approved immediately when the PC is available
@@ -40,7 +40,7 @@ Users should always be able to understand the requested PC and time, access mode
 - dashboards, booking form/history/detail and requester cancellation, review queues, PC inventory/management, Dean user management, per-booking Advisor selection, profile, and calendar
 - one-day lab and multi-day remote booking experiences
 - loading, empty, mutation, configuration, and authentication error states
-- Profile danger zone, immediate sign-out after deactivation, and a seven-day self-service reactivation screen
+- Profile danger zone, immediate sign-out after deactivation, and a 90-day self-service reactivation screen
 - responsive desktop and mobile layouts
 
 ### Backend
@@ -62,9 +62,9 @@ Users should always be able to understand the requested PC and time, access mode
 ### Verification
 
 - clean local database rebuild from migration and seed
-- 147 pgTAP assertions across the booking/security, account-deactivation, and Advisor-selection files cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, per-booking Advisor selection and eligibility, future-start enforcement, requester cancellation, management permissions, relationship integrity, privacy, overlap, Google profile provisioning, reactivation-window behavior, and audit behavior; the expanded suite awaits database execution
+- 147 pgTAP assertions across the booking/security, account-deactivation, and Advisor-selection files cover allow/deny, all four booking paths, three-stage Student review, Student ID extraction/update/collision handling, per-booking Advisor selection and eligibility, future-start enforcement, requester cancellation, management permissions, reviewer-attribution integrity, privacy, overlap, Google profile provisioning, reactivation-window behavior, and audit behavior; the expanded suite awaits database execution
 - prior Supabase foundation schema lint passed; expanded migrations await linked/local database lint
-- frontend ESLint, eight Node tests, translation-key parity, and the production Vite build pass with the account-deactivation UI
+- frontend ESLint, 11 Node tests, translation-key parity, and the production Vite build pass
 
 ## Architecture
 
@@ -126,7 +126,7 @@ Database identity uses UUIDs; bookings additionally expose human-readable reques
 - Technicians, Advisors, and Deans may also request PCs. Technician requests begin at Advisor review, Advisor requests begin at Dean review, and Dean requests are approved immediately when availability validation succeeds.
 - Technicians and Deans manage PC inventory, including specification, operational status, and maintenance notes; only Deans manage user roles.
 - Users cannot promote themselves or change protected profile relationships.
-- A user may mark their own profile deactivated and reactivate it within seven days. This currently gates the React workspace and profile writes, but it does not yet revoke the Supabase session or deny every RLS path and RPC.
+- A user may mark their own profile deactivated and reactivate it within 90 days. This currently gates the React workspace and profile writes, but it does not yet revoke the Supabase session or deny every RLS path and RPC.
 
 ### Data access
 
@@ -192,7 +192,7 @@ Open institutional decisions:
 
 ## Security-hardening workstream
 
-The security review, updated 26 September 2026, found no confirmed critical remote takeover or role-escalation path. The database foundation already denies anonymous application access, uses RLS, derives actors from `auth.uid()`, keeps roles in protected database state, pins `security definer` search paths, and prevents concurrent active overlaps. The full evidence and account-deactivation limitations are recorded in [`.docs/03-compliance/security-review.md`](.docs/03-compliance/security-review.md).
+The security review, updated 28 October 2026, found no confirmed critical remote takeover or role-escalation path. The database foundation already denies anonymous application access, uses RLS, derives actors from `auth.uid()`, keeps roles in protected database state, pins `security definer` search paths, and prevents concurrent active overlaps. The full evidence and account-deactivation limitations are recorded in [`.docs/03-compliance/security-review.md`](.docs/03-compliance/security-review.md).
 
 ### Priority 0 — required before broad production use
 

@@ -5,7 +5,7 @@
 | Google OAuth | Redirects through Supabase Auth; sessions persist and restore | Implemented; provider deployment configuration required |
 | Trusted roles | Every new Google user starts as Student; Technician/Advisor/Dean require a later protected allowlist update | Done |
 | Student ID capture | A 10-digit Lamduan email ID is filled and locked automatically; other Students use a guarded Profile modal and confirmation before booking | Done; institutional verification of manual values remains planned |
-| Account deactivation and recovery | Any role can soft-deactivate its own profile, is signed out, and can reactivate after Google sign-in within seven days | Implemented; database-wide access denial/session revocation remains B28 |
+| Account deactivation and recovery | Any role can soft-deactivate its own profile, is signed out, and can reactivate after Google sign-in within 90 days | Implemented; database-wide access denial/session revocation remains B28 |
 | Permanent account deletion | Expired deactivated Auth/profile data and related records are deleted or pseudonymized according to approved retention and booking-history rules | Planned (B38); no cleanup job currently exists |
 | Signed-out gate | Visitors see the sign-in page and cannot read application tables or calendar RPC output | Done |
 | Role-specific navigation | Student, Technician, Advisor, and Dean receive appropriate pages and actions | Done |
@@ -17,8 +17,9 @@
 | Multi-day remote request | Continuous full-day reservation over an inclusive future date range | Done |
 | Conflict prevention | PostgreSQL exclusion constraint rejects overlapping active intervals | Done |
 | Own request history/detail | Every role sees its own private records and rejection reasons | Done |
-| Technician review | Technician approves Student requests to the assigned Advisor or rejects with a reason | Done |
-| Advisor review | Assigned Advisor reviews Technician-approved Student requests; any Advisor may review a Technician request | Done |
+| Student Advisor selection | Student selects an active Advisor on each booking; the choice is stored on that booking, not the profile | Done |
+| Technician review | Technician approves Student requests to the selected Advisor or rejects with a reason | Done |
+| Advisor review | Selected Advisor reviews Technician-approved Student requests; any Advisor may review a Technician request | Done |
 | Technician booking | Skips technical review and begins at pending Advisor | Done |
 | Advisor booking | Skips Advisor review and begins at pending Dean | Done |
 | Dean booking | Immediately approved after PC/rule/conflict validation | Done |
@@ -28,12 +29,12 @@
 | Requester cancellation | Any role owner cancels an active future booking with a required reason; actor/time are recorded and the slot is released | Done |
 | Rebook/edit | Atomically change PC or interval | Planned |
 | Notifications | Email or durable in-app decision notifications | Proposed |
-| Advisor relationship management | Advisor claims unassigned Students or releases own advisees | Done |
-| Pending-request reassignment | A newly assigned Advisor receives unresolved Student requests; reviewed and closed history remains attributed to the original Advisor | Done |
-| Dean user management | View all profiles, change roles, and assign Advisors | Done |
+| Permanent Student–Advisor assignment | Students are not permanently assigned; former assignments are archived privately during migration | Removed |
+| Per-booking Advisor attribution | Each Student booking retains the Advisor selected when the request was created | Done |
+| Dean user management | View all profiles and change trusted roles | Done |
 | Technician/Dean PC management | Add PCs and update room, specification, status, and notes | Done |
 | Realtime refresh | Automatic cross-device refresh | Optional follow-up; current app refetches after mutations |
 
 Database authorization is authoritative. Frontend route guards and disabled controls are usability features only.
 
-The current account control is intentionally described as **soft deactivation**, not completed erasure. After seven days, self-service reactivation is rejected, but the stored account is not automatically removed.
+The current account control is intentionally described as **soft deactivation**, not completed erasure. After 90 days, self-service reactivation is rejected, but the stored account is not automatically removed.

@@ -17,9 +17,9 @@ sequenceDiagram
     W->>P: Load RLS-scoped profile, PCs, and bookings
     P-->>W: Student workspace
 
-    S->>W: Submit PC, dates/time, purpose, course
-    W->>R: create_booking(input)
-    R->>P: Validate actor, Advisor, PC, rules, and active overlap
+    S->>W: Submit PC, dates/time, selected Advisor, purpose, course
+    W->>R: create_booking(input, advisor_id)
+    R->>P: Validate actor, selected Advisor, PC, rules, and active overlap
     alt Invalid or conflicting
         P-->>R: Reject transaction
         R-->>W: Actionable database error
@@ -34,7 +34,7 @@ sequenceDiagram
         W->>P: approve_booking or reject_booking
         P->>P: Lock row, validate stage, update booking, append event
         alt Technician approves
-            V->>W: Review assigned request
+            V->>W: Review request that selected this Advisor
             W->>P: approve_booking or reject_booking
             P->>P: Lock row, validate stage, update booking, append event
             alt Advisor approves

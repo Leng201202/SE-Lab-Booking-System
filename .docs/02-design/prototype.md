@@ -25,7 +25,7 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 - Session and shared workspace state: app/src/app/AppContext.jsx
 - Booking request and detail: app/src/features/bookings/
 - Technician/Advisor/Dean queues: app/src/features/approvals/
-- Advisor advisee and Dean user management: app/src/features/users/
+- Dean user management: app/src/features/users/
 - Technician/Dean PC management: app/src/features/pcs/PcManagementPage.jsx
 - Availability calendar: app/src/features/calendar/
 - Shared Bangkok date/time and next-slot calculation: app/src/utils/booking.js
@@ -45,10 +45,10 @@ Use the local Supabase project URL and publishable key in app/.env.local. See [.
 8. Technician technical-review queue
 9. Advisor pending queue
 10. Dean final review
-11. Profile showing trusted role, Advisor assignment, locked Lamduan Student ID, or manual Student ID edit/confirmation dialogs
+11. Profile showing trusted role, school, locked Lamduan Student ID, or manual Student ID edit/confirmation dialogs
 12. Profile danger zone and account-deactivation confirmation
-13. Account reactivation screen showing the seven-day recovery state
-14. Advisor advisee management
+13. Account reactivation screen showing the 90-day recovery state
+14. Student booking form with required Advisor selection
 15. Dean user management
 16. Technician/Dean PC maintenance editor
 
@@ -59,8 +59,8 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- the database suite defines 122 pgTAP assertions across two files, including Technician workflow/management, Student ID security, Advisor reassignment, cancellation authorization, soft deactivation, and the recovery boundary; the latest migrations still require database execution
-- frontend lint, eight unit tests, and production build
+- the database suite defines 147 pgTAP assertions across three files, including Technician workflow/management, Student ID security, per-booking Advisor selection, cancellation authorization, soft deactivation, and the recovery boundary; the latest migration still requires database execution
+- frontend lint, 11 unit tests, and production build
 - schema lint and dependency audit
 
 External verification still required:
@@ -68,6 +68,6 @@ External verification still required:
 - hosted Supabase migration
 - real Google OAuth redirect
 - production Vercel environment
-- post-first-login role promotions and Advisor assignments
+- post-first-login role promotions and per-booking Advisor selection
 - visual regression on supported browsers and devices
-- direct API denial for deactivated Student, Technician, Advisor, and Dean sessions, plus the approved post-seven-day cleanup process
+- direct API denial for deactivated Student, Technician, Advisor, and Dean sessions, plus the approved post-90-day cleanup process

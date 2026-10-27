@@ -21,10 +21,10 @@ Provide one trusted system that answers:
 
 | Role | Responsibility |
 |---|---|
-| Student | View availability, submit requests, track Technician/Advisor/Dean decisions, and cancel own active future requests with a reason |
+| Student | View availability, select an Advisor per request, track Technician/Advisor/Dean decisions, and cancel own active future requests with a reason |
 | Technician | Perform the first Student review, manage PC inventory/specifications/maintenance, submit requests to Advisor review, and cancel own active future requests |
-| Advisor | Review assigned Students after technical approval plus Technician requests, manage own advisees, submit requests directly to Dean review, and cancel own active future requests |
-| Dean | Give final decisions, reserve and cancel own available-PC bookings, manage users/roles/assignments, and share PC management authority |
+| Advisor | Review Student requests that selected them after technical approval plus Technician requests, submit requests directly to Dean review, and cancel own active future requests |
+| Dean | Give final decisions, reserve and cancel own available-PC bookings, manage users/roles, and share PC management authority |
 | University operator | Bootstrap the first Dean, OAuth settings, and deployment secrets through protected administration |
 
 ## Proposed solution
@@ -33,7 +33,7 @@ Provide one trusted system that answers:
 Google OAuth
 → trusted Supabase profile and role
 → role-aware booking request
-→ Student: Technician, Advisor, then Dean decision
+→ Student: Technician, selected Advisor, then Dean decision
 → Technician: Advisor then Dean decision
 → Advisor: Dean decision
 → Dean: immediate approval after availability validation
@@ -72,12 +72,12 @@ The production foundation is implemented locally:
 - versioned PostgreSQL migration and deterministic PC seed
 - RLS and explicit grants
 - booking, approval, rejection, requester-cancellation, and calendar RPCs
-- protected user/Advisor relationship and PC-management RPCs
+- protected user-role, Advisor-listing, and PC-management RPCs
 - immutable approval events
-- self-service soft deactivation with a seven-day reactivation window; permanent cleanup is not yet implemented
-- 122 pgTAP database assertions across two files, including Technician authorization/workflow, Student ID security, Advisor reassignment, server-side future-start, requester cancellation, and account-recovery coverage, plus eight frontend tests
+- self-service soft deactivation with a 90-day reactivation window; permanent cleanup is not yet implemented
+- 147 pgTAP database assertions across three files, including Technician authorization/workflow, Student ID security, per-booking Advisor selection, server-side future-start, requester cancellation, and account-recovery coverage, plus 11 frontend tests
 
-The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role and Advisor assignments are available in the application.
+The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, deployment of the per-booking Advisor migration, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role changes are available in the application; Students choose an active Advisor on each booking request.
 
 The security review also makes institutional-domain enforcement, privileged MFA, booking anti-abuse limits, trusted university-ID handling, database-enforced account offboarding, and a real post-recovery deletion/pseudonymization process mandatory before broad production use. Administrative audit coverage, production browser headers, data minimization, and concurrency hardening follow as Priority 1 work. See [the security review](../03-compliance/security-review.md) and backlog B24–B38.
 
@@ -89,12 +89,12 @@ In scope:
 - PC availability and operational state
 - role-aware request creation for Students, Technicians, Advisors, and Deans
 - Technician, Advisor, and Dean decisions
-- Technician/Dean PC management, Advisor advisee management, and Dean user administration
+- per-booking Advisor selection for Students, Technician/Dean PC management, and Dean user administration
 - private request history and sanitized calendar occupancy
 - reason-required cancellation of any role's own active future booking
 - one-day lab and multi-day remote reservations
 - database conflict prevention and audit events
-- user-initiated account soft deactivation and seven-day self-service reactivation
+- user-initiated account soft deactivation and 90-day self-service reactivation
 
 Out of scope for this cycle:
 

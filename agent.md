@@ -115,7 +115,7 @@ React route guards improve navigation only. PostgreSQL grants, RLS policies, con
 - Direct table writes cannot bypass ownership or workflow rules.
 - Approval events are append-only application audit records.
 - `request_account_deletion` currently performs soft deactivation only. The React gate and profile-write trigger are not a complete authorization boundary: until B28 is finished, a valid deactivated session may still reach RLS-protected reads or RPCs that do not check account state.
-- Never describe expiry of the seven-day recovery window as permanent erasure until a protected cleanup process has actually removed or pseudonymized the retained Auth/profile and related data.
+- Never describe expiry of the 90-day recovery window as permanent erasure until a protected cleanup process has actually removed or pseudonymized the retained Auth/profile and related data.
 
 Consequential mutations use these database functions:
 

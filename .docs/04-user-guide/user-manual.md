@@ -26,7 +26,7 @@ The system lets members of the Software Engineering lab reserve a lab PC, either
 
 | Who requests | Approval path |
 |---|---|
-| Student | Technician review → Advisor review → Dean review → Approved |
+| Student | Technician review → selected Advisor review → Dean review → Approved |
 | Technician | Advisor review → Dean review → Approved |
 | Advisor | Dean review → Approved |
 | Dean | Approved immediately (if the PC and time are available) |
@@ -57,9 +57,8 @@ The left sidebar shows the pages available for your role. On a phone, tap the **
 | Profile | ✓ | ✓ | ✓ | ✓ | Account details and account-deactivation controls |
 | Pending Requests / Pending Approval | | ✓ | ✓ | ✓ | Requests waiting for your decision |
 | Request History / Approval History | | ✓ | ✓ | ✓ | Requests you have already decided |
-| Manage Advisees | | | ✓ | | Assign or release Students |
 | PC Inventory | | ✓ | ✓ | ✓ | List of lab PCs and their specifications |
-| User Management | | | | ✓ | Change roles and assign Advisors |
+| User Management | | | | ✓ | View users and change roles |
 | PC Management | | ✓ | | ✓ | Add and edit PCs |
 
 ## 4. Booking rules at a glance
@@ -81,12 +80,12 @@ The left sidebar shows the pages available for your role. On a phone, tap the **
 
 ### 5.1 Before your first booking
 
-You must have a **Student ID** and an **assigned Advisor** before you can submit a request.
+You must have a **Student ID** and select an eligible **Advisor** on every booking request.
 
 - For a 10-digit numeric `@lamduan.mfu.ac.th` account, the Student ID is filled automatically from the email address and cannot be changed in the application. Contact the system administrator if the university account is incorrect.
 - Otherwise, open **Profile**, click the **Student ID** row, enter the 10-digit ID from your university record, click **Review Student ID**, and confirm the exact value before saving.
 - To correct a manually entered value, click the same **Student ID** row and complete the confirmation flow again.
-- Check **Profile → School / Advisor**. If it says *Advisor not assigned*, ask your Advisor to assign you in the system (or contact the Dean).
+- Advisors are not permanently assigned on your profile. The booking form shows all active Advisors who are eligible to review the request.
 
 ### 5.2 Check availability on the Calendar
 
@@ -106,9 +105,10 @@ You must have a **Student ID** and an **assigned Advisor** before you can submit
 3. **Start date** and **End date**
    - Same date → one-day in-lab booking. Enter **Start time** and **End time** (08:00–18:00).
    - Different dates → multi-day **24-hour remote reservation**. No times are needed.
-4. **Purpose** — describe what you need the PC for (e.g. *Run the integration tests for our capstone project*).
-5. **Course / Project** — optional (e.g. *SE 498 · Capstone Project*).
-6. Click **Submit booking request**.
+4. **Advisor** — select the Advisor who should review this request. You may select a different Advisor for another booking.
+5. **Purpose** — describe what you need the PC for (e.g. *Run the integration tests for our capstone project*).
+6. **Course / Project** — optional (e.g. *SE 498 · Capstone Project*).
+7. Click **Submit booking request**.
 
 If the request is accepted you will see its detail page with status **Pending Technician**. If it is not accepted, a red **Request not submitted** box explains why (for example, the time conflicts with another booking).
 
@@ -127,7 +127,7 @@ Technicians perform the first review for Student requests and share PC-managemen
 
 1. Open **Pending Requests** and select a Student request at **Pending Technician**.
 2. Check whether the requested workstation and intended use are technically suitable.
-3. **Approve** sends the request to the Student's assigned Advisor; **Reject** requires a reason.
+3. **Approve** sends the request to the Advisor selected by the Student for that booking; **Reject** requires a reason.
 4. Completed decisions appear in **Request History**.
 
 ### 6.2 Your own bookings
@@ -140,30 +140,22 @@ Open **PC Management** to add a workstation or update its room, specification, s
 
 ## 7. Advisor guide
 
-Advisors can do everything a Student can, plus review requests from their advisees.
+Advisors can do everything a Student can, plus review Student requests that selected them and requests submitted by Technicians.
 
-### 7.1 Manage advisees
+### 7.1 Review Student and Technician requests
 
-1. Open **Manage Advisees**.
-2. For an unassigned Student, click **Assign to me**.
-3. To stop advising a Student, click **Release** next to their name.
-
-You can only manage Students who are unassigned or already assigned to you.
-
-### 7.2 Review Student and Technician requests
-
-1. Open **Pending Requests**. Technician-approved requests from assigned Students and requests submitted by Technicians appear here. The Dashboard also shows **Requests requiring attention**.
+1. Open **Pending Requests**. Technician-approved Student requests that selected you and requests submitted by Technicians appear here. The Dashboard also shows **Requests requiring attention**.
 2. Click a request to see the PC, dates, times, purpose, and course.
 3. Choose one:
    - **Approve** — the request moves to **Pending Dean** for final review.
    - **Reject** — enter a **rejection reason** (required) and confirm. The requester will see this reason.
 4. Decided requests appear in **Request History**.
 
-### 7.3 Your own bookings
+### 7.2 Your own bookings
 
 When an Advisor books a PC, the Advisor review step is skipped and the request goes straight to **Pending Dean**.
 
-### 7.4 PC Inventory
+### 7.3 PC Inventory
 
 **PC Inventory** lists every lab PC with its room, specification, and status (Available, Maintenance, Inactive).
 
@@ -185,7 +177,6 @@ A booking made by the Dean is **approved immediately**, as long as the PC is ava
 
 1. Open **User Management**. Totals for Students, Technicians, Advisors, and Deans are shown at the top.
 2. Use the **Role** dropdown to change a user's role (you cannot change your own role).
-3. For Students, use **Assigned Advisor** to assign or change their Advisor.
 
 ### 8.4 PC management
 
@@ -199,11 +190,11 @@ This feature is available to every role.
 
 1. Open **Profile** and find **Danger zone**.
 2. Choose **Delete account**, review the warning, and confirm. The current implementation marks the profile deactivated and signs you out; it does not immediately erase stored records.
-3. To recover the account, sign in with the same Google account within seven days. The recovery screen appears instead of the normal workspace.
+3. To recover the account, sign in with the same Google account within 90 days. The recovery screen appears instead of the normal workspace.
 4. Choose **Reactivate account** to restore access, or log out to leave the account deactivated.
-5. After seven days, self-service reactivation is no longer available. Contact the system/privacy administrator for the approved deletion or rights-request process.
+5. After 90 days, self-service reactivation is no longer available. Contact the system/privacy administrator for the approved deletion or rights-request process.
 
-Important: the current release does not automatically hard-delete or pseudonymize the Supabase Auth account, profile, bookings, or audit history after seven days. The final retention and deletion process is still pending university approval and implementation.
+Important: the current release does not automatically hard-delete or pseudonymize the Supabase Auth account, profile, bookings, or audit history after 90 days. The final retention and deletion process is still pending university approval and implementation.
 
 ## 10. Booking statuses
 
@@ -219,8 +210,8 @@ Important: the current release does not automatically hard-delete or pseudonymiz
 
 ## 11. Troubleshooting and FAQ
 
-**I can't submit a booking — it says I need an Advisor.**
-Your account has no assigned Advisor. Ask your Advisor to use *Manage Advisees → Assign to me*, or contact the Dean.
+**I can't submit a booking because the Advisor list is empty or unavailable.**
+Only active profiles with the Advisor role can be selected. Try loading the list again; if no Advisors are available, contact the Dean or system administrator.
 
 **The start time I want is not accepted.**
 For today, the earliest start is the next 15-minute slot after the current Bangkok time. Times must be between 08:00 and 18:00, and the end time must be after the start time.
@@ -244,7 +235,7 @@ Roles are assigned by the university. Contact the Dean or system administrator. 
 You may cancel your own pending or approved booking before it starts by opening its detail page and providing a reason. Editing/rebooking is not implemented; cancel the eligible booking and submit a new request.
 
 **I requested account deletion. Is my data already permanently erased?**
-No. The current feature soft-deactivates the account and provides seven days for recovery. Automatic permanent deletion or pseudonymization is not implemented yet; contact the system/privacy administrator for an account-rights request.
+No. The current feature soft-deactivates the account and provides 90 days for recovery. Automatic permanent deletion or pseudonymization is not implemented yet; contact the system/privacy administrator for an account-rights request.
 
 **Sign-in fails or loops back to the login page.**
 Make sure you are using your university Google account, allow pop-ups/redirects, and try again. If it continues, contact the system administrator.

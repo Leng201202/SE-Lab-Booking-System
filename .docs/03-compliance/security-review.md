@@ -1,4 +1,4 @@
-# Security review — updated 26 September 2026
+# Security review — updated 28 October 2026
 
 ## Scope and assurance
 
@@ -23,10 +23,10 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 | H4 | High | Direct column writes are revoked and Lamduan IDs are email-derived, but non-Lamduan Students may still submit a self-declared ID through a guarded RPC. | Administrator/directory verification or an explicit verified/unverified state | B27 |
 | H5 | High | Self-service deactivation now gates the React workspace and blocks profile-to-profile writes, but valid deactivated sessions can still use RLS paths and security-definer booking, review, cancellation, PC, or user-management RPCs that do not check `is_deactivated`. | Active-state checks in every RLS/RPC path, session revocation, lifecycle process, timeout policy, and adversarial tests for all roles | B28 |
 | H6 | High | The UI says an expired account may be permanently removed, but no cleanup job deletes or pseudonymizes Auth/profile data. Active bookings and retained audit/history records also have no approved deletion disposition. | Approved retention/rights policy plus privileged cleanup or pseudonymization process, session revocation, booking handling, and truthful user copy | B38 |
-| M1 | Medium | Approval decisions are audited, but role, Advisor assignment, PC, and suspension changes are not. | Immutable privileged-action audit events | B29 |
+| M1 | Medium | Approval decisions are audited, but role, PC, and suspension changes are not. Per-booking Advisor attribution is retained on the booking at creation. | Immutable privileged-action audit events | B29 |
 | M2 | Medium | Production has HSTS but no repository-defined CSP, frame protection, MIME-sniffing protection, referrer policy, or permissions policy. | Tested Vercel response headers and CSP | B30 |
 | M3 | Medium | Hosted Auth exposes the email provider even though the repository describes a Google-only system. | Disable unused provider and monitor configuration drift | B31 |
-| M4 | Medium | All Advisors can read unassigned Student profiles, including email and university ID. | Confirm policy need or replace with a minimized assignment/search RPC | B32 |
+| M4 | Medium | The Advisor-selection RPC exposes active Advisor UUIDs and display names to every authenticated user. | Confirm this minimum directory exposure with the university data owner | B32 |
 | M5 | Low/Medium | Shared calendar output exposes stable booking UUIDs, request numbers, and workflow status to unrelated authenticated users. | Return only fields needed to display occupancy | B32 |
 | M6 | Medium | PC availability is checked without locking the PC row, permitting a booking/status race with maintenance changes. | Row lock or database invariant spanning status and booking insertion | B33 |
 | L1 | Low | The SPA uses the supported implicit flow and browser-persisted tokens, increasing the importance of XSS prevention and CSP. | Evaluate PKCE and document token-storage risk | Security plan P2 |
@@ -46,7 +46,7 @@ It is an engineering review, not a guarantee that every vulnerability has been f
 - Production source maps were not publicly retrievable and Vercel supplies HSTS.
 - `npm audit` reported zero known vulnerabilities across 238 dependencies.
 - Frontend unit tests, ESLint, and the production build passed during the review.
-- Account-deactivation tests cover self-request, profile-write blocking, in-window reactivation, consistency, and expired recovery; they do not yet cover denial of the other exposed RPC/RLS paths.
+- Account-deactivation tests cover self-request, profile-write blocking, the 90-day reactivation boundary, consistency, and expired recovery; they do not yet cover denial of the other exposed RPC/RLS paths.
 
 ## Verification still required
 

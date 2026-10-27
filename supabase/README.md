@@ -54,6 +54,26 @@ http://127.0.0.1:5173/auth/callback
 
 Never expose the Google Client Secret, database password, Supabase secret key, or `service_role` key through Vite or commit them to the repository.
 
+### Deploying the per-booking Advisor migration
+
+This branch adds one database migration:
+
+```text
+20261021000100_select_advisor_per_booking.sql
+```
+
+It depends on all earlier migrations, including `20260925000100_add_account_deletion.sql` and `20261005000100_extend_recovery_window_to_90_days.sql`. If the hosted project is already current through `20261005000100`, this is the only new migration that should be pending. Confirm migration history before applying anything:
+
+```bash
+supabase migration list --linked
+supabase db push --dry-run
+supabase db push
+```
+
+Use `db push` instead of pasting the file into the SQL Editor so Supabase records the migration version. If older migrations are also pending, review and apply the complete pending sequence in timestamp order. Do not mark migrations as applied unless the hosted schema has first been verified to contain their changes. The repository currently tracks a historical hosted migration-parity issue as BUG-05 and a duplicated local migration version as BUG-09 in `.docs/05-testing/known-issues.md`; resolve any mismatch reported by the CLI before pushing this migration.
+
+After deployment, verify that `profiles.advisor_id` and `assign_student_advisor` are gone, `list_booking_advisors` is callable by authenticated users, and a Student booking requires a valid active Advisor.
+
 ## Roles and Advisor selection
 
 All new Google users default to Student, even if their email already appears in the allowlist. Have the user sign in once, then promote the existing profile through a protected SQL/admin connection:
@@ -88,11 +108,11 @@ Every role may cancel only its own active booking before it starts. `cancel_book
 
 Student identity is handled by `20260924000500_auto_university_id_from_lamduan_email.sql`. A 10-digit numeric `@lamduan.mfu.ac.th` local part is copied into `profiles.university_id`; collision handling preserves profile creation instead of breaking Google sign-in. Other Students may submit a 10-digit value through the authenticated `update_my_student_id` RPC. Direct REST updates to the column are revoked, and Lamduan Students cannot replace the email-derived value. Manually entered IDs are self-declared until the university verification process in backlog B27 is implemented.
 
-Account deletion is currently a recoverable soft-deactivation workflow implemented by `20260925000100_add_account_deletion.sql`. `request_account_deletion` sets `profiles.is_deactivated` and records the request time; `reactivate_my_account` clears those fields only during the seven-day recovery window. The migration does **not** delete the Supabase Auth user, profile, bookings, or approval history after seven days.
+Account deletion is currently a recoverable soft-deactivation workflow implemented by `20260925000100_add_account_deletion.sql` and extended to a 90-day recovery window by `20261005000100_extend_recovery_window_to_90_days.sql`. `request_account_deletion` sets `profiles.is_deactivated` and records the request time; `reactivate_my_account` clears those fields only during that recovery window. These migrations do **not** delete the Supabase Auth user, profile, bookings, or approval history after 90 days.
 
 The current React gate and profile-write trigger are not sufficient offboarding controls. Until backlog B28 is complete, a valid deactivated session may still reach RLS reads or RPCs that do not check `is_deactivated`. Backlog B38 covers the approved post-window retention, booking disposition, session revocation, and permanent deletion/pseudonymization process.
 
-Deploy migrations through `20260925000100_add_account_deletion.sql` before testing account deactivation on the hosted project.
+Deploy migrations through `20261021000100_select_advisor_per_booking.sql` before testing this branch against the hosted project.
 
 ## Security model
 
@@ -102,7 +122,7 @@ Deploy migrations through `20260925000100_add_account_deletion.sql` before testi
 - Advisors additionally see Student requests that name them, once those requests reach Advisor review.
 - Deans see final-review records and all profiles required for user management.
 - Shared calendar RPC output contains occupancy data but no Student identity, purpose, or rejection details.
-- Booking, approval, rejection, cancellation, user-management, relationship-management, and PC-management functions derive the actor from `auth.uid()`.
+- Booking, approval, rejection, cancellation, user-management, Advisor-listing, and PC-management functions derive the actor from `auth.uid()`.
 - Active bookings must start in the future; a database trigger rejects stale creation and approval attempts independently of browser validation.
 - An exclusion constraint prevents concurrent active bookings from overlapping.
 - Every approval/rejection creates an immutable `approval_events` record.

@@ -2,7 +2,7 @@
 
 This is a living log of bugs and known limitations. The system is still in development, so update it whenever a bug is found or fixed.
 
-_Last updated: 26 September 2026_
+_Last updated: 28 October 2026_
 
 ## How to use this log
 
@@ -26,7 +26,8 @@ _Last updated: 26 September 2026_
 | BUG-05 | "Supabase Preview" GitHub check fails on pushes to `main` with `column "student_id" does not exist` | Deployment / database migrations | Medium | 2026-09-23 | Open | — | Migration `20260922000400_expand_role_capabilities.sql` tries to rename a column that is already renamed in the hosted database. Likely fix: `supabase migration repair --status applied 20260922000400` after checking `supabase migration list`, or make the rename conditional. The Vercel deployment is not affected |
 | BUG-06 | The future-start database rule (BUG-04) has not been confirmed on the hosted Supabase project | Deployment | Medium | 2026-09-23 | Open | — | Blocked by BUG-05. Verify after the migration history is repaired |
 | BUG-07 | A deactivated account is blocked by the React workspace and profile-write trigger, but its still-valid Supabase session can call RLS paths and RPCs that do not check `is_deactivated` | Auth / database authorization | High | 2026-09-26 | Open | — | Complete B28 and add direct API tests for Student, Technician, Advisor, and Dean |
-| BUG-08 | Account-deletion copy implies permanent removal after seven days, but no cleanup job deletes or pseudonymizes Auth/profile/history data | Privacy / account lifecycle | High | 2026-09-26 | Open | — | Implement approved retention, booking disposition, session revocation, and cleanup under B38; update UI copy until then |
+| BUG-08 | Account-deletion copy may imply permanent removal after the 90-day recovery period, but no cleanup job deletes or pseudonymizes Auth/profile/history data | Privacy / account lifecycle | High | 2026-09-26 | Open | — | Implement approved retention, booking disposition, session revocation, and cleanup under B38; keep UI/docs explicit that expiry is not erasure |
+| BUG-09 | The repository contains two migration files with version `20260925000100`; the duplicate SQL is byte-identical, while its duplicate pgTAP file still asserts the obsolete 7-day recovery window | Database migrations/tests | Medium | 2026-10-28 | Open | — | Before the next clean reset or hosted push, confirm migration history and remove the redundant ` 2.sql` migration/test files in a dedicated cleanup change |
 
 ## Known limitations
 
@@ -39,7 +40,7 @@ These are features that are not built yet. Users may run into them, so they are 
 | No limits on booking length or number of pending requests per user | Advisors and the Dean should reject unreasonable requests | B26 |
 | Pages do not refresh automatically when someone else changes data | Reload the page to see the latest status | — |
 | Any Google account can sign in, not only university accounts | Only use university accounts. Roles above Student are still controlled by the allowlist | B24 |
-| Account deletion currently means soft deactivation, not erasure | Reactivate within seven days or contact the system/privacy administrator | B28, B38 |
+| Account deletion currently means soft deactivation, not erasure | Reactivate within 90 days or contact the system/privacy administrator | B28, B38 |
 
 Other security gaps (MFA, user suspension, audit of role changes, security headers) are tracked in the [security review](../03-compliance/security-review.md) as backlog items B25–B33.
 
@@ -49,3 +50,4 @@ Other security gaps (MFA, user suspension, audit of role changes, security heade
 |---|---|
 | 2026-09-23 | Log created with bugs found from the commit history and current CI status |
 | 2026-09-26 | Added account-deactivation authorization and permanent-cleanup gaps; removed the obsolete cancellation limitation |
+| 2026-10-28 | Aligned recovery-window and per-booking Advisor documentation; recorded the duplicated legacy migration/test files |

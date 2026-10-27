@@ -18,7 +18,7 @@ flowchart LR
 
     Student -->|availability and requests| Web
     Technician -->|technical reviews, requests, PCs| Web
-    Advisor -->|requests, reviews, advisees| Web
+    Advisor -->|requests and reviews| Web
     Dean -->|requests, final reviews, users, PCs| Web
     Operator -->|bootstrap and deployment configuration| DB
 

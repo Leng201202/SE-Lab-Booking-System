@@ -6,14 +6,14 @@
 2. Supabase completes OAuth and creates a trusted profile.
 3. Every new user receives the Student role.
 4. The app restores the session and loads only records allowed by RLS.
-5. A Student without an assigned Advisor can inspect the system but receives an actionable error if they try to submit a request.
+5. A Student can inspect the system immediately but must have a Student ID and select an eligible active Advisor when submitting a booking request.
 
 ## Journey 2 — Student requests a PC
 
 1. Student reviews PC inventory or the availability calendar.
 2. Student chooses an available one-day lab interval beginning at the next valid Bangkok slot, or a multi-day range beginning on a future date.
-3. The form collects PC, dates/times, purpose, and optional course/project.
-4. The database validates identity, Advisor assignment, PC state, future start instant, interval, purpose, and overlap.
+3. The form collects PC, dates/times, the reviewing Advisor, purpose, and optional course/project.
+4. The database validates identity, selected Advisor eligibility, PC state, future start instant, interval, purpose, and overlap.
 5. A valid request is created as pending Technician.
 6. Student sees the request detail and approval progress.
 
@@ -22,7 +22,7 @@
 1. The future Technician signs in with Google and initially receives the Student role.
 2. A Dean promotes the profile to Technician through protected user management.
 3. Technician opens Student requests awaiting technical review.
-4. Approval advances the request to its assigned Advisor and writes an audit event.
+4. Approval advances the request to the Advisor selected on that booking and writes an audit event.
 5. Rejection requires a reason, closes the request, and writes an audit event.
 6. Technician can add PCs and maintain room, specification, operational status, and maintenance notes.
 
@@ -30,7 +30,7 @@
 
 1. The future Advisor signs in with Google and initially receives the Student role.
 2. An administrator adds the existing profile's email to the protected allowlist, promoting it to Advisor.
-3. Advisor opens requests for assigned Students.
+3. Advisor opens Technician-approved Student requests that selected them, plus pending Technician requests.
 4. Advisor inspects Student, PC, dates, purpose, and course.
 5. Approval moves the request to pending Dean and writes an audit event.
 6. Rejection requires a reason, closes the request, and writes an audit event.
@@ -72,12 +72,10 @@
 
 ## Journey 10 — Manage users and PCs
 
-1. Advisor may claim an unassigned Student or release an existing advisee.
-2. Advisor cannot take a Student assigned to another Advisor.
-3. When another Advisor claims the released Student, unresolved requests waiting for Technician or Advisor review move to the new Advisor atomically.
-4. Requests that already passed Advisor review or reached a closed state retain their original Advisor attribution.
-5. Dean views all profiles, changes trusted roles, and assigns Students to eligible Advisors.
-6. Technician or Dean adds or edits PCs, including specifications, notes, and maintenance/inactive state.
+1. Dean views all profiles and changes trusted application roles.
+2. Dean cannot change their own role through the application.
+3. An Advisor named on an unresolved Student request cannot lose the Advisor role until that request is reviewed or cancelled.
+4. Technician or Dean adds or edits PCs, including specifications, notes, and maintenance/inactive state.
 
 ## Journey 11 — A requester cancels a booking
 
@@ -94,8 +92,8 @@ Rebooking and notifications are not part of the current journeys.
 
 1. An authenticated Student, Technician, Advisor, or Dean opens **Profile → Danger zone** and confirms account deletion.
 2. The database marks the profile deactivated and records the request time; the browser then signs out.
-3. Signing in again during the next seven days opens the restricted recovery screen instead of the normal workspace.
+3. Signing in again during the next 90 days opens the restricted recovery screen instead of the normal workspace.
 4. Choosing **Reactivate account** clears the deactivation fields and restores the workspace. Choosing logout leaves the account deactivated.
-5. Once seven days have elapsed, self-service reactivation is rejected.
+5. Once 90 days have elapsed, self-service reactivation is rejected.
 
 This journey currently stops at soft deactivation. No scheduled process permanently removes or pseudonymizes the Supabase Auth user, profile, bookings, or audit history after the window. Database-wide denial for every valid deactivated session and the treatment of active bookings are also pending under B28/B38.

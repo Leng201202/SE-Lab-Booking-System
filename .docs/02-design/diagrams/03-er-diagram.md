@@ -3,9 +3,8 @@
 ~~~mermaid
 erDiagram
     AUTH_USERS ||--|| PROFILES : "creates"
-    PROFILES ||--o{ PROFILES : "advises"
     PROFILES ||--o{ BOOKINGS : "requester submits"
-    PROFILES ||--o{ BOOKINGS : "advisor owns queue"
+    PROFILES ||--o{ BOOKINGS : "selected reviewer"
     PROFILES ||--o{ BOOKINGS : "requester cancels"
     PCS ||--o{ BOOKINGS : "reserved by"
     BOOKINGS ||--o{ APPROVAL_EVENTS : "has"
@@ -22,7 +21,6 @@ erDiagram
         text display_name
         text university_id UK
         app_role role
-        uuid advisor_id FK
         boolean is_deactivated
         timestamptz deletion_requested_at
         timestamptz created_at
@@ -78,9 +76,9 @@ The private role_allowlist table maps normalized verified Google emails to Techn
 Important integrity rules:
 
 - Profile IDs reference auth.users and cascade on user deletion.
-- Only Student profiles may have an Advisor, and the referenced profile must have the Advisor role.
+- Profiles do not store a permanent Student–Advisor relationship.
 - Booking requester role is snapshotted so later role changes do not rewrite historical workflow.
-- Student bookings require an Advisor and begin at Technician review. Technician, Advisor, and Dean bookings have no booking-level Advisor assignment.
+- Student bookings require a selected active Advisor and begin at Technician review. Technician, Advisor, and Dean bookings have no booking-level Advisor.
 - Active booking ranges use half-open [start, end) semantics.
 - A PostgreSQL exclusion constraint prevents overlapping active ranges for the same PC.
 - A cancelled booking must retain a 5–2000 character reason, cancellation time, and its requester as the cancelling actor; non-cancelled rows cannot carry cancellation metadata.
