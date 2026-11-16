@@ -59,8 +59,8 @@ Screenshots must come from the current app and must not contain real personal da
 Locally verified:
 
 - migration and seed rebuild
-- the database suite defines 147 pgTAP assertions across three files, including Technician workflow/management, Student ID security, per-booking Advisor selection, cancellation authorization, soft deactivation, and the recovery boundary; the latest migration still requires database execution
-- frontend lint, 11 unit tests, and production build
+- the maintained database suite defines 147 pgTAP assertions across three files, including Technician workflow/management, Student ID security, per-booking Advisor selection, cancellation authorization, soft deactivation, and the recovery boundary; an obsolete duplicate account-deletion test with the old 7-day expectation remains tracked as BUG-09, and the latest migration still requires database execution
+- frontend lint, 11 unit tests, and production build pass as of 16 November 2026; Vite reports an existing bundle-size warning
 - schema lint and dependency audit
 
 External verification still required:

@@ -75,7 +75,7 @@ The production foundation is implemented locally:
 - protected user-role, Advisor-listing, and PC-management RPCs
 - immutable approval events
 - self-service soft deactivation with a 90-day reactivation window; permanent cleanup is not yet implemented
-- 147 pgTAP database assertions across three files, including Technician authorization/workflow, Student ID security, per-booking Advisor selection, server-side future-start, requester cancellation, and account-recovery coverage, plus 11 frontend tests
+- 147 pgTAP database assertions across three maintained files, including Technician authorization/workflow, Student ID security, per-booking Advisor selection, server-side future-start, requester cancellation, and account-recovery coverage, plus 11 frontend tests; an obsolete duplicate account-deletion test with the old 7-day expectation remains tracked as BUG-09
 
 The hosted Supabase project and Google provider are active, and login has been verified from the local frontend. Release still requires migration-parity verification, deployment of the per-booking Advisor migration, an end-to-end Vercel-origin OAuth smoke test, exact production redirects, protected first-Dean promotion, and completion of the Priority 0 security items. Later role changes are available in the application; Students choose an active Advisor on each booking request.
 
