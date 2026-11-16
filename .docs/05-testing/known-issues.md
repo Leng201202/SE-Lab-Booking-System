@@ -2,7 +2,7 @@
 
 This is a living log of bugs and known limitations. The system is still in development, so update it whenever a bug is found or fixed.
 
-_Last updated: 28 October 2026_
+_Last updated: 16 November 2026_
 
 ## How to use this log
 
@@ -35,7 +35,7 @@ These are features that are not built yet. Users may run into them, so they are 
 
 | Limitation | Workaround | Backlog |
 |---|---|---|
-| A booking cannot be edited or moved to another PC/time | Submit a new request (the old one still blocks the slot until it is rejected) | B14 |
+| A booking cannot be edited or moved to another PC/time | Cancel the eligible original booking, then submit a new request; if it is not cancellable, wait for the workflow decision | B14 |
 | No email or in-app notifications for decisions | Check **My Bookings** or the request detail page | B17 |
 | No limits on booking length or number of pending requests per user | Advisors and the Dean should reject unreasonable requests | B26 |
 | Pages do not refresh automatically when someone else changes data | Reload the page to see the latest status | — |
@@ -51,3 +51,4 @@ Other security gaps (MFA, user suspension, audit of role changes, security heade
 | 2026-09-23 | Log created with bugs found from the commit history and current CI status |
 | 2026-09-26 | Added account-deactivation authorization and permanent-cleanup gaps; removed the obsolete cancellation limitation |
 | 2026-10-28 | Aligned recovery-window and per-booking Advisor documentation; recorded the duplicated legacy migration/test files |
+| 2026-11-16 | Re-audited documentation against the repository; reconfirmed BUG-09 and verified the 11 frontend tests, lint, and production build |

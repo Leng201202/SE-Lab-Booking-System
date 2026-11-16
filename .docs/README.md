@@ -1,6 +1,6 @@
 # Project documentation map
 
-This folder contains the requirements, design, and compliance evidence for the current SE Lab PC Booking System. It reflects the React/Vite frontend and repository-root Supabase backend as reviewed on 28 October 2026.
+This folder contains the requirements, design, and compliance evidence for the current SE Lab PC Booking System. It reflects the React/Vite frontend and repository-root Supabase backend. The last engineering/security review was completed on 28 October 2026; this documentation audit was completed on 16 November 2026.
 
 The system supports:
 
@@ -27,8 +27,8 @@ The system supports:
 - [x] Five interview records are present. The team must confirm they are genuine and retain consent/notes outside this public repository.
 - [x] Four design diagrams are present and aligned with the implementation.
 - [x] Implemented requirements trace to code, database rules, research pain, or an explicit institutional workflow source.
-- [x] The database suite defines 147 pgTAP assertions across three files; the prior foundation passed a clean rebuild and schema lint. The latest Advisor-selection migration still requires deployment verification.
-- [x] Frontend lint, 11 unit tests, and the production build pass, including Bangkok next-slot, cancellation eligibility, and Advisor request-parameter coverage.
+- [x] The maintained database suite defines 147 pgTAP assertions across three files; the repository also contains an obsolete duplicate account-deletion test with the old 7-day expectation, tracked as BUG-09. The latest Advisor-selection migration still requires deployment verification.
+- [x] Frontend lint, 11 unit tests, and the production build pass on 16 November 2026, including Bangkok next-slot, cancellation eligibility, and Advisor request-parameter coverage. Vite reports an existing bundle-size warning.
 - [x] A repository and unauthenticated production security review is recorded; no confirmed critical issue was found, and the backlog through B38 tracks required remediation.
 - [x] Hosted Google OAuth has been verified from the local frontend against the production Supabase project.
 - [ ] Production Vercel-origin OAuth, migration parity, protected first-Dean promotion, role boundaries, and Priority 0 security remediation still require release verification.

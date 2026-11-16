@@ -1,6 +1,6 @@
 # Product backlog — SE Lab PC Booking System
 
-Status reflects the repository as of 28 October 2026.
+Status reflects the repository as of 16 November 2026. Hosted/deployment states remain subject to external verification.
 
 Legend: **Done** = implemented and locally verified · **Configured deployment required** = code exists but external credentials/configuration remain · **Planned** = accepted but not built · **Proposed** = candidate requiring validation.
 
