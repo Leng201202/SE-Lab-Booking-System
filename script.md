@@ -1,6 +1,25 @@
-# Presentation Script: SE Lab PC Booking System (10 minutes)
+# Final Project Presentation Script: SE Lab PC Booking System (10 minutes)
 
 This version is audited against the active `dev` branch source code as of 16 November 2026. It is designed for five speakers at roughly 125–130 words per minute, with extra time for the live demo. Text in block quotes is spoken; italic text is a delivery or demo note.
+
+## Presentation-day requirements
+
+- **Date and venue:** Wednesday, 18 November 2026, SE Lab.
+- **Arrival:** every member arrives at least 15 minutes before the team’s assigned slot, with the live system already running on the team laptop.
+- **Format:** 10-minute presentation with a hard stop, 3-minute Q&A, and 2-minute changeover.
+- **Participation:** every member speaks about work they actually built, designed, governed, or tested.
+- **Demo rule:** show working MUST tasks live; do not replace the demo with screenshots.
+
+## Rubric coverage
+
+| Required evidence | Slides |
+|---|---:|
+| Problem and users | 1–3 |
+| Live demo of implemented MUST tasks | 4 |
+| Test results, sourced comparison, and before versus after | 5–7 |
+| AI logic: Where, How, Prove, and Measure | 8–9 |
+| Roles, lessons learned, and AI disclosure | 10–12 |
+| Next steps and questions | 13 |
 
 ---
 
@@ -32,11 +51,12 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 ### Code-derived baseline
 
 - The seed creates **10 PCs**: 8 available and 2 under maintenance, PC-04 and PC-08.
-- The frontend passes **11 of 11 tests**; ESLint and the production build pass. The build has a non-blocking large-bundle warning.
+- The 15 September browser-demo baseline at commit `516bb12` passes **6 of 6 Node tests**. The current system passes **11 of 11**; ESLint and the production build also pass. The current build has a non-blocking large-bundle warning.
 - The canonical SQL files define **147 pgTAP assertions**, but they were not rerun during this review because the local Supabase platform binary is missing. An obsolete duplicate test file remains in the repository.
+- The browser-demo baseline had **0 database assertions**, **0 database overlap constraints**, and **0 Supabase RPC calls**. The current system defines 147 canonical assertions, 1 active-overlap exclusion constraint, and 12 distinct RPC calls from the client.
 - Booking, approval, rejection, cancellation, PC management, user-role management, deactivation, and reactivation use database RPCs. The browser does not directly set ownership, role, or workflow status.
 - The running application contains no AI feature. It also contains no implemented notification service, automatic booking completion, institutional-domain gate, privileged-action MFA check, booking quota, or permanent account-cleanup job.
-- Across all current Git refs, **7 of 85 unique commits** contain a Claude co-author trailer. Use the same `--all` scope for slides 9 and 10.
+- At the 16 November measurement cutoff, **7 of 90 unique commits across all Git refs** contain a Claude co-author trailer. Use the same cutoff and `--all` scope for slides 9 and 10.
 
 ---
 
@@ -62,6 +82,8 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 ## Slide 4: Live demo (2:20) · Tech Lead — Sai Shang Hlang
 
+**Live MUST coverage:** B1 authentication; B2 and B5 availability/privacy; B3 and B22 booking creation; B6 status; B7, B8, and B34 staged review; B9 overlap prevention; and B10 anonymous denial. Keep every step live—no screenshots. B4 multi-day remote booking and B12 durable approval events remain source-backed claims unless they are also shown live.
+
 > I have prepared profiles for all four roles and opened the same free slot in two Student tabs.
 >
 > **[1]** Google sign-in restores the trusted database profile. New users start as Students. A Lamduan email supplies its ten-digit Student ID automatically; other Students must add one before booking.
@@ -78,19 +100,28 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 *Demo rule: use PC-01, PC-02, or another available PC; PC-04 and PC-08 are seeded as maintenance. Prepare both conflict tabs before the first submission. Use a future Bangkok time and confirm the Student has an ID and an active Advisor exists. If a step fails, state the expected result and move on. Stop by 2:20.*
 
-## Slide 5: Verification status (0:50) · QA — Su Yee Mon Thein
+## Slide 5: Test results and baseline (0:50) · QA — Su Yee Mon Thein
 
-> Today, the 16th of November, all **11 Node tests pass**. They cover active overlap detection, safe database-to-UI mapping, Bangkok date boundaries, future slots, cancellation eligibility, and Advisor parameters. ESLint passes, and the production build succeeds with one non-blocking bundle-size warning.
+> Our comparison baseline is the browser demo at commit `516bb12`. Rerun today, all **6 of its 6 Node tests pass**. In the current system, all **11 of 11 Node tests pass**. They cover safe data mapping, Bangkok date boundaries, future slots, cancellation eligibility, and Advisor parameters. ESLint and the production build also pass, with one non-blocking bundle-size warning.
 >
-> The SQL test files define **147 canonical pgTAP assertions** for authorization and workflow behavior. I cannot report a fresh pass rate because the local Supabase platform binary is missing. The suite and schema lint still need a clean run, and an obsolete duplicate test file must be removed safely.
+> The current SQL suite defines **147 canonical pgTAP assertions** for authorization and workflow behavior. I cannot report a fresh database pass rate because the available local CLI cannot execute the test command. The suite and schema lint still need a clean run, and an obsolete duplicate test must be removed safely.
 >
-> Before release, we must restore that environment, rebuild from every migration, and pass every critical database assertion. Sai will show what the implemented controls change for users.
+> These are reproducible code results, not estimates. Sai will now show the sourced comparison.
 
-*Do not restore the old “103 of 108” claim unless a dated test report proves that exact run. Replace this paragraph after the 147-assertion suite is executed successfully.*
+*Sources: `git show 516bb12:app/src/features/bookings/bookingService.test.js`, the current test file, the command `npm test --prefix app`, and the three canonical SQL test plans. Replace the database limitation only after a dated clean run.*
 
-## Slide 6: Before versus after (0:40) · Tech Lead — Sai Shang Hlang
+## Slide 6: Sourced before versus after (0:40) · Tech Lead — Sai Shang Hlang
 
-> The implementation uses two layers. React gives immediate feedback: disabled maintenance PCs, future Bangkok slots, Advisor selection, role-specific routes, and clear status progress. PostgreSQL repeats the critical rules: trusted roles, valid stages, future starts, 15-minute lab times, available PCs, owner-only cancellation, and non-overlapping active ranges. After each booking workflow mutation, the app reloads authoritative bookings, PCs, and calendar data. Bypassing a route or button therefore does not bypass the rule. Su will cover the remaining risks.
+**Put this comparison table on the slide:**
+
+| Measured item | Before: browser demo `516bb12` | After: current `dev` | Source |
+|---|---:|---:|---|
+| Node tests passing | 6 / 6 | 11 / 11 | Baseline and current `bookingService.test.js`; rerun 16 Nov |
+| Canonical database assertions defined | 0 | 147 | Baseline Git tree; current SQL plans: 106 + 14 + 27 |
+| PostgreSQL active-overlap constraints | 0 | 1 | Baseline had no database; current `bookings_no_active_overlap` |
+| Distinct Supabase RPCs called by the client | 0 | 12 | Baseline service used `localStorage`; current `app/src/features/` services |
+
+> Before, six tests covered a browser-only demo using mock users and local storage. There were zero database assertions, zero database overlap constraints, and zero Supabase RPC calls. Now 11 Node tests pass, 147 database assertions are defined, one PostgreSQL exclusion constraint protects active intervals, and the client uses 12 RPCs for controlled operations. The database result is still pending, so we do not present 147 as passed. These are repository measurements, not claims about user speed. Su will cover the remaining risks.
 
 ## Slide 7: Defects and security (0:45) · QA — Su Yee Mon Thein
 
@@ -100,21 +131,21 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 ## Slide 8: Where we used AI (0:35) · AI Lead — Nay Win Aung
 
-> AI assisted development; it is **not** part of the running booking system. We used an early Lovable prototype for interface exploration and Claude to help draft React code, SQL, tests, diagrams, and documentation. Several changes carry Claude co-author trailers.
+> **Where:** AI assisted the frontend, SQL migrations, tests, diagrams, and documentation; it is not part of the running system. **How:** we used an early Lovable prototype for exploration and Claude for drafting and revision, then applied the same architecture and security rules used for human work.
 >
-> We also created reusable instructions and checkers. Some currently live on documentation branches, so we must merge them or label them accurately. Our rules are simple: never fabricate research, keep security in PostgreSQL, protect secrets and personal data, and require human review.
+> We created two custom checking agents and one reusable audit skill. Some artifacts remain on documentation branches, so the slide must label their branch instead of implying they are merged. Our rules prohibit fabricated research, exposed secrets, and unreviewed AI output.
 
 ## Slide 9: How we checked and measured AI work (0:45) · AI Lead — Nay Win Aung
 
-> We checked AI output four ways. **Traceability:** requirements point to backlog items and research. **Independent verification:** assisted code receives the same frontend and database checks. **Human accountability:** a named contributor reviews each change. **Honest gaps:** our documents say when research, deployment, or testing is incomplete.
+> **Proof:** assisted code receives the same tests and review as other code. Requirements trace to backlog and research, while named humans own the commits. Commit `704f750` proves AI-assisted Student-ID work; `b4614f4` contains the reusable agent package; and `a2a46c6` and `abea331` contain the two AI-assisted diagrams.
 >
-> Across all current Git refs, **7 of 85 unique commits** contain a Claude co-author trailer. That measures disclosed history—not all AI use or productivity. We did not run a controlled comparison, so we claim no hours saved. Zaw will summarize team ownership using the same Git scope.
+> **Measure:** at our 16 November cutoff, 7 of 90 unique commits across all Git refs contain a Claude trailer. We produced 3 reusable AI workflows—2 agents and 1 skill—and 2 diagrams. These numbers measure disclosed artifacts, not productivity. We ran no controlled time comparison, so we claim no hours saved. Zaw will summarize ownership using the same cutoff.
 
 ## Slide 10: Team roles and ownership (0:30) · Product Owner — Zaw Phyo Aung
 
 > Our work had clear owners: I led scope, interviews, and backlog decisions; Sai led architecture and migrations; Nay led AI guidance; Su led verification and security review; and Chan led design, journeys, and diagrams.
 >
-> The counts use all Git refs: Zaw 5, Sai 64, Nay 3, Su 7, and Chan 6. Sai’s total combines two author names with the same email. Counts show repository activity, not contribution quality.
+> At the same 16 November cutoff, the counts are Zaw 5, Sai 69, Nay 3, Su 7, and Chan 6. Sai’s total combines two author names with the same university email. Counts show repository activity, not contribution quality.
 
 ## Slide 11: Lessons learned (0:45) · Designer — Chan Nyein Moe
 
@@ -134,11 +165,65 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 ## Final rehearsal checklist
 
+- Record the team’s assigned time and have every member in the SE Lab at least 15 minutes early.
+- Start the application, authenticate all four prepared profiles, connect power, and confirm network access before the slot begins.
+- Rehearse with a visible timer and stop at 10:00 even if a demo step is incomplete.
 - Update the deck numbers to match this script before rehearsing.
-- Use the same Git scope on slides 9 and 10. The current baseline is `git log --all`: 85 unique commits and 7 Claude-trailer commits.
+- Use the same 16 November cutoff and Git scope on slides 9 and 10: 90 unique commits and 7 Claude-trailer commits. If the team chooses a later cutoff, rerun and update both slides together.
 - Merge or explicitly label AI artifacts that exist only on documentation branches.
 - Recheck all four demo accounts, the Student ID, selected Advisor, available PC, and future Bangkok time.
 - Prepare the same free interval in two tabs before submitting either one; use the stale second tab to demonstrate database overlap rejection.
 - Do not use seeded PC-04 or PC-08 for the successful booking because both are under maintenance.
 - After a successful clean database run, replace the limitation on slide 5 with the dated result; never predict a pass.
 - Prepare short answers for why only Students were interviewed, why high-priority security work remains, why commit count is not a productivity measure, and why the database suite was not rerun in the current environment.
+
+## Three-minute Q&A preparation
+
+Each member should answer their own question in roughly 20–30 seconds.
+
+### Product Owner — Zaw Phyo Aung
+
+**Likely question:** What evidence supports the problem, and what remains unvalidated?
+
+**Answer:** Five Students were interviewed on 7–8 September. Four reported conflict or remote-visibility problems, while the fifth still checked availability manually. This supports the calendar and overlap requirements. It does not validate the institutional approval chain, because Technicians, Advisors, the Dean, and the lab operator were not interviewed.
+
+### Tech Lead — Sai Shang Hlang
+
+**Likely question:** How do you guarantee that two users cannot reserve the same PC and time?
+
+**Answer:** Active bookings use a PostgreSQL GiST exclusion constraint over the PC ID and a half-open timestamp range. Pending Technician, pending Advisor, pending Dean, and approved records all block the interval. The two-tab demo sends a stale second request to the database, which rejects it even though the client originally saw the slot as free.
+
+### AI Lead — Nay Win Aung
+
+**Likely question:** Explain your AI logic using Where, How, Prove, and Measure.
+
+**Answer:** Where: frontend, SQL, tests, diagrams, and documentation. How: AI drafted or revised work under repository rules, followed by human review. Proof: named commits, co-author trailers, two agent files, one skill, and two diagrams. Measure: at the 16 November cutoff, 7 of 90 commits have Claude trailers, with 3 reusable workflows and 2 diagrams. We did not measure time saved, so we make no productivity claim.
+
+### QA — Su Yee Mon Thein
+
+**Likely question:** Which test results are actually verified?
+
+**Answer:** The historical browser baseline was rerun and passed 6 of 6 Node tests. The current frontend passed 11 of 11, plus lint and build. The current SQL files define 147 canonical assertions, but the database suite was not rerun because the available local CLI cannot execute the test command. I would not call those 147 assertions passed until a dated run proves it.
+
+### Designer — Chan Nyein Moe
+
+**Likely question:** How does the design support different roles without exposing private information?
+
+**Answer:** Each role receives only its relevant navigation, queue, status, and next action. The shared calendar shows PC, time, access mode, and workflow status, but it omits unrelated Student identity and purpose. Detailed records open only when the database says the user owns or reviews that booking.
+
+## Number-and-source sheet
+
+Keep this page available during Q&A. Every presentation number should trace to one of these sources.
+
+| Number used | Meaning | Reproducible source |
+|---:|---|---|
+| 5 interviews; 4 with conflict/visibility pain | Research baseline | `.docs/01-requirements/user-research.md` |
+| 10 PCs; 8 available; 2 maintenance | Current deterministic inventory | `supabase/seed.sql` |
+| 6 / 6 | Browser-demo baseline tests, rerun from commit `516bb12` | Baseline `bookingService.test.js`; `npm test` against the archived commit |
+| 11 / 11 | Current Node tests | `npm test --prefix app` |
+| 147 | Canonical SQL assertions defined: 106 + 14 + 27 | `select plan(...)` in the three canonical database test files |
+| 0 → 1 | PostgreSQL active-overlap constraint | No Supabase directory at `516bb12`; current `bookings_no_active_overlap` migration |
+| 0 → 12 | Distinct client RPC calls | Baseline `localStorage` booking service; current feature services |
+| 7 / 90 | Commits with a Claude trailer / unique commits across all refs at the 16 Nov cutoff | `git log --all` and `git rev-list --all --count`, recorded together at the cutoff |
+| 3 workflows; 2 diagrams | Two custom agents, one audit skill, and two AI-assisted diagram commits | `b4614f4`, `a2a46c6`, and `abea331` |
+| 5, 69, 3, 7, 6 | Zaw, Sai, Nay, Su, and Chan commit activity across all refs | `git shortlog -sne --all`; combine Sai’s two author names sharing one email |
