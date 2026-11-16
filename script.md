@@ -44,7 +44,7 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 > Good morning. We are presenting the **SE Lab PC Booking System**, a React application backed by Supabase Auth and PostgreSQL. Users can see PC occupancy, request an available time, and follow the approval path for their role. The browser provides the experience, but PostgreSQL is the authority for identity, permissions, workflow, and booking conflicts. We will show the problem, the implemented user journey, a live workflow, verification evidence, and the work still required before rollout.
 
-## Slide 2: Problem and research boundary (0:55) · Product Owner — Zaw Phyo Aung
+## Slide 2: Problem and research boundary (0:50) · Product Owner — Zaw Phyo Aung
 
 > We interviewed five Students on the 7th and 8th of September. Four reported either a booking conflict or difficulty seeing remote PC use. The fifth still checked manually whether a PC was free.
 >
@@ -60,7 +60,7 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 >
 > Every role can also request and cancel its own booking. Staff use shorter approval routes, and the interface is available in English and Thai. Sai will demonstrate the Student path and conflict protection.
 
-## Slide 4: Live demo (2:10) · Tech Lead — Sai Shang Hlang
+## Slide 4: Live demo (2:20) · Tech Lead — Sai Shang Hlang
 
 > I have prepared profiles for all four roles and opened the same free slot in two Student tabs.
 >
@@ -78,7 +78,7 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 *Demo rule: use PC-01, PC-02, or another available PC; PC-04 and PC-08 are seeded as maintenance. Prepare both conflict tabs before the first submission. Use a future Bangkok time and confirm the Student has an ID and an active Advisor exists. If a step fails, state the expected result and move on. Stop by 2:20.*
 
-## Slide 5: Verification status (0:55) · QA — Su Yee Mon Thein
+## Slide 5: Verification status (0:50) · QA — Su Yee Mon Thein
 
 > Today, the 16th of November, all **11 Node tests pass**. They cover active overlap detection, safe database-to-UI mapping, Bangkok date boundaries, future slots, cancellation eligibility, and Advisor parameters. ESLint passes, and the production build succeeds with one non-blocking bundle-size warning.
 >
@@ -90,7 +90,7 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 ## Slide 6: Before versus after (0:40) · Tech Lead — Sai Shang Hlang
 
-> The implementation uses two layers. React gives immediate feedback: disabled maintenance PCs, future Bangkok slots, Advisor selection, role-specific routes, and clear status progress. PostgreSQL repeats the critical rules: trusted roles, valid stages, future starts, 15-minute lab times, available PCs, owner-only cancellation, and non-overlapping active ranges. After each mutation, the app reloads authoritative bookings, PCs, and calendar data. Bypassing a route or button therefore does not bypass the rule. Su will cover the remaining risks.
+> The implementation uses two layers. React gives immediate feedback: disabled maintenance PCs, future Bangkok slots, Advisor selection, role-specific routes, and clear status progress. PostgreSQL repeats the critical rules: trusted roles, valid stages, future starts, 15-minute lab times, available PCs, owner-only cancellation, and non-overlapping active ranges. After each booking workflow mutation, the app reloads authoritative bookings, PCs, and calendar data. Bypassing a route or button therefore does not bypass the rule. Su will cover the remaining risks.
 
 ## Slide 7: Defects and security (0:45) · QA — Su Yee Mon Thein
 
@@ -98,7 +98,7 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 >
 > Account deletion is also only soft deactivation. The React workspace blocks a deactivated profile and offers recovery for 90 days, but existing sessions are not denied by every RLS policy and RPC. No job permanently deletes or pseudonymizes an expired account, although some interface copy suggests deletion. Finally, the repository contains duplicate migration and test files. These are release blockers, not optional polish. Nay will explain how AI-assisted development was governed.
 
-## Slide 8: Where we used AI (0:40) · AI Lead — Nay Win Aung
+## Slide 8: Where we used AI (0:35) · AI Lead — Nay Win Aung
 
 > AI assisted development; it is **not** part of the running booking system. We used an early Lovable prototype for interface exploration and Claude to help draft React code, SQL, tests, diagrams, and documentation. Several changes carry Claude co-author trailers.
 >
