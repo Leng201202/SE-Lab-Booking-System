@@ -30,93 +30,93 @@ The speaking load is intentionally balanced around expertise. The Tech Lead has 
 
 ## Slide 1: Title (0:30) · Product Owner — Zaw Phyo Aung
 
-> Good morning. We are presenting the **SE Lab PC Booking System**, a shared, privacy-preserving calendar for the SE lab computers. Users can see when a PC is occupied, request an available time, and follow the correct approval path for their role. PostgreSQL is the final authority for access and booking conflicts. Our five-person team will show the problem, the user journey, a live workflow, our verification evidence, how we used AI, and the work still required before a broad rollout.
+> Good morning. We are presenting the **SE Lab PC Booking System**, a shared, privacy-preserving calendar for the SE lab computers. Users can see occupancy, request an available time, and follow the approval path for their role. PostgreSQL is the final authority for access and booking conflicts. We will show the problem, the user journey, a live workflow, our evidence, our use of AI, and the work still required before rollout.
 
 ## Slide 2: Problem and research boundary (0:55) · Product Owner — Zaw Phyo Aung
 
-> We began with five Student interviews on the 7th and 8th of September. Four of the five Students reported either a booking conflict or difficulty seeing remote PC use. The fifth still had to check manually whether a PC was free.
+> We interviewed five Students on the 7th and 8th of September. Four reported either a booking conflict or difficulty seeing remote PC use. The fifth still checked manually whether a PC was free.
 >
-> Two needs are clear from that evidence: remote use must be visible, and a reservation must reliably protect the selected PC and time. The current process makes both uncertain.
+> The evidence supports two needs: make remote use visible, and reliably protect the selected PC and time.
 >
-> We should also be precise about what the research does **not** prove. We interviewed only Students. The Technician, Advisor, and Dean approval chain is an institutional workflow requirement, not a finding from those interviews. Those stakeholders still need separate validation. Chan will now show how we turned the supported needs and institutional rules into one user journey.
+> It does **not** validate the approval process. We interviewed only Students; the Technician, Advisor, and Dean chain is an institutional requirement. Those stakeholders still need separate research. Chan will now show how we turned the supported needs and institutional rules into one journey.
 
 ## Slide 3: Users and journey (0:50) · Designer — Chan Nyein Moe
 
-> The journey begins with one question: **which PC is genuinely available?** A Student checks the calendar, chooses either a one-day lab session or a multi-day remote booking, selects an eligible Advisor, submits the request, and then follows its status. The Student can cancel their own active booking before it begins.
+> The journey begins with one question: **which PC is genuinely available?** A Student checks the calendar, chooses a one-day lab session or multi-day remote booking, selects an Advisor, submits, and follows the status. They can cancel their own active booking before it begins.
 >
-> The same system gives each reviewer a focused task. A Technician performs the first review for Student requests and manages PC inventory. The Advisor selected on that booking performs the next review. The Dean makes the final decision and manages trusted roles.
+> Each reviewer has a focused task. A Technician first reviews Student requests and manages PC inventory. The selected Advisor reviews next. The Dean makes the final decision and manages trusted roles.
 >
-> The route changes for staff requests: Technician requests start with Advisor review, Advisor requests go directly to Dean review, and a Dean’s own valid request is approved immediately. Sai will demonstrate the Student path and the conflict protection.
+> Staff follow shorter routes: Technician requests start with the Advisor, Advisor requests start with the Dean, and a Dean’s valid request is approved immediately. Sai will demonstrate the Student path and conflict protection.
 
 ## Slide 4: Live demo (2:10) · Tech Lead — Sai Shang Hlang
 
-> I have separate browser profiles ready for the four application roles.
+> I have separate profiles ready for all four roles.
 >
-> **[1]** First, a new user signs in with Google and receives the Student role by default. The browser cannot assign a privileged role.
+> **[1]** A new Google user becomes a Student by default; the browser cannot grant a privileged role.
 >
-> **[2]** The calendar shows week and day occupancy plus onsite or remote access. It does not expose another Student’s name, email, university ID, or purpose.
+> **[2]** The calendar shows occupancy and access mode without exposing another Student’s identity or purpose.
 >
-> **[3]** As the Student, I select an Advisor and request an available one-day lab slot. The form blocks elapsed times; a remote multi-day request must begin on a future date.
+> **[3]** As a Student, I select an Advisor and request a lab slot. Elapsed times are blocked, and multi-day remote requests must begin on a future date.
 >
-> **[4]** I submit the same PC and interval again. The database rejects the overlap, so two concurrent requests cannot reserve the same active interval.
+> **[4]** I submit the same PC and interval again. The database rejects the overlap, including concurrent attempts.
 >
-> **[5]** I switch to the Technician, the selected Advisor, and then the Dean. Each person can act only at the correct stage, and each decision creates an approval event.
+> **[5]** I switch to the Technician, selected Advisor, and Dean. Each acts only at the correct stage, and every decision is audited.
 >
-> **[6]** Finally, I sign out. Anonymous requests to protected application data are denied.
+> **[6]** After sign-out, anonymous requests to protected data are denied.
 >
-> At the backlog level, 18 of 30 MUST stories are Done. The remaining items are deployment, security, and account-lifecycle work—not hidden demo features. Su will now separate what we verified from what still needs verification.
+> Eighteen of 30 MUST stories are Done. The rest cover deployment, security, and account lifecycle. Su will separate what is verified from what still needs verification.
 
 *Demo rule: use prepared future dates and an available seeded PC. If a step fails, state the expected result, show the recorded evidence if available, and move on. Stop the demo by 2:20.*
 
 ## Slide 5: Verification status (0:55) · QA — Su Yee Mon Thein
 
-> We reran the checks available in this environment today, the 16th of November. All **11 frontend tests pass**. ESLint passes, and the production build succeeds with one non-blocking warning about the main bundle size.
+> Today, the 16th of November, all **11 frontend tests pass**. ESLint passes, and the production build succeeds with one non-blocking bundle-size warning.
 >
-> The maintained database suite now defines **147 canonical pgTAP assertions** across booking security, account recovery, and per-booking Advisor selection. I cannot honestly report a fresh database pass rate today: the local Supabase platform binary is missing, so the expanded suite and schema lint still require a clean database run. We also have one obsolete duplicate account-deletion test, recorded as BUG-09.
+> The database suite defines **147 canonical pgTAP assertions**. I cannot report a fresh pass rate today because the local Supabase platform binary is missing. The expanded suite and schema lint still need a clean run. An obsolete duplicate test is tracked as BUG-09.
 >
-> Our quality gate is therefore clear: restore the test environment, remove the duplicate safely, rebuild from the migrations, and pass all critical database assertions before release. Sai will show what those database controls change for users.
+> Before release, we must restore the environment, remove the duplicate safely, rebuild from migrations, and pass every critical database assertion. Sai will show what those controls change for users.
 
 *Do not restore the old “103 of 108” claim unless a dated test report proves that exact run. Replace this paragraph after the 147-assertion suite is executed successfully.*
 
 ## Slide 6: Before versus after (0:40) · Tech Lead — Sai Shang Hlang
 
-> Before this system, a remote session could look like an unused PC, approval progress was difficult to follow, and two people could plan to use the same machine. Now the calendar exposes safe occupancy and access mode, while private requester details remain hidden. A PostgreSQL exclusion constraint prevents overlapping active intervals, even under concurrent requests. Workflow functions enforce the correct review stage and write an approval event in the same transaction. Past starts are rejected by both the interface and the database. The important design choice is that bypassing a button or route does not bypass the rule. Su will now cover the defects and release risks that remain.
+> Before, remote use looked like an available PC, approval was hard to follow, and two people could plan for the same machine. Now the calendar shows safe occupancy while hiding private details. A PostgreSQL constraint prevents overlapping active bookings, including concurrent requests. Database functions enforce each review stage and audit its decision. Past starts are rejected in both the interface and database. Bypassing a button does not bypass the rule. Su will cover the remaining risks.
 
 ## Slide 7: Defects and security (0:45) · QA — Su Yee Mon Thein
 
-> Our bug log contains **nine issues**: four fixed and five open. The open work covers hosted migration history, verification of the future-start rule in production, incomplete authorization after account deactivation, missing permanent deletion or pseudonymization, and duplicate migration and test files.
+> Our bug log has **nine issues**: four fixed and five open. The open work covers hosted migrations, production verification, incomplete authorization after deactivation, missing permanent cleanup, and duplicate migration and test files.
 >
-> Within the reviewed scope, we found **no confirmed critical** takeover, injection, cross-site scripting, anonymous disclosure, or direct role-escalation issue. That is not the same as claiming the system is fully secure. Six high-priority risks still block broad rollout: university-domain enforcement, MFA for privileged actions, booking-abuse limits, verification of manually entered IDs, complete suspension and session denial, and an approved account-retention and cleanup process. These map to B24 through B28 and B38. Nay will explain how AI-assisted work was governed and checked.
+> The review found **no confirmed critical issue** in scope, but that does not mean the system is fully secure. Six high-priority risks block rollout: domain enforcement, privileged-action MFA, booking limits, verification of manual IDs, complete suspension and session denial, and an approved retention and cleanup process. They map to B24 through B28 and B38. Nay will explain how we governed AI-assisted work.
 
 ## Slide 8: Where we used AI (0:40) · AI Lead — Nay Win Aung
 
-> AI assisted development; it is **not** a feature of the running booking system. We used an early Lovable prototype for interface exploration and used Claude to help draft and revise React code, SQL migrations, tests, diagrams, and documentation. The Student-ID auto-fill work and several documentation changes carry Claude co-author trailers.
+> AI assisted development; it is **not** part of the running booking system. We used an early Lovable prototype for interface exploration and Claude to help draft React code, SQL, tests, diagrams, and documentation. Several changes carry Claude co-author trailers.
 >
-> We also created reusable instructions and checking workflows so AI work followed the same architecture and compliance rules as human work. Some of those artifacts currently live on documentation branches, so we should merge them before describing them as active-branch files. The essential rules are already clear in our contributor guide: never fabricate research, treat PostgreSQL as the security boundary, protect secrets and personal data, and require human review.
+> We also created reusable instructions and checkers. Some currently live on documentation branches, so we must merge them or label them accurately. Our rules are simple: never fabricate research, keep security in PostgreSQL, protect secrets and personal data, and require human review.
 
 ## Slide 9: How we checked and measured AI work (0:45) · AI Lead — Nay Win Aung
 
-> We did not accept AI output on trust. We checked it in four ways. **Traceability:** requirements point to backlog items and recorded research. **Independent verification:** AI-assisted code is subject to the same frontend checks and canonical 147-assertion database suite. **Human accountability:** a named contributor reviews and commits each change. **Honest gaps:** our documents state when research, deployment, or testing is incomplete.
+> We checked AI output four ways. **Traceability:** requirements point to backlog items and research. **Independent verification:** assisted code receives the same frontend and database checks. **Human accountability:** a named contributor reviews each change. **Honest gaps:** our documents say when research, deployment, or testing is incomplete.
 >
-> For one reproducible measurement, **7 of 85 unique commits across all current Git refs** contain a Claude co-author trailer. That number measures disclosed commit history, not all AI use and not productivity. We did not run a controlled comparison of work with and without AI, so we make no claim about hours saved. Zaw will now summarize team ownership using the same Git scope.
+> Across all current Git refs, **7 of 85 unique commits** contain a Claude co-author trailer. That measures disclosed history—not all AI use or productivity. We did not run a controlled comparison, so we claim no hours saved. Zaw will summarize team ownership using the same Git scope.
 
 ## Slide 10: Team roles and ownership (0:30) · Product Owner — Zaw Phyo Aung
 
-> Our work had clear owners. I handled product scope, interviews, and backlog decisions. Sai led architecture, migrations, and overlap protection. Nay led AI guidance and disclosure. Su owned verification, the defect log, and security review. Chan owned the design system, user journeys, and diagrams.
+> Our work had clear owners: I led scope, interviews, and backlog decisions; Sai led architecture and migrations; Nay led AI guidance; Su led verification and security review; and Chan led design, journeys, and diagrams.
 >
-> The slide’s commit counts use all current Git refs, matching the AI slide: Zaw 5, Sai 64, Nay 3, Su 7, and Chan 6, for 85 unique commits. Sai’s total combines two Git author names with the same university email. These counts show repository activity, not the value or quality of each person’s contribution.
+> The counts use all Git refs: Zaw 5, Sai 64, Nay 3, Su 7, and Chan 6. Sai’s total combines two author names with the same email. Counts show repository activity, not contribution quality.
 
 ## Slide 11: Lessons learned (0:45) · Designer — Chan Nyein Moe
 
-> We learned five things. **First**, put critical rules in the database because interface checks can be bypassed. **Second**, design status and next actions so every role can tell what is happening without seeing private information. **Third**, keep migrations, seed data, tests, and documentation synchronized; the duplicate legacy files show how easily evidence can drift. **Fourth**, research supports only the people and questions actually studied, so we still need Technician, Advisor, Dean, and lab-operator interviews. **Fifth**, label every claim by its evidence state: implemented, locally verified, deployment-dependent, or planned. That makes both the product and the presentation more trustworthy. Nay will close our AI disclosure.
+> We learned five things. **First**, put critical rules in the database. **Second**, show each role its status and next action without exposing private data. **Third**, keep migrations, tests, and documentation synchronized; duplicate legacy files show how evidence drifts. **Fourth**, research proves only what and whom we studied, so other roles still need interviews. **Fifth**, label claims as implemented, verified, deployment-dependent, or planned. That makes the product and presentation more trustworthy. Nay will close our AI disclosure.
 
 ## Slide 12: AI disclosure (0:25) · AI Lead — Nay Win Aung
 
-> For transparency, this slide lists the AI tools we used, what they assisted with, and the human owner who remains accountable. The running application sends no booking or profile data to an AI model, and the team rules prohibit sharing secrets or real personal data with AI tools. The interview records, institutional workflow decisions, security acceptance decisions, and final approval of every change remain human responsibilities. AI produced drafts; the team owns the result.
+> This slide lists each AI tool, what it assisted with, and the accountable human owner. The running application sends no user data to an AI model, and our rules prohibit sharing secrets or personal data. Interviews, institutional decisions, security acceptance, and final approval remain human responsibilities. AI produced drafts; the team owns the result.
 
 ## Slide 13: Next steps and questions (0:15) · Product Owner — Zaw Phyo Aung
 
-> Our next steps are to restore the database test environment and run all 147 canonical assertions, clean up the duplicate migration and test files, repair and verify hosted migration history, and complete high-priority items B24 through B28 and B38. Then we will validate the workflow with institutional stakeholders. Thank you. We are happy to take your questions.
+> Next, we will run all 147 database assertions, remove the duplicate files, verify hosted migrations, complete B24 through B28 and B38, and validate the workflow with institutional stakeholders. Thank you. We welcome your questions.
 
 ---
 
