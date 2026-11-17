@@ -21,6 +21,7 @@ The system supports:
 | Requirements | [Proposal](01-requirements/proposal.md), [backlog](01-requirements/backlog.md), and [user research](01-requirements/user-research.md) |
 | Design | [Feature list](02-design/feature-list.md), [user journeys](02-design/user-journey.md), [prototype guide](02-design/prototype.md), and four diagrams |
 | Compliance | [System rules](03-compliance/rule.md), [security review](03-compliance/security-review.md), and [legal requirement trace](03-compliance/legal-requirement-trace.md) |
+| Final delivery | [Member role statements](final/role-statements/) with ownership evidence and AI disclosures |
 
 ## Evidence status
 
