@@ -1,0 +1,17 @@
+# Baseline browser demo tests at commit 516bb12 (15 Sep 2026)
+# Run: 2026-11-17 23:35 +07 · branch dev @ a01f057 · npm test in a detached worktree
+
+✔ rejects an overlapping active booking interval (0.59075ms)
+✔ service blocks conflicts, invalid times, and maintenance PCs (0.374875ms)
+✔ moves a new request through advisor and dean approval (1.732666ms)
+✔ advisor rejection records a required reason (0.167792ms)
+✔ dean rejection records the final reviewer and reason (0.144959ms)
+✔ service refuses invalid approval transitions and blank rejection reasons (0.120583ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 450.680167

@@ -1,0 +1,9 @@
+# Schema lint
+# Run: 2026-11-17 23:35 +07 · branch dev @ a01f057 · supabase db lint --schema public,private --level warning
+
+Connecting to local database...
+Linting schema: public
+Linting schema: private
+
+No schema errors found
+{"results":[],"message":"db lint"}
