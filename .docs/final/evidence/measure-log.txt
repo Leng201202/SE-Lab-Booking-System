@@ -1,0 +1,30 @@
+# measure.sh run at 2026-11-17T09:59:07Z on 8a51bb1
+
+## Git / AI disclosure (all refs)
+unique_commits_all_refs=65
+commits_with_claude_trailer=7
+  73ba375 2026-11-16 Add 10-minute slide-by-slide presentation script
+  e8284fb 2026-11-16 Add 10-minute slide-by-slide presentation script
+  abea331 2026-10-06 Add draw.io use case diagram covering all roles
+  a2a46c6 2026-10-06 Add draw.io user flow diagram for the core Student-booking workflow
+  b4614f4 2026-10-04 Add DISCOVER requirements/design package (agents, skill, spec, diagrams)
+  704f750 2026-09-24 Auto-fill Student ID from Lamduan email and gate booking on it
+  d1d5f54 2026-09-20 docs: update project proposal for 20 computers and multi-day bookings
+custom_agents=2  (branch docs/discover-package)
+custom_skills=1  (branch docs/discover-package)
+
+## Database evidence (current tree)
+pgTAP plans in canonical files:
+supabase/tests/database/001_booking_security.test.sql:select plan(106);
+supabase/tests/database/002_account_deletion.test.sql:select plan(14);
+supabase/tests/database/003_booking_advisor_selection.test.sql:select plan(27);
+overlap_exclusion_constraint_refs=2 migration file(s)
+distinct_client_rpcs=12
+baseline_has_supabase_dir=0
+baseline_localStorage_refs_in_bookingService=2
+baseline_rpc_calls=0
+
+## Frontend tests (current) — run separately:
+  npm ci --prefix app && npm test --prefix app
+## Frontend tests (baseline) — run separately:
+  git worktree add /tmp/base 516bb12 && (cd /tmp/base/app && npm ci && node --test)

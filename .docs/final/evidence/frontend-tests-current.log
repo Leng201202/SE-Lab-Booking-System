@@ -1,0 +1,87 @@
+# npm test --prefix app  — current main 8a51bb1, run 2026-11-17T09:59:07Z
+
+> se-lab-pc-booking-system@0.0.0 test
+> node --test
+
+TAP version 13
+# Subtest: detects overlap only for active booking statuses
+ok 1 - detects overlap only for active booking statuses
+  ---
+  duration_ms: 0.811289
+  type: 'test'
+  ...
+# Subtest: maps a database booking to the existing page contract
+ok 2 - maps a database booking to the existing page contract
+  ---
+  duration_ms: 1.425812
+  type: 'test'
+  ...
+# Subtest: maps sanitized calendar rows without private requester data
+ok 3 - maps sanitized calendar rows without private requester data
+  ---
+  duration_ms: 0.130055
+  type: 'test'
+  ...
+# Subtest: uses the Bangkok calendar date at UTC day boundaries
+ok 4 - uses the Bangkok calendar date at UTC day boundaries
+  ---
+  duration_ms: 10.800074
+  type: 'test'
+  ...
+# Subtest: rounds today forward to the next Bangkok booking slot
+ok 5 - rounds today forward to the next Bangkok booking slot
+  ---
+  duration_ms: 1.245946
+  type: 'test'
+  ...
+# Subtest: does not offer past dates or a day with no remaining slot
+ok 6 - does not offer past dates or a day with no remaining slot
+  ---
+  duration_ms: 0.381808
+  type: 'test'
+  ...
+# Subtest: allows every role to cancel only their own active future booking
+ok 7 - allows every role to cancel only their own active future booking
+  ---
+  duration_ms: 0.224774
+  type: 'test'
+  ...
+# Subtest: does not allow cancellation after the booking starts or after it closes
+ok 8 - does not allow cancellation after the booking starts or after it closes
+  ---
+  duration_ms: 0.07992
+  type: 'test'
+  ...
+# Subtest: sends the selected Advisor with a booking request
+ok 9 - sends the selected Advisor with a booking request
+  ---
+  duration_ms: 0.675181
+  type: 'test'
+  ...
+# Subtest: sends no Advisor when none is selected so the database can reject Student requests
+ok 10 - sends no Advisor when none is selected so the database can reject Student requests
+  ---
+  duration_ms: 0.241244
+  type: 'test'
+  ...
+# Subtest: maps the Advisor listing to dropdown options
+ok 11 - maps the Advisor listing to dropdown options
+  ---
+  duration_ms: 0.143934
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 572.048754
+
+# npm run lint
+
+> se-lab-pc-booking-system@0.0.0 lint
+> eslint .
+

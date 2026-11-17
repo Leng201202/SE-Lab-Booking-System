@@ -1,0 +1,47 @@
+# node --test — baseline 516bb12 (browser demo), run 2026-11-17T09:59:11Z
+TAP version 13
+# Subtest: rejects an overlapping active booking interval
+ok 1 - rejects an overlapping active booking interval
+  ---
+  duration_ms: 0.911292
+  type: 'test'
+  ...
+# Subtest: service blocks conflicts, invalid times, and maintenance PCs
+ok 2 - service blocks conflicts, invalid times, and maintenance PCs
+  ---
+  duration_ms: 0.565406
+  type: 'test'
+  ...
+# Subtest: moves a new request through advisor and dean approval
+ok 3 - moves a new request through advisor and dean approval
+  ---
+  duration_ms: 1.810493
+  type: 'test'
+  ...
+# Subtest: advisor rejection records a required reason
+ok 4 - advisor rejection records a required reason
+  ---
+  duration_ms: 0.281615
+  type: 'test'
+  ...
+# Subtest: dean rejection records the final reviewer and reason
+ok 5 - dean rejection records the final reviewer and reason
+  ---
+  duration_ms: 0.346298
+  type: 'test'
+  ...
+# Subtest: service refuses invalid approval transitions and blank rejection reasons
+ok 6 - service refuses invalid approval transitions and blank rejection reasons
+  ---
+  duration_ms: 0.235403
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 492.625325
