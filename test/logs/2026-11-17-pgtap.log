@@ -1,0 +1,166 @@
+# pgTAP database suite (npm run supabase:test equivalent)
+# Run: 2026-11-17 23:35 +07 · branch dev @ a01f057 · local Supabase, clean reset without the duplicate ' 2' migration
+
+RUN 2026-11-17 23:33 +07
+Connecting to local database...
+supabase/tests/database/001_booking_security.test.sql ........... ok
+supabase/tests/database/002_account_deletion.test.sql ........... ok
+supabase/tests/database/003_booking_advisor_selection.test.sql .. ok
+All tests successful.
+Files=3, Tests=147,  0 wallclock secs ( 0.01 usr  0.03 sys +  0.02 cusr  0.06 csys =  0.12 CPU)
+Result: PASS
+exit=0
+
+## 001_booking_security
+ok 1 - non-Google identities cannot create application profiles
+ok 2 - Google signup creates a Student profile before email confirmation is finalized
+ok 3 - Student without a Student ID cannot create a booking
+ok 4 - Lamduan Google signup derives the 10-digit Student ID
+ok 5 - Lamduan Student cannot replace the email-derived Student ID
+ok 6 - Student ID collision does not abort Lamduan Google profile creation
+ok 7 - conflicted Lamduan profile is created without overwriting the claimed Student ID
+ok 8 - a future Technician starts as Student
+ok 9 - a future Advisor starts as Student
+ok 10 - a future Dean starts as Student
+ok 11 - new users default to Student
+ok 12 - allowlisted Technician receives the trusted role
+ok 13 - allowlisted Advisor receives the trusted role
+ok 14 - allowlisted Dean receives the trusted role
+ok 15 - Student profiles no longer store a permanent Advisor assignment
+ok 16 - anonymous users cannot read PC inventory
+ok 17 - anonymous users cannot execute cancellation
+ok 18 - anonymous users cannot update a Student ID
+ok 19 - cancellation requires an authenticated user ID
+ok 20 - authenticated students can read PC inventory
+ok 21 - Student without bookings can read only their own profile
+ok 22 - students cannot promote their own role
+ok 23 - Students cannot bypass Student ID validation with a direct profile update
+ok 24 - manual Student ID update rejects an invalid format
+ok 25 - Student can save a valid 10-digit Student ID through the guarded RPC
+ok 26 - guarded Student ID update persists the normalized value
+ok 27 - Students cannot bypass the booking RPC with a direct insert
+ok 28 - Students cannot manage PC inventory
+ok 29 - database rejects an active booking whose start instant has passed
+ok 30 - Student can create a valid booking with a selected Advisor
+ok 31 - new Student booking starts at the Technician stage
+ok 32 - database exclusion constraint rejects overlap
+ok 33 - Student cannot approve a request
+ok 34 - another Student cannot read a private booking
+ok 35 - another Student can see sanitized occupied calendar time
+ok 36 - another Student cannot open private booking details
+ok 37 - another Student cannot cancel the requester's booking
+ok 38 - Student cannot create a booking without selecting an Advisor
+ok 39 - Advisor not selected on a request cannot read it
+ok 40 - Advisor not selected on a request cannot approve it
+ok 41 - Dean cannot read requests that have not passed Advisor review
+ok 42 - Dean can browse all profiles for user management
+ok 43 - Dean cannot bypass the Advisor stage
+ok 44 - selected Advisor cannot read a request before Technician approval
+ok 45 - Technician can read Student requests awaiting technical review
+ok 46 - Technician can approve a Student request
+ok 47 - Technician approval advances to Advisor review
+ok 48 - Technician decision is retained
+ok 49 - Technician decision creates an audit event
+ok 50 - selected Advisor can read the Technician-approved request
+ok 51 - selected Advisor can approve the request
+ok 52 - Advisor approval advances to Dean review
+ok 53 - Advisor decision creates an audit event
+ok 54 - Dean can read requests awaiting final review
+ok 55 - Dean retains access to all profiles during review
+ok 56 - Dean can grant final approval
+ok 57 - Dean approval confirms the booking
+ok 58 - all three review decisions remain in the audit trail
+ok 59 - Student cancellation requires a meaningful reason
+ok 60 - Student can cancel their own approved future booking
+ok 61 - Student cancellation closes the booking
+ok 62 - Student cancellation reason is retained
+ok 63 - Student cancellation records the requester as actor
+ok 64 - Student cancellation records its timestamp
+ok 65 - cancelled booking immediately releases calendar availability
+ok 66 - Student can create a second non-conflicting request
+ok 67 - Technician can advance the second Student request to Advisor review
+ok 68 - Advisor rejection requires a reason
+ok 69 - selected Advisor can reject a pending request
+ok 70 - Advisor rejection closes the request
+ok 71 - rejection adds an immutable audit event
+ok 72 - Student can select a different Advisor for another booking
+ok 73 - the selected Advisor is stored on the new booking
+ok 74 - bookings by the same Student keep their own Advisors
+ok 75 - Technician can advance the request addressed to the other Advisor
+ok 76 - an Advisor who was not selected cannot read the request
+ok 77 - the selected Advisor receives the request after Technician approval
+ok 78 - Technician can add a PC with specifications
+ok 79 - Technician-managed PC specifications are persisted
+ok 80 - Technician can place a PC into maintenance
+ok 81 - Technician cannot manage user roles
+ok 82 - Technician can create a booking request
+ok 83 - Technician booking starts at Advisor review
+ok 84 - Technician booking skips Technician review
+ok 85 - the Student-to-Advisor assignment RPC is removed
+ok 86 - Advisors can no longer call the removed assignment RPC
+ok 87 - Advisor cannot manage roles
+ok 88 - Advisor can approve a Technician booking
+ok 89 - Advisor can create a booking request
+ok 90 - Advisor booking starts at Dean review
+ok 91 - Advisor booking skips Advisor review
+ok 92 - Dean can approve a Technician booking
+ok 93 - Dean can approve an Advisor booking
+ok 94 - Advisor can cancel their own approved future booking
+ok 95 - Advisor cancellation closes the booking
+ok 96 - Advisor cancellation reason is retained
+ok 97 - Dean can create a booking
+ok 98 - Dean booking is approved immediately
+ok 99 - Dean can cancel their own approved future booking
+ok 100 - Dean cancellation closes the booking
+ok 101 - Dean cancellation reason is retained
+ok 102 - Dean can add a PC
+ok 103 - Dean can mark a PC for maintenance
+ok 104 - maintenance status is persisted
+ok 105 - Dean can promote an existing Student
+ok 106 - Dean role update is persisted
+
+## 002_account_deletion
+ok 1 - a freshly created profile is not deactivated
+ok 2 - a Student can request deletion of their own account
+ok 3 - requesting deletion twice is rejected
+ok 4 - a deactivated account cannot update its Student ID
+ok 5 - the account is marked deactivated after the deletion request
+ok 6 - the deletion request timestamp is recorded
+ok 7 - reactivating within the 90-day window succeeds
+ok 8 - reactivating an already-active account is rejected
+ok 9 - the account is active again after reactivation
+ok 10 - the deletion request timestamp is cleared after reactivation
+ok 11 - is_deactivated cannot be set true without a deletion_requested_at timestamp
+ok 12 - a second Student can also request deletion of their own account
+ok 13 - reactivation fails once the 90-day recovery window has passed
+ok 14 - an account past the recovery window remains deactivated
+
+## 003_booking_advisor_selection
+ok 1 - anonymous users cannot list Advisors
+ok 2 - Student without an assigned Advisor sees every active Advisor, sorted by name
+ok 3 - the Advisor listing returns display names
+ok 4 - booking creation fails when the Advisor ID is omitted
+ok 5 - booking creation fails when the Advisor ID is malformed
+ok 6 - booking creation fails when the Advisor does not exist
+ok 7 - booking creation fails when the selected profile is not an Advisor
+ok 8 - booking creation fails when the selected Advisor is deactivated
+ok 9 - an invalid time range is still rejected with a valid Advisor
+ok 10 - an unavailable PC is still rejected with a valid Advisor
+ok 11 - Student can book with a selected Advisor
+ok 12 - Student can book again with a different Advisor
+ok 13 - each booking stores its own Advisor and the authenticated requester
+ok 14 - Student can read the Advisor named on their own bookings
+ok 15 - Student cannot read Advisors who are not on their bookings
+ok 16 - workstation conflicts are still rejected with a valid Advisor
+ok 17 - another Student cannot read bookings that name an Advisor
+ok 18 - booking ownership still prevents cancelling another Student request
+ok 19 - non-Student requesters cannot attach an Advisor
+ok 20 - Technician can advance the Alpha Advisor request
+ok 21 - Alpha Advisor sees only the request addressed to them
+ok 22 - Advisor can read the requester of a request addressed to them
+ok 23 - Advisor cannot browse unrelated Students
+ok 24 - an Advisor who was not selected cannot approve the request
+ok 25 - Advisor with unresolved requests cannot be demoted
+ok 26 - Advisor with no unresolved requests can change roles
+ok 27 - the profile Advisor helper is removed
+

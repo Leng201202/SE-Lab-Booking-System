@@ -1,0 +1,29 @@
+# Clean database reset from the repository as-is
+# Run: 2026-11-17 23:35 +07 · branch dev @ a01f057 · supabase db reset --local
+
+Applying migration 20260925000100_add_account_deletion 2.sql...
+Applying migration 20260925000100_add_account_deletion.sql...
+ERROR: column "is_deactivated" of relation "profiles" already exists (SQLSTATE 42701)
+
+## Duplicate test file 002_account_deletion.test 2.sql against the migrated database
+ok 1 - a freshly created profile is not deactivated
+ok 2 - a Student can request deletion of their own account
+ok 3 - requesting deletion twice is rejected
+ok 4 - a deactivated account cannot update its Student ID
+ok 5 - the account is marked deactivated after the deletion request
+ok 6 - the deletion request timestamp is recorded
+ok 7 - reactivating within the 7-day window succeeds
+ok 8 - reactivating an already-active account is rejected
+ok 9 - the account is active again after reactivation
+ok 10 - the deletion request timestamp is cleared after reactivation
+ok 11 - is_deactivated cannot be set true without a deletion_requested_at timestamp
+ok 12 - a second Student can also request deletion of their own account
+not ok 13 - reactivation fails once the 7-day recovery window has passed
+# Failed test 13: "reactivation fails once the 7-day recovery window has passed"
+#       caught: no exception
+#       wanted: an exception
+not ok 14 - an account past the recovery window remains deactivated
+# Failed test 14: "an account past the recovery window remains deactivated"
+#         have: false
+#         want: true
+# Looks like you failed 2 tests of 14

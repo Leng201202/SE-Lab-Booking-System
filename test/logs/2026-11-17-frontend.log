@@ -1,0 +1,37 @@
+# Frontend checks
+# Run: 2026-11-17 23:35 +07 · branch dev @ a01f057 · npm test · npm run lint · npm run build
+
+## npm test
+✔ detects overlap only for active booking statuses (2.01425ms)
+✔ maps a database booking to the existing page contract (2.933417ms)
+✔ maps sanitized calendar rows without private requester data (0.176084ms)
+✔ uses the Bangkok calendar date at UTC day boundaries (45.602167ms)
+✔ rounds today forward to the next Bangkok booking slot (1.65275ms)
+✔ does not offer past dates or a day with no remaining slot (0.683042ms)
+✔ allows every role to cancel only their own active future booking (0.202792ms)
+✔ does not allow cancellation after the booking starts or after it closes (0.088917ms)
+✔ sends the selected Advisor with a booking request (0.734292ms)
+✔ sends no Advisor when none is selected so the database can reject Student requests (0.098208ms)
+✔ maps the Advisor listing to dropdown options (0.057333ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 626.339833
+
+## npm run lint
+
+exit=0
+
+## npm run build
+dist/assets/index-CzCSF7fn.css   56.04 kB │ gzip:  10.54 kB
+dist/assets/index-BJU0_Rvm.js   880.27 kB │ gzip: 247.70 kB
+✓ built in 300ms
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.

@@ -1,0 +1,22 @@
+# QA retest cases test/qa-retest.test.sql
+# Run: 2026-11-17 23:35 +07 · branch dev @ a01f057 · local Supabase after clean reset
+
+1..13
+ok 1 - QA-01 (B4) Student can request a multi-day reservation
+ok 2 - QA-02 (B4) a multi-day reservation is stored as remote access
+ok 3 - QA-03 (B4) a 3-day reservation blocks three whole Bangkok days
+ok 4 - QA-04 (B4) a one-day session before 08:00 is rejected
+ok 5 - QA-05 (B4) a one-day session off the 15-minute grid is rejected
+ok 6 - QA-06 (B9) a lab session inside an active multi-day reservation is rejected
+ok 7 - QA-07 (B9) only one active booking exists for that PC and day
+ok 8 - QA-08 (B5) the shared calendar does not return the booking purpose
+ok 9 - QA-09 (B10) anonymous visitors cannot call the calendar function
+ok 10 - QA-10 (B10) anonymous visitors cannot read the bookings table
+not ok 11 - QA-11 (BUG-07) a deactivated account cannot create a booking # TODO BUG-07 open: deactivated sessions are not checked in create_booking
+# Failed (TODO) test 11: "QA-11 (BUG-07) a deactivated account cannot create a booking"
+#     no exception thrown
+not ok 12 - QA-12 (BUG-07) a deactivated account cannot read the shared calendar # TODO BUG-07 open: deactivated sessions can still read calendar occupancy
+# Failed (TODO) test 12: "QA-12 (BUG-07) a deactivated account cannot read the shared calendar"
+#     no exception thrown
+not ok 13 - QA-13 (BUG-08) a cleanup or pseudonymization routine exists for expired accounts # TODO BUG-08 open: no cleanup function or scheduled job exists
+# Failed (TODO) test 13: "QA-13 (BUG-08) a cleanup or pseudonymization routine exists for expired accounts"
