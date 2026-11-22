@@ -1,4 +1,3 @@
-<!-- DRAFT prepared for Zaw Phyo Aung with AI help. Rewrite in your own words (especially section 3) before pushing. -->
 ## Reflection
 
 **Zaw Phyo Aung · 6631503130 · Product Owner · Team FLUX**
@@ -11,7 +10,7 @@ As Product Owner I connected the problem, the user research and the backlog. **W
 
 ### 2. Where I stand in the AI era
 
-When AI can build features quickly, the hard question becomes *what* to build and *why*. My strength is turning user evidence into priorities and keeping product claims honest. I need more practice in measuring outcomes with real users.
+When AI can build features quickly, the hard question becomes _what_ to build and _why_. My strength is turning user evidence into priorities and keeping product claims honest. I need more practice in measuring outcomes with real users.
 
 ### 3. My plan
 

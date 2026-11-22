@@ -1,4 +1,3 @@
-<!-- DRAFT prepared for Sai Shang Hlang with AI help. Rewrite in your own words (especially section 3) before pushing. -->
 ## Reflection
 
 **Sai Shang Hlang · 6631503129 · Tech Lead · Team FLUX**

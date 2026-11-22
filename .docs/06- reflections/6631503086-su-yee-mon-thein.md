@@ -1,4 +1,3 @@
-<!-- DRAFT prepared for Su Yee Mon Thein with AI help. Rewrite in your own words (especially section 3) before pushing. -->
 ## Reflection
 
 **Su Yee Mon Thein · 6631503086 · QA / Test · Team FLUX**
